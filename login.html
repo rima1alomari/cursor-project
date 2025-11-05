@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sign in</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body class="bg-white">
+    <main class="center-wrapper">
+      <div class="card">
+        <div class="logo-circle" aria-hidden="true">
+          <span class="logo-dot logo-dot--green"></span>
+          <span class="logo-dot logo-dot--blue"></span>
+        </div>
+        <h1 class="title">Sign in</h1>
+        <p class="subtitle">Welcome back. Please enter your details.</p>
+        <form class="form" id="login-form">
+          <div class="field">
+            <label class="label" for="email">Email</label>
+            <input class="input" id="email" name="email" type="email" placeholder="you@example.com" required />
+          </div>
+          <div class="field">
+            <label class="label" for="password">Password</label>
+            <input class="input" id="password" name="password" type="password" placeholder="••••••••" required />
+          </div>
+          <div class="row">
+            <button class="btn btn-primary" type="submit">Sign in</button>
+            <a class="btn btn-outline" href="./index.html">Back</a>
+          </div>
+        </form>
+        <p class="footer-hint">No account yet? Use any email and password to continue.</p>
+      </div>
+    </main>
+    <script>
+      (function () {
+        var form = document.getElementById('login-form');
+        if (!form) return;
+        form.addEventListener('submit', function (e) {
+          e.preventDefault();
+          // For now, no real auth – just go to the home page.
+          window.location.href = './home.html';
+        });
+      })();
+    </script>
+  </body>
+  </html>
+
