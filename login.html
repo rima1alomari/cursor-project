@@ -9,7 +9,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./styles.css" />
   </head>
-  <body class="bg-white">
+  <body class="bg-white bg-modern bg-corner-dots">
+    <header class="site-header">
+      <img class="site-logo" src="./logo.png" alt="Site logo" onerror="this.remove(); var b=document.querySelector('.site-brand'); if(b){ b.textContent='Aramco Digital'; }" />
+      <span class="site-brand"></span>
+    </header>
     <main class="center-wrapper">
       <div class="card">
         <div class="logo-circle" aria-hidden="true">
@@ -35,6 +39,7 @@
         <p class="footer-hint">No account yet? Use any email and password to continue.</p>
       </div>
     </main>
+    <footer class="credits">Made by: Reema Alomari, Abdullah Alqahtani, Yara AlSardi</footer>
     <script>
       (function () {
         var form = document.getElementById('login-form');
