@@ -1,0 +1,391 @@
+body {
+  background: #ffffff !important;
+}
+
+:root {
+    --bg: #ffffff;
+    --text-main: #111827;
+    --text-muted: #6b7280;
+    --primary-blue: #2563eb;
+    --primary-green: #22c55e;
+    --shadow-soft: 0 10px 30px rgba(15, 23, 42, 0.07);
+    --radius-xl: 18px;
+    --radius-lg: 14px;
+    --radius-md: 10px;
+    --transition-fast: 0.2s ease;
+    --transition-med: 0.3s ease;
+  }
+  
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+  
+  body {
+    margin: 0;
+    font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    background-color: var(--bg);
+    color: var(--text-main);
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+  }
+  
+  /* Dotted background */
+  body::before,
+  body::after {
+    content: "";
+    position: fixed;
+    width: 280px;
+    height: 280px;
+    pointer-events: none;
+    opacity: 0.28;
+    z-index: -1;
+  }
+  
+  body::before {
+    top: 40px;
+    left: 40px;
+    background-image: radial-gradient(var(--primary-blue) 1.2px, transparent 1.2px);
+    background-size: 20px 20px;
+  }
+  
+  body::after {
+    bottom: 40px;
+    right: 40px;
+    background-image: radial-gradient(var(--primary-green) 1.2px, transparent 1.2px);
+    background-size: 20px 20px;
+  }
+  
+  /* Top bar */
+  .topbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 70px;
+    padding: 0 40px;
+    background-color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.06);
+    z-index: 50;
+  }
+  
+  .topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  
+  .app-name {
+    font-size: 1.45rem;
+    font-weight: 600;
+    color: #0f172a;
+    letter-spacing: 0.04em;
+  }
+  
+  .profile-container {
+    position: relative;
+  }
+  
+  .profile-button {
+    border: none;
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: box-shadow var(--transition-fast), transform var(--transition-fast);
+  }
+  
+  .profile-button:hover {
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    transform: translateY(-1px);
+  }
+  
+  .profile-img {
+    width: 40px;
+    height: 40px;
+    border-radius: 999px;
+    object-fit: cover;
+  }
+  
+  /* Profile dropdown */
+  .profile-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    min-width: 160px;
+    background-color: #ffffff;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-soft);
+    padding: 6px 0;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-4px);
+    transition: opacity var(--transition-med), transform var(--transition-med),
+      visibility var(--transition-med);
+  }
+  
+  .profile-container.open .profile-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+  
+  .profile-menu-item {
+    width: 100%;
+    padding: 8px 16px;
+    border: none;
+    background: transparent;
+    text-align: left;
+    font-size: 0.9rem;
+    color: var(--text-main);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: background-color var(--transition-fast), color var(--transition-fast);
+  }
+  
+  .profile-menu-item:hover {
+    background-color: #f3f4f6;
+    color: #111827;
+  }
+  
+  /* Right side logo */
+  .company-logo {
+    height: 35px;
+    object-fit: contain;
+  }
+  
+  /* Main layout */
+  .main-layout {
+    min-height: 100vh;
+    padding-top: 90px; /* space for fixed header */
+    padding-bottom: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  /* Center section with plus button */
+  .center-section {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .plus-container {
+    position: relative;
+    width: 260px;
+    height: 260px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .plus-button {
+    width: 140px;
+    height: 140px;
+    border-radius: 36px;
+    border: none;
+    font-size: 3.4rem;
+    font-weight: 500;
+    color: #ffffff;
+    background-image: linear-gradient(135deg, var(--primary-blue), var(--primary-green));
+    box-shadow: 0 20px 50px rgba(15, 23, 42, 0.25);
+    cursor: pointer;
+    transition: transform var(--transition-med), box-shadow var(--transition-med), filter var(--transition-med);
+  }
+  
+  
+  .plus-button:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 20px 50px rgba(15, 23, 42, 0.28);
+    filter: brightness(1.03);
+  }
+  
+  /* Template buttons */
+  .template-btn {
+    position: absolute;
+    width: 150px;
+    height: 86px;
+    border-radius: var(--radius-lg);
+    border: none;
+    background-color: #ffffff;
+    box-shadow: var(--shadow-soft);
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-main);
+    cursor: pointer;
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.85);
+    pointer-events: none;
+    transition:
+      opacity 0.35s ease,
+      transform 0.45s cubic-bezier(0.22, 0.61, 0.36, 1);
+    text-align: left;
+    padding: 10px 14px;
+  }
+  
+  
+  .template-btn::after {
+    content: "→";
+    float: right;
+    font-size: 1rem;
+    color: var(--primary-blue);
+  }
+  
+  .template-top,
+  .template-left,
+  .template-right {
+    top: 50%;
+    left: 50%;
+  }
+  
+  /* Positions when open (GTA wheel style) */
+  .plus-container.open .template-top {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translate(-50%, -210%) scale(1);
+  }
+  
+  .plus-container.open .template-left {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translate(-165%, -30%) scale(1);
+  }
+  
+  .plus-container.open .template-right {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translate(65%, -30%) scale(1);
+  }
+  
+  .template-btn:hover {
+    box-shadow: 0 14px 30px rgba(15, 23, 42, 0.16);
+    transform: translate(-50%, -50%) scale(1.03);
+  }
+  
+  /* Recent projects section */
+  .recent-section {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+  
+  .recent-inner {
+    width: 70%;
+    max-width: 900px;
+    background-color: #ffffff;
+    border-radius: var(--radius-xl);
+    padding: 20px 24px 22px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+    border: 1px solid rgba(148, 163, 184, 0.25);
+  }
+  
+  .recent-inner h2 {
+    margin: 0 0 4px;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #0f172a;
+  }
+  
+  .recent-empty {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+  }
+  
+  /* Settings popup (modal) */
+  .settings-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--transition-med);
+    z-index: 60;
+  }
+  
+  .settings-overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  
+  .settings-modal {
+    background-color: #ffffff;
+    border-radius: 18px;
+    padding: 20px 24px 18px;
+    min-width: 320px;
+    max-width: 420px;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.3);
+    transform: translateY(10px);
+    animation: modalIn 0.26s ease-out forwards;
+  }
+  
+  .settings-modal h2 {
+    margin: 0 0 6px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #0f172a;
+  }
+  
+  .settings-subtitle {
+    margin: 0 0 10px;
+    font-size: 0.88rem;
+    color: var(--text-muted);
+  }
+  
+  .settings-list {
+    margin: 0 0 16px 18px;
+    padding: 0;
+    font-size: 0.9rem;
+    color: #111827;
+  }
+  
+  .settings-list li {
+    margin-bottom: 6px;
+  }
+  
+  .close-settings {
+    border-radius: 999px;
+    border: none;
+    padding: 8px 18px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    background-color: #0f172a;
+    color: #f9fafb;
+    transition: background-color var(--transition-fast), transform var(--transition-fast),
+      box-shadow var(--transition-fast);
+  }
+  
+  .close-settings:hover {
+    background-color: #020617;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.25);
+  }
+  
+  @keyframes modalIn {
+    from {
+      opacity: 0;
+      transform: translateY(18px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+  
