@@ -1,0 +1,1565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Slide Editor</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <meta name="color-scheme" content="light">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Merriweather:wght@400;700&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    /* Canvas drag placeholder (no real drag-drop yet) */
+    .draggable-placeholder { cursor: move; }
+    /* Hide native file inputs */
+    input[type=file] { display: none; }
+  </style>
+</head>
+<body class="min-h-screen bg-[#f5f7fa] text-slate-800">
+  <div class="flex h-screen flex-col">
+    <!-- Top Toolbar -->
+    <header class="w-full border-b border-slate-200/50 bg-gradient-to-r from-[#004c97] via-teal-500 to-emerald-500 py-4 text-white shadow-sm">
+      <div class="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 md:gap-6 md:px-6 lg:px-8">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <span class="sr-only">Editor Branding</span>
+          </div>
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="flex items-center gap-2">
+              <div id="presenceAvatars" class="flex -space-x-2"></div>
+              <span id="collaborationStatus" class="text-xs uppercase tracking-wide text-white/80">Connecting…</span>
+            </div>
+            <div class="rounded-full bg-black/20 px-3 py-1.5 text-sm">Slide <span id="slideIndexLabel" class="font-semibold">1</span>/<span id="slideCountLabel">1</span></div>
+            <span id="autosaveStatus" class="text-xs text-white/80">Autosave ready</span>
+            <button id="shareBtn" class="rounded-full border border-white/30 px-3 py-1.5 text-sm hover:bg-white/10">Share</button>
+            <button id="presentModeBtn" class="rounded-full border border-white/30 px-3 py-1.5 text-sm hover:bg-white/10">Presenter Mode</button>
+            <button id="exportPdfBtn" class="rounded-full bg-white/20 px-3 py-1.5 text-sm shadow-sm transition hover:bg-white/30">Export PDF</button>
+          </div>
+        </div>
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-2 rounded-full border border-white/20 bg-white/10 p-1 backdrop-blur-sm">
+            <button data-tab-target="slides" class="tool-tab rounded-full px-4 py-1.5 text-sm font-medium text-white/70 transition">Slides</button>
+            <button data-tab-target="text" class="tool-tab rounded-full px-4 py-1.5 text-sm font-medium text-white/70 transition">Text</button>
+            <button data-tab-target="image" class="tool-tab rounded-full px-4 py-1.5 text-sm font-medium text-white/70 transition">Image</button>
+            <button data-tab-target="chart" class="tool-tab rounded-full px-4 py-1.5 text-sm font-medium text-white/70 transition">Chart</button>
+            <button data-tab-target="background" class="tool-tab rounded-full px-4 py-1.5 text-sm font-medium text-white/70 transition">Background</button>
+          </div>
+        </div>
+        <div class="rounded-2xl border border-white/20 bg-white/10 p-3 backdrop-blur-sm">
+          <div data-tab-panel="slides" class="hidden flex flex-wrap items-center gap-3">
+            <button id="addSlideBtn" class="rounded-full bg-white/20 px-3 py-1.5 text-sm shadow-sm transition hover:bg-white/30">Add Slide</button>
+            <button id="duplicateSlideBtn" class="rounded-full border border-white/30 px-3 py-1.5 text-sm hover:bg-white/10">Duplicate Slide</button>
+            <button id="deleteSlideBtn" class="rounded-full border border-white/30 px-3 py-1.5 text-sm hover:bg-white/10">Delete Slide</button>
+            <button id="renameSlideBtn" class="rounded-full border border-white/30 px-3 py-1.5 text-sm hover:bg-white/10">Rename Slide</button>
+            <button id="clearSlideBtn" class="rounded-full border border-white/30 px-3 py-1.5 text-sm hover:bg-white/10">Clear Content</button>
+          </div>
+          <div data-tab-panel="text" class="hidden flex flex-wrap items-center gap-4">
+            <button id="addTextBtn" class="rounded-full bg-white/20 px-3 py-1.5 text-sm hover:bg-white/30">Add Text</button>
+            <div class="flex items-center gap-2">
+              <label class="text-sm text-white/80">Font</label>
+              <select id="fontFamilySelect" class="rounded-md border-0 bg-white/20 px-2 py-1.5 text-sm text-white focus:ring-2 focus:ring-white/40">
+                <option value="Inter, sans-serif">Inter</option>
+                <option value="Poppins, sans-serif">Poppins</option>
+                <option value="Roboto, sans-serif">Roboto</option>
+                <option value="Merriweather, serif">Merriweather</option>
+              </select>
+            </div>
+            <div class="flex items-center gap-2">
+              <label class="text-sm text-white/80">Size</label>
+              <select id="fontSizeSelect" class="rounded-md border-0 bg-white/20 px-2 py-1.5 text-sm text-white focus:ring-2 focus:ring-white/40">
+                <option value="14">14</option>
+                <option value="16" selected>16</option>
+                <option value="20">20</option>
+                <option value="24">24</option>
+                <option value="32">32</option>
+                <option value="40">40</option>
+                <option value="48">48</option>
+              </select>
+            </div>
+            <div class="flex items-center gap-2">
+              <label class="text-sm text-white/80">Color</label>
+              <input id="textColorInput" type="color" class="h-9 w-12 rounded-md border border-white/30 bg-transparent" value="#111827">
+            </div>
+            <div class="flex items-center gap-2">
+              <label class="text-sm text-white/80">Highlight</label>
+              <input id="textBgColorInput" type="color" class="h-9 w-12 rounded-md border border-white/30 bg-transparent" value="#ffffff">
+              <button id="textBgClearBtn" class="rounded-full border border-white/30 px-3 py-1.5 text-xs hover:bg-white/10">Clear</button>
+            </div>
+            <div class="flex items-center gap-2">
+              <button id="boldBtn" class="rounded-full border border-white/30 px-3 py-1.5 text-sm font-bold hover:bg-white/10">B</button>
+              <button id="italicBtn" class="rounded-full border border-white/30 px-3 py-1.5 text-sm italic hover:bg-white/10">I</button>
+              <button id="underlineBtn" class="rounded-full border border-white/30 px-3 py-1.5 text-sm underline hover:bg-white/10">U</button>
+            </div>
+            <div class="flex items-center gap-2">
+              <button id="alignLeftBtn" class="rounded-full border border-white/30 px-3 py-1.5 text-sm hover:bg-white/10">Left</button>
+              <button id="alignCenterBtn" class="rounded-full border border-white/30 px-3 py-1.5 text-sm hover:bg-white/10">Center</button>
+              <button id="alignRightBtn" class="rounded-full border border-white/30 px-3 py-1.5 text-sm hover:bg-white/10">Right</button>
+            </div>
+          </div>
+          <div data-tab-panel="image" class="hidden flex flex-wrap items-center gap-4">
+            <label for="uploadImageInput" class="cursor-pointer rounded-full bg-white/20 px-3 py-1.5 text-sm hover:bg-white/30">Upload Image</label>
+            <input id="uploadImageInput" type="file" accept="image/*">
+            <label for="replaceImageInput" class="cursor-pointer rounded-full border border-white/30 px-3 py-1.5 text-sm hover:bg-white/10">Replace Image</label>
+            <input id="replaceImageInput" type="file" accept="image/*">
+            <div class="flex items-center gap-2">
+              <span class="text-sm text-white/80">Fit</span>
+              <button id="fitBtn" class="rounded-full border border-white/30 px-3 py-1.5 text-sm hover:bg-white/10">Contain</button>
+              <button id="fillBtn" class="rounded-full border border-white/30 px-3 py-1.5 text-sm hover:bg-white/10">Cover</button>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-sm text-white/80">Width</span>
+              <input id="imageWidthRange" type="range" min="120" max="800" value="400" class="h-1 w-40 accent-[#004c97]">
+              <span id="imageWidthValue" class="text-xs text-white/80">400px</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-sm text-white/80">Opacity</span>
+              <input id="imageOpacityRange" type="range" min="20" max="100" value="100" class="h-1 w-32 accent-[#004c97]">
+              <span id="imageOpacityValue" class="text-xs text-white/80">100%</span>
+            </div>
+          </div>
+          <div data-tab-panel="chart" class="hidden flex flex-wrap items-center gap-4">
+            <div class="flex items-center gap-2">
+              <button id="addBarChartBtn" class="rounded-full bg-white/20 px-3 py-1.5 text-sm hover:bg-white/30">Add Bar</button>
+              <button id="addLineChartBtn" class="rounded-full bg-white/20 px-3 py-1.5 text-sm hover:bg-white/30">Add Line</button>
+              <button id="addPieChartBtn" class="rounded-full bg-white/20 px-3 py-1.5 text-sm hover:bg-white/30">Add Pie</button>
+            </div>
+            <div class="flex items-center gap-2">
+              <label class="text-sm text-white/80">Type</label>
+              <select id="chartTypeSelect" class="rounded-md border-0 bg-white/20 px-2 py-1.5 text-sm text-white focus:ring-2 focus:ring-white/40">
+                <option value="bar">Bar</option>
+                <option value="line">Line</option>
+                <option value="pie">Pie</option>
+                <option value="doughnut">Doughnut</option>
+              </select>
+            </div>
+            <div class="flex items-center gap-2">
+              <label class="text-sm text-white/80">Palette</label>
+              <select id="chartPaletteSelect" class="rounded-md border-0 bg-white/20 px-2 py-1.5 text-sm text-white focus:ring-2 focus:ring-white/40">
+                <option value="ocean">Ocean</option>
+                <option value="sunset">Sunset</option>
+                <option value="citrus">Citrus</option>
+                <option value="midnight">Midnight</option>
+              </select>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-sm text-white/80">Width</span>
+              <input id="chartWidthRange" type="range" min="240" max="900" value="420" class="h-1 w-40 accent-[#004c97]">
+              <span id="chartWidthValue" class="text-xs text-white/80">420px</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-sm text-white/80">Height</span>
+              <input id="chartHeightRange" type="range" min="160" max="600" value="280" class="h-1 w-40 accent-[#004c97]">
+              <span id="chartHeightValue" class="text-xs text-white/80">280px</span>
+            </div>
+            <button id="chartRandomizeBtn" class="rounded-full border border-white/30 px-3 py-1.5 text-sm hover:bg-white/10">Randomize Data</button>
+          </div>
+          <div data-tab-panel="background" class="hidden flex flex-wrap items-center gap-4">
+            <div class="flex items-center gap-2">
+              <span class="text-sm text-white/80">Color</span>
+              <input id="bgColorInput" type="color" class="h-9 w-12 rounded-md border border-white/30 bg-transparent">
+            </div>
+            <label for="bgImageInput" class="cursor-pointer rounded-full border border-white/30 px-3 py-1.5 text-sm hover:bg-white/10">Upload Background</label>
+            <input id="bgImageInput" type="file" accept="image/*">
+            <button id="clearBgBtn" class="rounded-full border border-white/30 px-3 py-1.5 text-sm hover:bg-white/10">Clear Background</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Content Row -->
+    <div class="flex flex-1">
+      <!-- Left Sidebar -->
+      <aside class="w-1/5 min-w-[240px] max-w-[320px] border-r border-slate-200 bg-white">
+        <div class="p-4 border-b border-slate-200 bg-gradient-to-r from-[#004c97]/10 to-emerald-500/10">
+          <h1 class="text-lg font-semibold text-[#004c97]">Slides</h1>
+        </div>
+        <div id="thumbnails" class="overflow-y-auto p-3 space-y-3">
+          <!-- Thumbnails injected by JS -->
+        </div>
+      </aside>
+
+      <!-- Center Canvas -->
+      <main class="flex-1 flex flex-col items-center overflow-auto">
+        <div class="w-full p-4 md:p-6 lg:p-8">
+          <div class="w-full flex justify-center">
+            <!-- 16:9 container -->
+            <div class="relative w-full max-w-5xl aspect-video bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden" id="canvasContainer">
+              <!-- Active slide content injected here -->
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Share Modal -->
+  <div id="shareModal" class="fixed inset-0 z-40 hidden items-center justify-center bg-slate-900/60 px-4 py-6 backdrop-blur-sm">
+    <div class="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
+      <div class="flex items-start justify-between">
+        <div>
+          <h2 class="text-lg font-semibold text-slate-900">Share &amp; Collaborate</h2>
+          <p class="text-sm text-slate-500">Invite teammates to edit in real time. Everyone sees updates instantly.</p>
+        </div>
+        <button id="shareCloseBtn" class="rounded-full border border-slate-200 px-2 py-1 text-sm text-slate-500 hover:bg-slate-100">Close</button>
+      </div>
+      <div class="mt-4 space-y-4">
+        <div>
+          <label class="text-xs font-semibold uppercase tracking-wide text-slate-500">Shareable Link</label>
+          <div class="mt-1 flex gap-2">
+            <input id="shareLinkInput" type="text" readonly class="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm" value="" />
+            <button id="shareCopyBtn" class="rounded-lg bg-[#004c97] px-4 py-2 text-sm text-white shadow-sm hover:bg-[#003d78]">Copy</button>
+          </div>
+        </div>
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Currently Collaborating</p>
+          <ul id="shareCollaboratorList" class="mt-2 space-y-1 text-sm text-slate-600"></ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Presenter Mode Overlay -->
+  <div id="presenterOverlay" class="fixed inset-0 z-50 hidden flex flex-col bg-slate-900/95 text-white">
+    <div class="flex items-center justify-between px-8 py-6">
+      <div>
+        <p class="text-xs uppercase tracking-[0.4em] text-slate-300">Presenter Mode</p>
+        <h2 id="presenterTitle" class="text-2xl font-semibold">Slide 1</h2>
+      </div>
+      <div class="flex items-center gap-3 text-sm">
+        <span class="rounded-full bg-slate-800/80 px-3 py-1.5">Tips: ← → to navigate · Esc to exit</span>
+        <button id="presenterExitBtn" class="rounded-full border border-white/40 px-4 py-2 text-sm hover:bg-white/10">Exit</button>
+      </div>
+    </div>
+    <div class="flex flex-1 flex-col items-center justify-center gap-8 px-8 pb-12">
+      <div id="presenterCanvas" class="w-full max-w-5xl rounded-3xl bg-white shadow-2xl"></div>
+      <div class="flex items-center gap-4 text-sm">
+        <button id="presenterPrevBtn" class="rounded-full border border-white/40 px-4 py-2 hover:bg-white/10">Previous</button>
+        <button id="presenterNextBtn" class="rounded-full border border-white/40 px-4 py-2 hover:bg-white/10">Next</button>
+        <span id="presenterProgress" class="text-xs uppercase tracking-[0.4em] text-slate-300">1 / 1</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Simple in-memory slides model
+    let slides = [
+      { id: crypto.randomUUID(), title: 'Slide 1', backgroundColor: '#ffffff', backgroundImage: null, elements: [] },
+      { id: crypto.randomUUID(), title: 'Slide 2', backgroundColor: '#ffffff', backgroundImage: null, elements: [] },
+    ];
+    let activeSlideIndex = 0;
+    let selectedElementId = null; // currently selected element on canvas
+
+    const AUTOSAVE_KEY = 'slide-editor-autosave-v1';
+    const SYNC_KEY = `${AUTOSAVE_KEY}-sync`;
+    const AUTOSAVE_DEBOUNCE_MS = 1200;
+    const SESSION_ID = (typeof crypto !== 'undefined' && crypto.randomUUID)
+      ? crypto.randomUUID()
+      : `client-${Math.random().toString(16).slice(2)}`;
+    let autosaveTimeout = null;
+    let needsAutosave = false;
+    let lastSavedAt = null;
+    let savedStatusTimeout = null;
+
+    // Attempt to restore autosaved state
+    try {
+      if (typeof window !== 'undefined') {
+        const savedStateRaw = localStorage.getItem(AUTOSAVE_KEY);
+        if (savedStateRaw) {
+          const savedState = JSON.parse(savedStateRaw);
+          if (savedState && Array.isArray(savedState.slides)) {
+            slides = savedState.slides;
+          }
+          if (typeof savedState?.activeSlideIndex === 'number') {
+            activeSlideIndex = Math.min(Math.max(savedState.activeSlideIndex, 0), Math.max(slides.length - 1, 0));
+          }
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to load autosave state', error);
+    }
+
+    if (!slides.length) {
+      slides.push({ id: crypto.randomUUID(), title: 'Slide 1', backgroundColor: '#ffffff', backgroundImage: null, elements: [] });
+    }
+
+    // DOM refs
+    const thumbnailsEl = document.getElementById('thumbnails');
+    const canvasContainerEl = document.getElementById('canvasContainer');
+    const slideIndexLabelEl = document.getElementById('slideIndexLabel');
+    const slideCountLabelEl = document.getElementById('slideCountLabel');
+    const autosaveStatusEl = document.getElementById('autosaveStatus');
+    const presenceAvatarsEl = document.getElementById('presenceAvatars');
+    const collaborationStatusEl = document.getElementById('collaborationStatus');
+
+    // Tool refs
+    const addSlideBtn = document.getElementById('addSlideBtn');
+    const duplicateSlideBtn = document.getElementById('duplicateSlideBtn');
+    const deleteSlideBtn = document.getElementById('deleteSlideBtn');
+    const renameSlideBtn = document.getElementById('renameSlideBtn');
+    const clearSlideBtn = document.getElementById('clearSlideBtn');
+
+    const addTextBtn = document.getElementById('addTextBtn');
+    const fontFamilySelect = document.getElementById('fontFamilySelect');
+    const fontSizeSelect = document.getElementById('fontSizeSelect');
+    const textColorInput = document.getElementById('textColorInput');
+    const textBgColorInput = document.getElementById('textBgColorInput');
+    const textBgClearBtn = document.getElementById('textBgClearBtn');
+    const boldBtn = document.getElementById('boldBtn');
+    const italicBtn = document.getElementById('italicBtn');
+    const underlineBtn = document.getElementById('underlineBtn');
+    const alignLeftBtn = document.getElementById('alignLeftBtn');
+    const alignCenterBtn = document.getElementById('alignCenterBtn');
+    const alignRightBtn = document.getElementById('alignRightBtn');
+
+    const uploadImageInput = document.getElementById('uploadImageInput');
+    const replaceImageInput = document.getElementById('replaceImageInput');
+    const fitBtn = document.getElementById('fitBtn');
+    const fillBtn = document.getElementById('fillBtn');
+    const imageWidthRange = document.getElementById('imageWidthRange');
+    const imageOpacityRange = document.getElementById('imageOpacityRange');
+    const imageWidthValue = document.getElementById('imageWidthValue');
+    const imageOpacityValue = document.getElementById('imageOpacityValue');
+
+    const addBarChartBtn = document.getElementById('addBarChartBtn');
+    const addLineChartBtn = document.getElementById('addLineChartBtn');
+    const addPieChartBtn = document.getElementById('addPieChartBtn');
+    const chartTypeSelect = document.getElementById('chartTypeSelect');
+    const chartPaletteSelect = document.getElementById('chartPaletteSelect');
+    const chartWidthRange = document.getElementById('chartWidthRange');
+    const chartHeightRange = document.getElementById('chartHeightRange');
+    const chartWidthValue = document.getElementById('chartWidthValue');
+    const chartHeightValue = document.getElementById('chartHeightValue');
+    const chartRandomizeBtn = document.getElementById('chartRandomizeBtn');
+
+    const bgColorInput = document.getElementById('bgColorInput');
+    const bgImageInput = document.getElementById('bgImageInput');
+    const clearBgBtn = document.getElementById('clearBgBtn');
+
+    const tabButtons = document.querySelectorAll('[data-tab-target]');
+    const tabPanels = document.querySelectorAll('[data-tab-panel]');
+
+    const shareBtn = document.getElementById('shareBtn');
+    const exportPdfBtn = document.getElementById('exportPdfBtn');
+    const presentModeBtn = document.getElementById('presentModeBtn');
+    const shareModal = document.getElementById('shareModal');
+    const shareCloseBtn = document.getElementById('shareCloseBtn');
+    const shareCopyBtn = document.getElementById('shareCopyBtn');
+    const shareLinkInput = document.getElementById('shareLinkInput');
+    const shareCollaboratorList = document.getElementById('shareCollaboratorList');
+
+    const presenterOverlay = document.getElementById('presenterOverlay');
+    const presenterCanvasEl = document.getElementById('presenterCanvas');
+    const presenterTitleEl = document.getElementById('presenterTitle');
+    const presenterProgressEl = document.getElementById('presenterProgress');
+    const presenterExitBtn = document.getElementById('presenterExitBtn');
+    const presenterPrevBtn = document.getElementById('presenterPrevBtn');
+    const presenterNextBtn = document.getElementById('presenterNextBtn');
+
+    const chartInstances = new Map();
+    const chartPalettes = {
+      ocean: ['#1d4ed8', '#0ea5e9', '#22d3ee', '#38bdf8', '#2563eb'],
+      sunset: ['#ef4444', '#f97316', '#facc15', '#fb7185', '#f59e0b'],
+      citrus: ['#22c55e', '#84cc16', '#f59e0b', '#34d399', '#fde047'],
+      midnight: ['#0f172a', '#1e293b', '#3b82f6', '#64748b', '#312e81']
+    };
+
+    function createDefaultChartData() {
+      const labels = ['A', 'B', 'C', 'D', 'E'];
+      const values = labels.map(() => Math.floor(Math.random() * 60) + 10);
+      return { labels, values };
+    }
+
+    function getPaletteColors(name) {
+      return chartPalettes[name] || chartPalettes.ocean;
+    }
+
+    const collaborators = [
+      { id: 'c1', name: 'Aisha Karim', role: 'Designer', color: '#0ea5e9', status: 'editing' },
+      { id: 'c2', name: 'Yara AlSardi', role: 'Product Lead', color: '#f97316', status: 'viewing' },
+      { id: 'c3', name: 'Abdullah Alqahtani', role: 'Engineer', color: '#22c55e', status: 'away' },
+      { id: 'c4', name: 'Reema Alomari', role: 'Owner', color: '#a855f7', status: 'editing' },
+    ];
+
+    let presenterIndex = activeSlideIndex;
+    let presenterKeyHandler = null;
+
+    function updateShareLink() {
+      if (!shareLinkInput) return '';
+      const base = typeof window !== 'undefined' && window.location ? `${window.location.origin}${window.location.pathname}` : 'https://example.com/slides';
+      const link = `${base}?slide=${slides[activeSlideIndex]?.id || ''}`;
+      shareLinkInput.value = link;
+      return link;
+    }
+
+    function updateAutosaveStatus(message, state = 'idle') {
+      if (!autosaveStatusEl) return;
+      autosaveStatusEl.textContent = message;
+      autosaveStatusEl.dataset.state = state;
+    }
+
+    function scheduleAutosaveIdleReset() {
+      if (savedStatusTimeout) window.clearTimeout(savedStatusTimeout);
+      savedStatusTimeout = window.setTimeout(() => {
+        updateAutosaveStatus('Autosave ready', 'idle');
+      }, 6000);
+    }
+
+    function markDirty() {
+      needsAutosave = true;
+      updateAutosaveStatus('Saving…', 'saving');
+      scheduleAutosave();
+    }
+
+    function scheduleAutosave() {
+      if (autosaveTimeout) window.clearTimeout(autosaveTimeout);
+      autosaveTimeout = window.setTimeout(runAutosave, AUTOSAVE_DEBOUNCE_MS);
+    }
+
+    function runAutosave() {
+      if (!needsAutosave) return;
+      try {
+        const payload = JSON.stringify({ slides, activeSlideIndex });
+        localStorage.setItem(AUTOSAVE_KEY, payload);
+        const syncPayload = JSON.stringify({ sessionId: SESSION_ID, timestamp: Date.now(), slides, activeSlideIndex });
+        localStorage.setItem(SYNC_KEY, syncPayload);
+        needsAutosave = false;
+        lastSavedAt = new Date();
+        updateAutosaveStatus('Saved just now', 'saved');
+        scheduleAutosaveIdleReset();
+      } catch (error) {
+        console.warn('Autosave failed', error);
+        updateAutosaveStatus('Autosave paused (storage blocked)', 'error');
+      }
+    }
+
+    function renderPresenceIndicators() {
+      if (!presenceAvatarsEl) return;
+      presenceAvatarsEl.innerHTML = '';
+      const active = collaborators.filter(c => c.status !== 'offline');
+      active.slice(0, 4).forEach(collab => {
+        const badge = document.createElement('div');
+        badge.className = 'flex h-8 w-8 items-center justify-center rounded-full border-2 border-white text-xs font-semibold text-white shadow-sm';
+        badge.style.backgroundColor = collab.color;
+        badge.title = `${collab.name} · ${collab.status}`;
+        badge.textContent = collab.name
+          .split(' ')
+          .map(part => part[0])
+          .join('')
+          .slice(0, 2)
+          .toUpperCase();
+        presenceAvatarsEl.appendChild(badge);
+      });
+      if (active.length > 4) {
+        const extra = document.createElement('div');
+        extra.className = 'flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-white/30 text-xs font-semibold text-white';
+        extra.textContent = `+${active.length - 4}`;
+        presenceAvatarsEl.appendChild(extra);
+      }
+      if (collaborationStatusEl) {
+        const editingCount = active.filter(c => c.status === 'editing').length;
+        const viewingCount = active.filter(c => c.status === 'viewing').length;
+        const parts = [];
+        if (editingCount) parts.push(`${editingCount} editing`);
+        if (viewingCount) parts.push(`${viewingCount} viewing`);
+        if (!parts.length) parts.push('All caught up');
+        collaborationStatusEl.textContent = parts.join(' · ');
+      }
+      if (shareCollaboratorList) {
+        shareCollaboratorList.innerHTML = '';
+        collaborators.forEach(collab => {
+          const li = document.createElement('li');
+          li.className = 'flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2';
+          const name = document.createElement('span');
+          name.textContent = collab.name;
+          name.className = 'font-medium text-slate-700';
+          const status = document.createElement('span');
+          status.textContent = collab.status === 'editing' ? 'Editing' : collab.status === 'viewing' ? 'Viewing' : collab.status === 'away' ? 'Away' : 'Offline';
+          status.className = `text-xs uppercase tracking-wide ${collab.status === 'editing' ? 'text-emerald-500' : collab.status === 'viewing' ? 'text-sky-500' : 'text-slate-400'}`;
+          li.appendChild(name);
+          li.appendChild(status);
+          shareCollaboratorList.appendChild(li);
+        });
+      }
+    }
+
+    function simulateCollaborationTick() {
+      collaborators.forEach(collab => {
+        const roll = Math.random();
+        if (roll < 0.6) {
+          collab.status = 'editing';
+        } else if (roll < 0.85) {
+          collab.status = 'viewing';
+        } else {
+          collab.status = 'away';
+        }
+      });
+      renderPresenceIndicators();
+    }
+
+    function openShareModal() {
+      if (!shareModal) return;
+      updateShareLink();
+      renderPresenceIndicators();
+      shareModal.classList.remove('hidden');
+    }
+
+    function closeShareModal() {
+      if (!shareModal) return;
+      shareModal.classList.add('hidden');
+    }
+
+    function openPresenterMode() {
+      if (!presenterOverlay) return;
+      presenterIndex = activeSlideIndex;
+      presenterOverlay.classList.remove('hidden');
+      document.body.classList.add('overflow-hidden');
+      renderPresenterSlide();
+      presenterKeyHandler = (event) => {
+        if (event.key === 'ArrowRight' || event.key === ' ') {
+          event.preventDefault();
+          navigatePresenter(1);
+        } else if (event.key === 'ArrowLeft') {
+          event.preventDefault();
+          navigatePresenter(-1);
+        } else if (event.key === 'Escape') {
+          event.preventDefault();
+          closePresenterMode();
+        }
+      };
+      document.addEventListener('keydown', presenterKeyHandler);
+    }
+
+    function closePresenterMode() {
+      if (!presenterOverlay) return;
+      presenterOverlay.classList.add('hidden');
+      document.body.classList.remove('overflow-hidden');
+      if (presenterKeyHandler) {
+        document.removeEventListener('keydown', presenterKeyHandler);
+        presenterKeyHandler = null;
+      }
+    }
+
+    function navigatePresenter(delta) {
+      presenterIndex = Math.min(Math.max(presenterIndex + delta, 0), slides.length - 1);
+      activeSlideIndex = presenterIndex;
+      selectedElementId = null;
+      render();
+      renderPresenterSlide();
+    }
+
+    function renderPresenterSlide() {
+      if (!presenterOverlay || presenterOverlay.classList.contains('hidden')) return;
+      const slide = slides[presenterIndex];
+      if (!slide || !presenterCanvasEl) return;
+      presenterCanvasEl.innerHTML = '';
+      const frame = document.createElement('div');
+      frame.className = 'relative aspect-video w-full overflow-hidden rounded-3xl';
+      frame.style.backgroundColor = slide.backgroundColor || '#ffffff';
+      if (slide.backgroundImage) {
+        frame.style.backgroundImage = `url(${slide.backgroundImage})`;
+        frame.style.backgroundSize = 'cover';
+        frame.style.backgroundPosition = 'center';
+      }
+      presenterCanvasEl.appendChild(frame);
+
+      slide.elements.forEach(el => {
+        if (el.type === 'text') {
+          const div = document.createElement('div');
+          div.className = 'absolute';
+          div.style.left = el.left + 'px';
+          div.style.top = el.top + 'px';
+          div.style.width = (el.width || 300) + 'px';
+          div.style.color = el.color || '#111827';
+          div.style.fontSize = (el.fontSize || 16) + 'px';
+          div.style.fontWeight = el.bold ? '700' : '400';
+          div.style.fontStyle = el.italic ? 'italic' : 'normal';
+          div.style.textDecoration = el.underline ? 'underline' : 'none';
+          div.style.textAlign = el.align || 'left';
+          div.style.fontFamily = el.fontFamily || 'Inter, sans-serif';
+          if (el.backgroundColor) {
+            div.style.backgroundColor = el.backgroundColor;
+            div.style.padding = '4px 8px';
+            div.style.borderRadius = '8px';
+          }
+          div.textContent = el.text || '';
+          frame.appendChild(div);
+        }
+        if (el.type === 'image') {
+          const img = document.createElement('img');
+          img.className = 'absolute';
+          img.style.left = el.left + 'px';
+          img.style.top = el.top + 'px';
+          img.style.width = (el.width || 320) + 'px';
+          img.style.height = 'auto';
+          img.style.objectFit = el.fit || 'contain';
+          img.style.opacity = el.opacity != null ? el.opacity : 1;
+          img.src = el.src;
+          img.alt = '';
+          frame.appendChild(img);
+        }
+        if (el.type === 'chart') {
+          const wrapper = document.createElement('div');
+          wrapper.className = 'absolute flex items-center justify-center bg-white border border-slate-200 rounded-xl shadow-lg p-4';
+          wrapper.style.left = (el.left || 100) + 'px';
+          wrapper.style.top = (el.top || 100) + 'px';
+          wrapper.style.width = (el.width || 420) + 'px';
+          wrapper.style.height = (el.height || 280) + 'px';
+          const canvas = document.createElement('canvas');
+          wrapper.appendChild(canvas);
+          frame.appendChild(wrapper);
+          renderChartForElement(el, canvas, { registerInstance: false });
+        }
+      });
+
+      if (presenterTitleEl) presenterTitleEl.textContent = slide.title || `Slide ${presenterIndex + 1}`;
+      if (presenterProgressEl) presenterProgressEl.textContent = `${presenterIndex + 1} / ${slides.length}`;
+    }
+
+    function exportActiveSlideToPdf() {
+      if (!canvasContainerEl || typeof html2pdf === 'undefined') {
+        alert('Export requires html2pdf library. Please check your connection.');
+        return;
+      }
+      if (exportPdfBtn) {
+        exportPdfBtn.disabled = true;
+        exportPdfBtn.textContent = 'Exporting…';
+      }
+      const clone = canvasContainerEl.cloneNode(true);
+      clone.querySelectorAll('.ring-2').forEach(node => node.classList.remove('ring-2', 'ring-[#004c97]'));
+      clone.style.width = '1280px';
+      clone.style.height = '720px';
+      clone.style.maxWidth = 'none';
+      const wrapper = document.createElement('div');
+      wrapper.style.position = 'fixed';
+      wrapper.style.top = '-10000px';
+      wrapper.style.left = '-10000px';
+      wrapper.style.width = '1280px';
+      wrapper.appendChild(clone);
+      document.body.appendChild(wrapper);
+      const filename = `${slides[activeSlideIndex]?.title || 'slide'}.pdf`;
+      html2pdf()
+        .set({
+          margin: 0,
+          filename,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2 },
+          jsPDF: { unit: 'px', format: [1280, 720] },
+        })
+        .from(clone)
+        .save()
+        .catch(err => {
+          console.warn('Export failed', err);
+          alert('Unable to export right now. Please try again.');
+        })
+        .finally(() => {
+          document.body.removeChild(wrapper);
+          if (exportPdfBtn) {
+            exportPdfBtn.disabled = false;
+            exportPdfBtn.textContent = 'Export PDF';
+          }
+        });
+    }
+
+    function render() {
+      // Counters
+      slideIndexLabelEl.textContent = String(activeSlideIndex + 1);
+      slideCountLabelEl.textContent = String(slides.length);
+
+      // Thumbnails
+      thumbnailsEl.innerHTML = '';
+      slides.forEach((slide, index) => {
+        const btn = document.createElement('button');
+        btn.className = `w-full p-2 text-left rounded-md border ${index === activeSlideIndex ? 'border-[#004c97] bg-blue-50' : 'border-slate-200 bg-white'} hover:bg-slate-50 shadow-sm`;
+        btn.addEventListener('click', () => {
+          activeSlideIndex = index;
+          selectedElementId = null;
+          render();
+        });
+
+        const thumb = document.createElement('div');
+        thumb.className = 'relative w-full aspect-video bg-white rounded border border-slate-200 overflow-hidden';
+        thumb.style.backgroundColor = slide.backgroundColor || '#ffffff';
+        if (slide.backgroundImage) {
+          thumb.style.backgroundImage = `url(${slide.backgroundImage})`;
+          thumb.style.backgroundSize = 'cover';
+          thumb.style.backgroundPosition = 'center';
+        }
+
+        const label = document.createElement('div');
+        label.className = 'absolute bottom-1 right-1 text-[10px] px-1.5 py-0.5 rounded bg-black/60 text-white';
+        const labelTitle = slide.title ? slide.title : `Slide ${index + 1}`;
+        label.textContent = `${index + 1}. ${labelTitle}`;
+
+        thumb.appendChild(label);
+        btn.appendChild(thumb);
+        thumbnailsEl.appendChild(btn);
+      });
+
+      // Canvas content
+      const slide = slides[activeSlideIndex];
+      chartInstances.forEach(instance => instance.destroy());
+      chartInstances.clear();
+      canvasContainerEl.innerHTML = '';
+      canvasContainerEl.style.backgroundColor = slide.backgroundColor || '#ffffff';
+      if (slide.backgroundImage) {
+        canvasContainerEl.style.backgroundImage = `url(${slide.backgroundImage})`;
+        canvasContainerEl.style.backgroundSize = 'cover';
+        canvasContainerEl.style.backgroundPosition = 'center';
+      } else {
+        canvasContainerEl.style.backgroundImage = '';
+      }
+
+      // Render elements
+      slide.elements.forEach(el => {
+        if (el.type === 'text') {
+          const div = document.createElement('div');
+          div.className = 'absolute draggable-placeholder';
+          div.style.left = el.left + 'px';
+          div.style.top = el.top + 'px';
+          div.style.width = (el.width || 300) + 'px';
+          div.style.color = el.color || '#111827';
+          div.style.fontSize = (el.fontSize || 16) + 'px';
+          div.style.fontWeight = el.bold ? '700' : '400';
+          div.style.fontStyle = el.italic ? 'italic' : 'normal';
+          div.style.textDecoration = el.underline ? 'underline' : 'none';
+          div.style.textAlign = el.align || 'left';
+          div.style.fontFamily = el.fontFamily || 'Inter, sans-serif';
+          div.contentEditable = 'true';
+          div.spellcheck = false;
+          if (el.backgroundColor) {
+            div.style.backgroundColor = el.backgroundColor;
+            div.style.padding = '4px 8px';
+            div.style.borderRadius = '8px';
+          } else {
+            div.style.backgroundColor = 'transparent';
+            div.style.padding = '0';
+            div.style.borderRadius = '0';
+          }
+          div.dataset.elementId = el.id;
+          div.textContent = el.text || '';
+
+          // Selection styles
+          if (selectedElementId === el.id) {
+            div.classList.add('ring-2', 'ring-[#004c97]', 'rounded');
+          }
+
+          // Select on click
+          div.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (selectedElementId !== el.id) {
+              selectedElementId = el.id;
+              render();
+              requestAnimationFrame(() => {
+                const refreshed = canvasContainerEl.querySelector(`[data-element-id="${el.id}"]`);
+                if (refreshed) {
+                  refreshed.focus();
+                  if (window.getSelection) {
+                    const sel = window.getSelection();
+                    if (sel) {
+                      const range = document.createRange();
+                      range.selectNodeContents(refreshed);
+                      sel.removeAllRanges();
+                      sel.addRange(range);
+                    }
+                  }
+                }
+              });
+            } else {
+              div.focus();
+            }
+          });
+
+          div.addEventListener('input', () => {
+            el.text = div.textContent || '';
+            markDirty();
+          });
+          div.addEventListener('blur', () => {
+            el.text = div.textContent || '';
+            markDirty();
+          });
+
+          canvasContainerEl.appendChild(div);
+        }
+
+        if (el.type === 'image') {
+          const img = document.createElement('img');
+          img.className = 'absolute draggable-placeholder select-none';
+          img.style.left = el.left + 'px';
+          img.style.top = el.top + 'px';
+          img.style.width = (el.width || 320) + 'px';
+          img.style.height = 'auto';
+          img.style.objectFit = el.fit || 'contain';
+          img.style.opacity = el.opacity != null ? el.opacity : 1;
+          img.src = el.src;
+          img.alt = 'Slide Image';
+          img.dataset.elementId = el.id;
+
+          if (selectedElementId === el.id) {
+            img.classList.add('ring-2', 'ring-[#004c97]', 'rounded');
+          }
+
+          img.addEventListener('click', (e) => {
+            e.stopPropagation();
+            selectedElementId = el.id;
+            render();
+          });
+
+          canvasContainerEl.appendChild(img);
+        }
+
+        if (el.type === 'chart') {
+          const wrapper = document.createElement('div');
+          wrapper.className = 'absolute draggable-placeholder flex items-center justify-center bg-white border border-slate-200 rounded-xl shadow-lg p-4';
+          wrapper.style.left = (el.left || 100) + 'px';
+          wrapper.style.top = (el.top || 100) + 'px';
+          wrapper.style.width = (el.width || 420) + 'px';
+          wrapper.style.height = (el.height || 280) + 'px';
+          wrapper.dataset.elementId = el.id;
+
+          if (selectedElementId === el.id) {
+            wrapper.classList.add('ring-2', 'ring-[#004c97]');
+          }
+
+          wrapper.addEventListener('click', (e) => {
+            e.stopPropagation();
+            selectedElementId = el.id;
+            render();
+          });
+
+          const canvas = document.createElement('canvas');
+          canvas.className = 'h-full w-full';
+          wrapper.appendChild(canvas);
+          canvasContainerEl.appendChild(wrapper);
+
+          renderChartForElement(el, canvas);
+        }
+      });
+
+      syncInspectorControls();
+      updateShareLink();
+      renderPresenceIndicators();
+      if (presenterOverlay && !presenterOverlay.classList.contains('hidden')) {
+        renderPresenterSlide();
+      }
+    }
+
+    function renderChartForElement(element, canvas, options = {}) {
+      const ctx = canvas.getContext('2d');
+      const data = element.dataset || createDefaultChartData();
+      element.dataset = data;
+      const palette = getPaletteColors(element.palette || 'ocean');
+      const baseColors = element.chartType === 'line'
+        ? palette.map(color => color)
+        : palette.map(color => `${color}CC`);
+
+      const chart = new Chart(ctx, {
+        type: element.chartType || 'bar',
+        data: {
+          labels: data.labels,
+          datasets: [{
+            label: element.title || 'Dataset',
+            data: data.values,
+            backgroundColor: baseColors,
+            borderColor: palette,
+            borderWidth: element.chartType === 'line' ? 3 : 1.5,
+            tension: 0.35,
+            fill: element.chartType === 'line' ? false : true,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: { color: '#1f2937', font: { family: 'Inter, sans-serif' } }
+            }
+          },
+          scales: element.chartType === 'pie' || element.chartType === 'doughnut' ? {} : {
+            x: { ticks: { color: '#1f2937' }, grid: { color: '#e2e8f0' } },
+            y: { ticks: { color: '#1f2937' }, grid: { color: '#e2e8f0' }, beginAtZero: true }
+          }
+        }
+      });
+
+      if (options.registerInstance !== false) {
+        chartInstances.set(element.id, chart);
+      }
+    }
+
+    function syncInspectorControls() {
+      const slide = getActiveSlide();
+      if (bgColorInput) {
+        const color = slide.backgroundColor && /^#/.test(slide.backgroundColor)
+          ? slide.backgroundColor
+          : '#ffffff';
+        bgColorInput.value = color;
+      }
+      if (clearBgBtn) {
+        clearBgBtn.disabled = !slide.backgroundImage;
+      }
+
+      const selected = getSelectedElement();
+      const isText = selected && selected.type === 'text';
+      const isImage = selected && selected.type === 'image';
+      const isChart = selected && selected.type === 'chart';
+
+      const textControls = [fontFamilySelect, fontSizeSelect, textColorInput, textBgColorInput, textBgClearBtn, boldBtn, italicBtn, underlineBtn, alignLeftBtn, alignCenterBtn, alignRightBtn];
+      textControls.forEach(control => {
+        if (!control) return;
+        control.disabled = !isText;
+      });
+
+      if (isText && selected) {
+        if (fontFamilySelect) {
+          fontFamilySelect.value = selected.fontFamily || 'Inter, sans-serif';
+        }
+        if (fontSizeSelect) {
+          fontSizeSelect.value = String(selected.fontSize || 16);
+        }
+        if (textColorInput) {
+          textColorInput.value = selected.color || '#111827';
+        }
+        if (textBgColorInput) {
+          textBgColorInput.value = selected.backgroundColor || '#ffffff';
+        }
+        if (textBgClearBtn) {
+          textBgClearBtn.disabled = !selected.backgroundColor;
+        }
+      } else if (textBgClearBtn) {
+        textBgClearBtn.disabled = true;
+      }
+
+      const imageControls = [replaceImageInput, fitBtn, fillBtn, imageWidthRange, imageOpacityRange];
+      imageControls.forEach(control => {
+        if (!control) return;
+        control.disabled = !isImage;
+      });
+
+      if (imageWidthRange) {
+        if (isImage && selected) {
+          const widthValue = Math.round(selected.width || 320);
+          imageWidthRange.value = String(widthValue);
+          if (imageWidthValue) imageWidthValue.textContent = `${widthValue}px`;
+        } else {
+          imageWidthRange.value = '400';
+          if (imageWidthValue) imageWidthValue.textContent = '--';
+        }
+      }
+
+      if (imageOpacityRange) {
+        if (isImage && selected) {
+          const opacityValue = Math.round((selected.opacity != null ? selected.opacity : 1) * 100);
+          imageOpacityRange.value = String(opacityValue);
+          if (imageOpacityValue) imageOpacityValue.textContent = `${opacityValue}%`;
+        } else {
+          imageOpacityRange.value = '100';
+          if (imageOpacityValue) imageOpacityValue.textContent = '--';
+        }
+      }
+
+      if (chartTypeSelect) {
+        if (isChart && selected) {
+          chartTypeSelect.value = selected.chartType || 'bar';
+        } else {
+          chartTypeSelect.value = 'bar';
+        }
+        chartTypeSelect.disabled = !isChart;
+      }
+
+      if (chartPaletteSelect) {
+        if (isChart && selected) {
+          chartPaletteSelect.value = selected.palette || 'ocean';
+        } else {
+          chartPaletteSelect.value = 'ocean';
+        }
+        chartPaletteSelect.disabled = !isChart;
+      }
+
+      if (chartWidthRange) {
+        if (isChart && selected) {
+          const w = Math.round(selected.width || 420);
+          chartWidthRange.value = String(w);
+          if (chartWidthValue) chartWidthValue.textContent = `${w}px`;
+        } else {
+          chartWidthRange.value = '420';
+          if (chartWidthValue) chartWidthValue.textContent = `${chartWidthRange.value}px`;
+        }
+        chartWidthRange.disabled = !isChart;
+      }
+
+      if (chartHeightRange) {
+        if (isChart && selected) {
+          const h = Math.round(selected.height || 280);
+          chartHeightRange.value = String(h);
+          if (chartHeightValue) chartHeightValue.textContent = `${h}px`;
+        } else {
+          chartHeightRange.value = '280';
+          if (chartHeightValue) chartHeightValue.textContent = `${chartHeightRange.value}px`;
+        }
+        chartHeightRange.disabled = !isChart;
+      }
+
+      if (chartRandomizeBtn) {
+        chartRandomizeBtn.disabled = !isChart;
+      }
+    }
+
+    function setActiveTab(name) {
+      tabButtons.forEach(btn => {
+        const isActive = btn.dataset.tabTarget === name;
+        btn.classList.toggle('bg-white', isActive);
+        btn.classList.toggle('text-[#004c97]', isActive);
+        btn.classList.toggle('shadow', isActive);
+        btn.classList.toggle('text-white/70', !isActive);
+        btn.classList.toggle('bg-transparent', !isActive);
+      });
+      tabPanels.forEach(panel => {
+        panel.classList.toggle('hidden', panel.dataset.tabPanel !== name);
+      });
+    }
+
+    tabButtons.forEach(btn => {
+      btn.addEventListener('click', () => setActiveTab(btn.dataset.tabTarget));
+    });
+
+    setActiveTab('slides');
+
+    // Helpers
+    function getActiveSlide() { return slides[activeSlideIndex]; }
+    function getSelectedElement() {
+      const slide = getActiveSlide();
+      return slide.elements.find(e => e.id === selectedElementId) || null;
+    }
+
+    // Events: outer click clears selection
+    canvasContainerEl.addEventListener('click', () => {
+      selectedElementId = null;
+      render();
+    });
+
+    // Add slide
+    if (addSlideBtn) {
+      addSlideBtn.addEventListener('click', () => {
+        const newSlide = {
+          id: crypto.randomUUID(),
+          title: `Slide ${slides.length + 1}`,
+          backgroundColor: '#ffffff',
+          backgroundImage: null,
+          elements: [],
+        };
+        slides.splice(activeSlideIndex + 1, 0, newSlide);
+        activeSlideIndex = Math.min(activeSlideIndex + 1, slides.length - 1);
+        selectedElementId = null;
+        markDirty();
+        render();
+      });
+    }
+
+    if (duplicateSlideBtn) {
+      duplicateSlideBtn.addEventListener('click', () => {
+        const source = getActiveSlide();
+        if (!source) return;
+        const clone = JSON.parse(JSON.stringify(source));
+        clone.id = crypto.randomUUID();
+        clone.title = source.title ? `${source.title} Copy` : `Slide ${slides.length + 1}`;
+        clone.elements = (clone.elements || []).map(element => ({ ...element, id: crypto.randomUUID() }));
+        slides.splice(activeSlideIndex + 1, 0, clone);
+        activeSlideIndex = Math.min(activeSlideIndex + 1, slides.length - 1);
+        selectedElementId = null;
+        markDirty();
+        render();
+      });
+    }
+
+    if (deleteSlideBtn) {
+      deleteSlideBtn.addEventListener('click', () => {
+        if (slides.length === 1) {
+          alert('You need at least one slide.');
+          return;
+        }
+        if (!confirm('Delete the current slide?')) {
+          return;
+        }
+        slides.splice(activeSlideIndex, 1);
+        if (activeSlideIndex >= slides.length) {
+          activeSlideIndex = slides.length - 1;
+        }
+        selectedElementId = null;
+        markDirty();
+        render();
+      });
+    }
+
+    if (renameSlideBtn) {
+      renameSlideBtn.addEventListener('click', () => {
+        const slide = getActiveSlide();
+        if (!slide) return;
+        const result = prompt('Slide title', slide.title || `Slide ${activeSlideIndex + 1}`);
+        if (result !== null) {
+          const trimmed = result.trim();
+          if (trimmed.length > 0) {
+            slide.title = trimmed;
+            markDirty();
+            render();
+          }
+        }
+      });
+    }
+
+    if (clearSlideBtn) {
+      clearSlideBtn.addEventListener('click', () => {
+        const slide = getActiveSlide();
+        if (!slide) return;
+        if (!confirm('Remove all elements from this slide?')) {
+          return;
+        }
+        slide.elements = [];
+        selectedElementId = null;
+        markDirty();
+        render();
+      });
+    }
+
+    // Text tools
+    if (addTextBtn) {
+      addTextBtn.addEventListener('click', () => {
+        const slide = getActiveSlide();
+        const highlightValue = textBgColorInput ? textBgColorInput.value : '#ffffff';
+        const element = {
+          id: crypto.randomUUID(),
+          type: 'text',
+          text: 'New text',
+          left: 40,
+          top: 40,
+          width: 360,
+          fontSize: parseInt(fontSizeSelect?.value || '16', 10) || 16,
+          fontFamily: fontFamilySelect ? fontFamilySelect.value : 'Inter, sans-serif',
+          color: textColorInput ? textColorInput.value : '#111827',
+          backgroundColor: highlightValue && highlightValue !== '#ffffff' ? highlightValue : null,
+          bold: false,
+          italic: false,
+          underline: false,
+          align: 'left'
+        };
+        slide.elements.push(element);
+        selectedElementId = element.id;
+        markDirty();
+        render();
+        requestAnimationFrame(() => {
+          const target = canvasContainerEl.querySelector(`[data-element-id="${element.id}"]`);
+          if (target) {
+            target.focus();
+            if (window.getSelection) {
+              const sel = window.getSelection();
+              if (sel) {
+                const range = document.createRange();
+                range.selectNodeContents(target);
+                sel.removeAllRanges();
+                sel.addRange(range);
+              }
+            }
+          }
+        });
+      });
+    }
+
+    if (fontFamilySelect) {
+      fontFamilySelect.addEventListener('change', () => {
+        const el = getSelectedElement();
+        if (el && el.type === 'text') {
+          el.fontFamily = fontFamilySelect.value;
+          markDirty();
+          render();
+        }
+      });
+    }
+
+    if (fontSizeSelect) {
+      fontSizeSelect.addEventListener('change', () => {
+        const el = getSelectedElement();
+        if (el && el.type === 'text') {
+          el.fontSize = parseInt(fontSizeSelect.value, 10) || el.fontSize;
+          markDirty();
+          render();
+        }
+      });
+    }
+
+    if (textColorInput) {
+      textColorInput.addEventListener('input', () => {
+        const el = getSelectedElement();
+        if (el && el.type === 'text') {
+          el.color = textColorInput.value;
+          markDirty();
+          render();
+        }
+      });
+    }
+
+    if (textBgColorInput) {
+      textBgColorInput.addEventListener('input', () => {
+        const el = getSelectedElement();
+        if (el && el.type === 'text') {
+          const value = textBgColorInput.value;
+          el.backgroundColor = value === '#ffffff' ? null : value;
+          markDirty();
+          render();
+        }
+      });
+    }
+
+    if (textBgClearBtn) {
+      textBgClearBtn.addEventListener('click', () => {
+        const el = getSelectedElement();
+        if (el && el.type === 'text') {
+          el.backgroundColor = null;
+          if (textBgColorInput) textBgColorInput.value = '#ffffff';
+          markDirty();
+          render();
+        }
+      });
+    }
+
+    if (boldBtn) {
+      boldBtn.addEventListener('click', () => {
+        const el = getSelectedElement();
+        if (el && el.type === 'text') { el.bold = !el.bold; markDirty(); render(); }
+      });
+    }
+    if (italicBtn) {
+      italicBtn.addEventListener('click', () => {
+        const el = getSelectedElement();
+        if (el && el.type === 'text') { el.italic = !el.italic; markDirty(); render(); }
+      });
+    }
+    if (underlineBtn) {
+      underlineBtn.addEventListener('click', () => {
+        const el = getSelectedElement();
+        if (el && el.type === 'text') { el.underline = !el.underline; markDirty(); render(); }
+      });
+    }
+    if (alignLeftBtn) {
+      alignLeftBtn.addEventListener('click', () => {
+        const el = getSelectedElement();
+        if (el && el.type === 'text') { el.align = 'left'; markDirty(); render(); }
+      });
+    }
+    if (alignCenterBtn) {
+      alignCenterBtn.addEventListener('click', () => {
+        const el = getSelectedElement();
+        if (el && el.type === 'text') { el.align = 'center'; markDirty(); render(); }
+      });
+    }
+    if (alignRightBtn) {
+      alignRightBtn.addEventListener('click', () => {
+        const el = getSelectedElement();
+        if (el && el.type === 'text') { el.align = 'right'; markDirty(); render(); }
+      });
+    }
+
+    function createChartElement(chartType) {
+      const slide = getActiveSlide();
+      const palette = chartPaletteSelect ? chartPaletteSelect.value : 'ocean';
+      const dataset = createDefaultChartData();
+      const element = {
+        id: crypto.randomUUID(),
+        type: 'chart',
+        chartType,
+        palette,
+        dataset,
+        left: 120,
+        top: 120,
+        width: chartWidthRange ? parseInt(chartWidthRange.value, 10) || 420 : 420,
+        height: chartHeightRange ? parseInt(chartHeightRange.value, 10) || 280 : 280,
+      };
+      slide.elements.push(element);
+      selectedElementId = element.id;
+      setActiveTab('chart');
+      markDirty();
+      render();
+    }
+
+    function randomizeChartData(element) {
+      if (!element) return;
+      const labels = element.dataset?.labels || ['A', 'B', 'C', 'D', 'E'];
+      const values = labels.map(() => Math.floor(Math.random() * 70) + 5);
+      element.dataset = { labels, values };
+      markDirty();
+    }
+
+    if (addBarChartBtn) {
+      addBarChartBtn.addEventListener('click', () => createChartElement('bar'));
+    }
+    if (addLineChartBtn) {
+      addLineChartBtn.addEventListener('click', () => createChartElement('line'));
+    }
+    if (addPieChartBtn) {
+      addPieChartBtn.addEventListener('click', () => createChartElement('pie'));
+    }
+
+    if (chartTypeSelect) {
+      chartTypeSelect.addEventListener('change', () => {
+        const el = getSelectedElement();
+        if (el && el.type === 'chart') {
+          el.chartType = chartTypeSelect.value;
+          markDirty();
+          render();
+        }
+      });
+    }
+
+    if (chartPaletteSelect) {
+      chartPaletteSelect.addEventListener('change', () => {
+        const el = getSelectedElement();
+        if (el && el.type === 'chart') {
+          el.palette = chartPaletteSelect.value;
+          markDirty();
+          render();
+        }
+      });
+    }
+
+    if (chartWidthRange) {
+      chartWidthRange.addEventListener('input', () => {
+        const el = getSelectedElement();
+        if (el && el.type === 'chart') {
+          el.width = parseInt(chartWidthRange.value, 10) || el.width;
+          if (chartWidthValue) chartWidthValue.textContent = `${Math.round(el.width)}px`;
+          markDirty();
+          render();
+        } else if (chartWidthValue) {
+          chartWidthValue.textContent = `${chartWidthRange.value}px`;
+        }
+      });
+    }
+
+    if (chartHeightRange) {
+      chartHeightRange.addEventListener('input', () => {
+        const el = getSelectedElement();
+        if (el && el.type === 'chart') {
+          el.height = parseInt(chartHeightRange.value, 10) || el.height;
+          if (chartHeightValue) chartHeightValue.textContent = `${Math.round(el.height)}px`;
+          markDirty();
+          render();
+        } else if (chartHeightValue) {
+          chartHeightValue.textContent = `${chartHeightRange.value}px`;
+        }
+      });
+    }
+
+    if (chartRandomizeBtn) {
+      chartRandomizeBtn.addEventListener('click', () => {
+        const el = getSelectedElement();
+        if (el && el.type === 'chart') {
+          randomizeChartData(el);
+          render();
+        }
+      });
+    }
+
+    window.addEventListener('storage', (event) => {
+      if (event.storageArea !== localStorage) return;
+      if (event.key === SYNC_KEY && event.newValue) {
+        try {
+          const payload = JSON.parse(event.newValue);
+          if (payload.sessionId === SESSION_ID) return;
+          if (Array.isArray(payload.slides)) {
+            slides = payload.slides;
+            activeSlideIndex = Math.min(Math.max(payload.activeSlideIndex ?? 0, 0), slides.length - 1);
+            selectedElementId = null;
+            needsAutosave = false;
+            updateAutosaveStatus('Live update received', 'synced');
+            scheduleAutosaveIdleReset();
+            render();
+          }
+        } catch (error) {
+          console.warn('Failed to process sync payload', error);
+        }
+      }
+    });
+
+    if (shareBtn) {
+      shareBtn.addEventListener('click', openShareModal);
+    }
+    if (shareCloseBtn) {
+      shareCloseBtn.addEventListener('click', closeShareModal);
+    }
+    if (shareModal) {
+      shareModal.addEventListener('click', (event) => {
+        if (event.target === shareModal) {
+          closeShareModal();
+        }
+      });
+    }
+    if (shareCopyBtn) {
+      shareCopyBtn.addEventListener('click', async () => {
+        const link = updateShareLink();
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(link);
+          } else {
+            throw new Error('Clipboard not available');
+          }
+          shareCopyBtn.textContent = 'Copied!';
+          setTimeout(() => { shareCopyBtn.textContent = 'Copy'; }, 1500);
+        } catch (err) {
+          prompt('Copy this link manually', link);
+        }
+      });
+    }
+
+    if (presentModeBtn) {
+      presentModeBtn.addEventListener('click', openPresenterMode);
+    }
+    if (presenterExitBtn) {
+      presenterExitBtn.addEventListener('click', closePresenterMode);
+    }
+    if (presenterPrevBtn) {
+      presenterPrevBtn.addEventListener('click', () => navigatePresenter(-1));
+    }
+    if (presenterNextBtn) {
+      presenterNextBtn.addEventListener('click', () => navigatePresenter(1));
+    }
+
+    if (exportPdfBtn) {
+      exportPdfBtn.addEventListener('click', exportActiveSlideToPdf);
+    }
+
+    // Image tools
+    if (uploadImageInput) {
+      uploadImageInput.addEventListener('change', (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          const slide = getActiveSlide();
+          const element = {
+            id: crypto.randomUUID(),
+            type: 'image',
+            src: reader.result,
+            left: 80,
+            top: 80,
+            width: 400,
+            fit: 'contain',
+            opacity: 1
+          };
+          slide.elements.push(element);
+          selectedElementId = element.id;
+          markDirty();
+          render();
+          uploadImageInput.value = '';
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    if (replaceImageInput) {
+      replaceImageInput.addEventListener('change', (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        const el = getSelectedElement();
+        if (!el || el.type !== 'image') { replaceImageInput.value = ''; return; }
+        const reader = new FileReader();
+        reader.onload = () => {
+          el.src = reader.result;
+          markDirty();
+          render();
+          replaceImageInput.value = '';
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    if (fitBtn) {
+      fitBtn.addEventListener('click', () => {
+        const el = getSelectedElement();
+        if (el && el.type === 'image') { el.fit = 'contain'; markDirty(); render(); }
+      });
+    }
+    if (fillBtn) {
+      fillBtn.addEventListener('click', () => {
+        const el = getSelectedElement();
+        if (el && el.type === 'image') { el.fit = 'cover'; markDirty(); render(); }
+      });
+    }
+
+    if (imageWidthRange) {
+      imageWidthRange.addEventListener('input', () => {
+        const el = getSelectedElement();
+        if (el && el.type === 'image') {
+          el.width = parseInt(imageWidthRange.value, 10) || el.width;
+          if (imageWidthValue) imageWidthValue.textContent = `${el.width}px`;
+          markDirty();
+          render();
+        }
+      });
+    }
+
+    if (imageOpacityRange) {
+      imageOpacityRange.addEventListener('input', () => {
+        const el = getSelectedElement();
+        if (el && el.type === 'image') {
+          el.opacity = (parseInt(imageOpacityRange.value, 10) || 100) / 100;
+          if (imageOpacityValue) imageOpacityValue.textContent = `${Math.round(el.opacity * 100)}%`;
+          markDirty();
+          render();
+        }
+      });
+    }
+
+    // Background tools
+    bgColorInput.addEventListener('input', () => {
+      const slide = getActiveSlide();
+      slide.backgroundColor = bgColorInput.value || '#ffffff';
+      markDirty();
+      render();
+    });
+
+    bgImageInput.addEventListener('change', (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const slide = getActiveSlide();
+        slide.backgroundImage = reader.result;
+        markDirty();
+        render();
+        bgImageInput.value = '';
+      };
+      reader.readAsDataURL(file);
+    });
+
+    clearBgBtn.addEventListener('click', () => {
+      const slide = getActiveSlide();
+      slide.backgroundImage = null;
+      markDirty();
+      render();
+    });
+
+    // Initialize defaults and render
+    (function init() {
+      const currentSlide = getActiveSlide();
+      if (bgColorInput) {
+        const initialColor = currentSlide?.backgroundColor && /^#/.test(currentSlide.backgroundColor)
+          ? currentSlide.backgroundColor
+          : '#ffffff';
+        bgColorInput.value = initialColor;
+      }
+      updateAutosaveStatus('Autosave ready', 'idle');
+      render();
+      renderPresenceIndicators();
+      updateShareLink();
+      simulateCollaborationTick();
+      window.setInterval(simulateCollaborationTick, 8000);
+      window.addEventListener('beforeunload', runAutosave);
+    })();
+  </script>
+</body>
+</html>
+
+
