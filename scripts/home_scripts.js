@@ -2,6 +2,7 @@
 const profileContainer = document.querySelector(".profile-container");
 const profileButton = document.querySelector(".profile-button");
 const profileMenu = document.querySelector(".profile-menu");
+const logoutButton = document.getElementById("logoutButton");
 
 // PLUS / TEMPLATES
 const plusContainer = document.getElementById("plusContainer");
@@ -28,6 +29,16 @@ if (profileMenu) {
   profileMenu.addEventListener("click", (e) => {
     // Don't close dropdown when clicking inside it
     e.stopPropagation();
+  });
+}
+
+if (logoutButton) {
+  logoutButton.addEventListener("click", (e) => {
+    e.preventDefault();
+    if (profileContainer) {
+      profileContainer.classList.remove("open");
+    }
+    window.location.href = "login.html";
   });
 }
 
