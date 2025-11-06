@@ -79,8 +79,11 @@ if (plusButton && plusContainer) {
 templateButtons.forEach((btn) => {
   btn.addEventListener("click", (e) => {
     e.stopPropagation();
-    // You can read data-template here if you want different behavior per template
-    // const templateType = btn.dataset.template;
+    const templateType = btn.dataset.template;
+    if (templateType === "blank") {
+      window.location.href = "slide-editor.html";
+      return;
+    }
     window.location.href = "editor.html";
   });
 });
