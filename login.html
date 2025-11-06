@@ -11,11 +11,12 @@
   </head>
   <body class="bg-white bg-modern bg-corner-dots">
     <header class="site-header">
-      <img class="site-logo" src="./logo.png" alt="Site logo" onerror="this.remove(); var b=document.querySelector('.site-brand'); if(b){ b.textContent='Aramco Digital'; }" />
+      <img class="site-logo site-logo--banner" src="./Screenshot 2025-11-06 at 1.14.39 PM.png" alt="Aramco Digital banner" onerror="this.remove(); var b=document.querySelector('.site-brand'); if(b){ b.textContent='Aramco Digital'; }" />
       <span class="site-brand"></span>
+      <img class="site-logo site-logo--mark" src="./logo.png" alt="Aramco Digital logo" onerror="this.remove();" />
     </header>
-    <main class="center-wrapper">
-      <div class="card">
+    <main class="center-wrapper center-wrapper--top">
+      <div class="card card--auth">
         <div class="logo-circle" aria-hidden="true">
           <span class="logo-dot logo-dot--green"></span>
           <span class="logo-dot logo-dot--blue"></span>
@@ -31,7 +32,11 @@
             <label class="label" for="password">Password</label>
             <input class="input" id="password" name="password" type="password" placeholder="••••••••" required />
           </div>
-          <div class="row">
+          <label class="remember">
+            <input class="remember__checkbox" id="remember" name="remember" type="checkbox" />
+            <span class="remember__text">Remember me</span>
+          </label>
+          <div class="row row--actions">
             <button class="btn btn-primary" type="submit">Sign in</button>
             <a class="btn btn-outline" href="./index.html">Back</a>
           </div>

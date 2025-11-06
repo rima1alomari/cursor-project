@@ -61,6 +61,10 @@ body {
   place-items: center;
   padding: 24px;
 }
+.center-wrapper--top {
+  place-items: start center;
+  padding-top: 120px;
+}
 .site-header {
   position: sticky;
   top: 0;
@@ -68,7 +72,7 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
-  justify-content: flex-end;
+  justify-content: space-between;
   height: 64px;
   padding: 0 20px;
   background: rgba(255,255,255,0.85);
@@ -76,14 +80,28 @@ body {
   backdrop-filter: blur(6px);
   border-bottom: 1px solid var(--border);
 }
-.site-logo { height: 36px; width: auto; display: block; }
+.site-logo { display: block; height: auto; width: auto; }
+.site-logo--banner { height: 44px; border-radius: 12px; }
+.site-logo--mark { height: 36px; }
+.site-brand { flex: 1; text-align: center; font-weight: 600; color: var(--muted); }
 .site-brand { font-weight: 600; color: var(--muted); }
 
-.hero { 
-  text-align: center; 
-  display: grid; 
-  gap: 16px; 
-  justify-items: center; 
+.hero {
+  text-align: center;
+  display: grid;
+  gap: 16px;
+  justify-items: center;
+}
+.hero-tagline {
+  margin: 0;
+  font-size: 18px;
+  color: var(--muted);
+}
+.hero-logo {
+  width: min(340px, 60vw);
+  height: auto;
+  border-radius: 18px;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.15);
 }
 
 .card {
@@ -95,6 +113,8 @@ body {
   box-shadow: var(--shadow);
   background: #ffffff;
 }
+
+.card--auth { margin-top: 40px; }
 
 .card--center { text-align: center; }
 
@@ -174,6 +194,20 @@ body {
   gap: 14px;
   margin-top: 8px;
 }
+.remember {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--muted);
+  user-select: none;
+}
+.remember__checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--blue-700);
+}
+.row--actions { justify-content: space-between; width: 100%; }
 
 .field {
   display: grid;
