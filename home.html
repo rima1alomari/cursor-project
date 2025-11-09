@@ -48,10 +48,11 @@
 
       <section class="recent-section">
         <div class="recent-inner">
-          <h2>Recently Opened Projects</h2>
+          <h2>Recently Saved Projects</h2>
           <p class="recent-empty">
-            No recent projects yet. Save a project in the editor to see it appear here.
+            No recent projects yet. Create a presentation to see it appear here instantly.
           </p>
+          <div class="recent-grid" id="recentGrid" aria-live="polite"></div>
         </div>
       </section>
     </main>
@@ -67,6 +68,29 @@
           <li>Account options</li>
         </ul>
         <button class="close-settings" id="closeSettingsBtn">Close</button>
+      </div>
+    </div>
+
+    <div id="namePresentationModal" class="confirm-overlay" role="dialog" aria-modal="true" aria-labelledby="namePresentationTitle">
+      <div class="confirm-dialog name-dialog">
+        <h3 id="namePresentationTitle">Name your presentation</h3>
+        <p>Give your new presentation a title. You can rename it later from the editor.</p>
+        <input id="namePresentationInput" type="text" class="presentation-name-input" placeholder="Untitled presentation" maxlength="120" />
+        <div class="confirm-actions">
+          <button id="namePresentationCancel" class="confirm-btn cancel">Cancel</button>
+          <button id="namePresentationConfirm" class="confirm-btn confirm">Start</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="deletePresentationModal" class="confirm-overlay" role="dialog" aria-modal="true" aria-labelledby="deletePresentationTitle">
+      <div class="confirm-dialog">
+        <h3 id="deletePresentationTitle">Delete presentation?</h3>
+        <p id="deletePresentationMessage">Are you sure you want to delete this presentation?</p>
+        <div class="confirm-actions">
+          <button id="deletePresentationCancel" class="confirm-btn cancel">No</button>
+          <button id="deletePresentationConfirm" class="confirm-btn confirm">Yes</button>
+        </div>
       </div>
     </div>
 

@@ -17,6 +17,216 @@
     .draggable-placeholder { cursor: move; }
     /* Hide native file inputs */
     input[type=file] { display: none; }
+    /* Slide thumbnail hover buttons */
+    .slide-thumbnail-container {
+      position: relative;
+    }
+    .slide-hover-buttons {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: none;
+      gap: 8px;
+      z-index: 10;
+    }
+    .slide-thumbnail-container:hover .slide-hover-buttons {
+      display: flex;
+    }
+    .slide-hover-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      border: 2px solid white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 18px;
+      font-weight: bold;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+    }
+    .slide-hover-btn:hover {
+      transform: translateY(-2px) scale(1.03);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.28);
+    }
+    .slide-hover-btn.add {
+      background-color: #22c55e;
+      color: white;
+    }
+    .slide-hover-btn.duplicate {
+      background-color: #3b82f6;
+      color: white;
+    }
+    .slide-hover-btn.delete {
+      background-color: #ef4444;
+      color: white;
+    }
+    .slide-thumbnail-container:hover .slide-thumbnail-overlay {
+      background-color: rgba(0, 0, 0, 0.3);
+    }
+    .slide-thumbnail-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border-radius: 4px;
+      transition: background-color 0.2s;
+    }
+    .slide-hover-btn svg {
+      pointer-events: none;
+    }
+    .confirm-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      backdrop-filter: blur(3px);
+    }
+    .confirm-overlay.open {
+      display: flex;
+    }
+    .confirm-dialog {
+      background: #ffffff;
+      border-radius: 18px;
+      padding: 28px 32px 26px;
+      width: min(420px, 92vw);
+      box-shadow: 0 24px 60px rgba(15, 23, 42, 0.28);
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    .confirm-dialog h3 {
+      margin: 0;
+      font-size: 1.1rem;
+      color: #0f172a;
+    }
+    .confirm-dialog p {
+      margin: 0;
+      font-size: 0.95rem;
+      color: #4b5563;
+    }
+    .confirm-actions {
+      display: flex;
+      justify-content: center;
+      gap: 14px;
+    }
+    .confirm-btn {
+      min-width: 130px;
+      border-radius: 12px;
+      border: none;
+      padding: 10px 18px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+    }
+    .confirm-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.16);
+    }
+    .confirm-btn.cancel {
+      background: #e5e7eb;
+      color: #111827;
+    }
+    .confirm-btn.confirm {
+      background: #ef4444;
+      color: #ffffff;
+    }
+    .presentation-name-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.14);
+      padding: 6px 14px;
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      cursor: pointer;
+      transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .presentation-name-chip:hover,
+    .presentation-name-chip:focus {
+      background: rgba(255, 255, 255, 0.22);
+      transform: translateY(-1px);
+      box-shadow: 0 10px 26px rgba(0, 0, 0, 0.12);
+      outline: none;
+    }
+    .presentation-name-text {
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      white-space: nowrap;
+      max-width: 220px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .presentation-name-icon {
+      width: 16px;
+      height: 16px;
+      opacity: 0.85;
+    }
+    .rename-dialog {
+      gap: 16px;
+      align-items: stretch;
+    }
+    .presentation-name-input {
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.45);
+      padding: 10px 14px;
+      font-size: 0.95rem;
+      outline: none;
+      color: #1f2937;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .presentation-name-input:focus {
+      border-color: rgba(59, 130, 246, 0.6);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+    .return-home-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.32);
+      background: rgba(255, 255, 255, 0.14);
+      color: #ffffff;
+      cursor: pointer;
+      transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .return-home-btn:hover,
+    .return-home-btn:focus {
+      background: rgba(255, 255, 255, 0.22);
+      transform: translateY(-1px);
+      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.18);
+      outline: none;
+    }
+    .return-home-icon {
+      width: 18px;
+      height: 18px;
+      opacity: 0.95;
+    }
+    .confirm-btn.confirm {
+      background: #ef4444;
+      color: #ffffff;
+    }
+    .confirm-btn.primary {
+      background: linear-gradient(135deg, #0ea5e9, #22c55e);
+      color: #ffffff;
+    }
+    .confirm-btn.danger {
+      background: #ef4444;
+      color: #ffffff;
+    }
   </style>
 </head>
 <body class="min-h-screen bg-[#f5f7fa] text-slate-800">
@@ -27,6 +237,19 @@
         <div class="flex flex-wrap items-center justify-between gap-4">
           <div class="flex items-center gap-3">
             <span class="sr-only">Editor Branding</span>
+            <button id="returnHomeButton" class="return-home-btn" type="button" aria-label="Back to home">
+              <svg class="return-home-icon" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M8.75 4.5L3.25 10L8.75 15.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M3.5 10H16.75" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <button id="presentationNameDisplay" class="presentation-name-chip" type="button" aria-label="Rename presentation">
+              <span id="presentationNameText" class="presentation-name-text">Untitled presentation</span>
+              <svg class="presentation-name-icon" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M4 12.5V15.5H7L15 7.5L12 4.5L4 12.5Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M11 5L14 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
           </div>
           <div class="flex flex-wrap items-center gap-3">
             <div class="flex items-center gap-2">
@@ -244,14 +467,67 @@
     </div>
   </div>
 
+  <div id="renamePresentationModal" class="confirm-overlay" role="dialog" aria-modal="true" aria-labelledby="renamePresentationTitle">
+    <div class="confirm-dialog rename-dialog">
+      <h3 id="renamePresentationTitle">Rename presentation</h3>
+      <p>Update the presentation title. This will appear in your recent saves.</p>
+      <input id="renamePresentationInput" type="text" class="presentation-name-input" placeholder="Untitled presentation" maxlength="120" />
+      <div class="confirm-actions">
+        <button id="renamePresentationCancel" class="confirm-btn cancel">Cancel</button>
+        <button id="renamePresentationConfirm" class="confirm-btn primary">Apply</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="leaveConfirmOverlay" class="confirm-overlay" role="dialog" aria-modal="true" aria-labelledby="leaveConfirmTitle">
+    <div class="confirm-dialog">
+      <h3 id="leaveConfirmTitle">Leave presentation?</h3>
+      <p>Are you sure you want to leave the presentation without saving?</p>
+      <div class="confirm-actions">
+        <button id="leaveConfirmCancel" class="confirm-btn cancel">Cancel</button>
+        <button id="leaveConfirmDiscard" class="confirm-btn danger">Don't save</button>
+        <button id="leaveConfirmSave" class="confirm-btn primary">Save &amp; Exit</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Slide Confirmation -->
+  <div id="deleteConfirmOverlay" class="confirm-overlay" role="dialog" aria-modal="true" aria-labelledby="deleteConfirmTitle">
+    <div class="confirm-dialog">
+      <h3 id="deleteConfirmTitle">Delete slide?</h3>
+      <p id="deleteConfirmMessage">Are you sure you want to delete this slide?</p>
+      <div class="confirm-actions">
+        <button id="deleteConfirmCancel" class="confirm-btn cancel">No</button>
+        <button id="deleteConfirmConfirm" class="confirm-btn confirm">Yes</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     // Simple in-memory slides model
     let slides = [
       { id: crypto.randomUUID(), title: 'Slide 1', backgroundColor: '#ffffff', backgroundImage: null, elements: [] },
-      { id: crypto.randomUUID(), title: 'Slide 2', backgroundColor: '#ffffff', backgroundImage: null, elements: [] },
     ];
     let activeSlideIndex = 0;
     let selectedElementId = null; // currently selected element on canvas
+    const NEW_PRESENTATION_NAME_KEY = 'vision-new-presentation-name';
+    let currentPresentationName = '';
+
+    const RECENTS_STORAGE_KEY = 'vision-recents';
+    const LOAD_REQUEST_KEY = 'slide-editor-load-request';
+    const CURRENT_PRESENTATION_ID_KEY = 'slide-editor-current-id';
+    const HISTORY_LIMIT = 50;
+
+    let currentPresentationId = localStorage.getItem(CURRENT_PRESENTATION_ID_KEY) || null;
+    let historyStack = [];
+    let redoStack = [];
+    let isRestoringHistory = false;
+    let lastHistorySignature = null;
+    let pendingDeleteConfirmResolver = null;
+    let pendingPresentationDeletionId = null;
+    let deleteConfirmKeyHandler = null;
+    let pendingNavigationTarget = null;
+    let skipRunAutosave = false;
 
     const AUTOSAVE_KEY = 'slide-editor-autosave-v1';
     const SYNC_KEY = `${AUTOSAVE_KEY}-sync`;
@@ -264,17 +540,51 @@
     let lastSavedAt = null;
     let savedStatusTimeout = null;
 
+    function getAutosaveStorageKey(id = currentPresentationId) {
+      if (id) {
+        return `${AUTOSAVE_KEY}-${id}`;
+      }
+      return AUTOSAVE_KEY;
+    }
+
+    function getSyncStorageKey(id = currentPresentationId) {
+      if (id) {
+        return `${SYNC_KEY}-${id}`;
+      }
+      return SYNC_KEY;
+    }
+
     // Attempt to restore autosaved state
     try {
       if (typeof window !== 'undefined') {
-        const savedStateRaw = localStorage.getItem(AUTOSAVE_KEY);
+        const activeAutosaveKey = getAutosaveStorageKey();
+        let savedStateRaw = localStorage.getItem(activeAutosaveKey);
+        if (!savedStateRaw && !currentPresentationId) {
+          savedStateRaw = localStorage.getItem(AUTOSAVE_KEY);
+        }
         if (savedStateRaw) {
           const savedState = JSON.parse(savedStateRaw);
-          if (savedState && Array.isArray(savedState.slides)) {
+          const savedPresentationId = savedState?.presentationId ?? null;
+          const idMismatch = savedPresentationId && currentPresentationId && savedPresentationId !== currentPresentationId;
+          if (idMismatch) {
+            try {
+              localStorage.removeItem(getAutosaveStorageKey(savedPresentationId));
+              localStorage.removeItem(getSyncStorageKey(savedPresentationId));
+            } catch (error) {
+              console.warn('Failed to clear mismatched autosave', error);
+            }
+            // Ignore autosave belonging to a different presentation.
+          } else if (savedState && Array.isArray(savedState.slides)) {
             slides = savedState.slides;
-          }
-          if (typeof savedState?.activeSlideIndex === 'number') {
-            activeSlideIndex = Math.min(Math.max(savedState.activeSlideIndex, 0), Math.max(slides.length - 1, 0));
+            if (typeof savedState?.activeSlideIndex === 'number') {
+              activeSlideIndex = Math.min(Math.max(savedState.activeSlideIndex, 0), Math.max(slides.length - 1, 0));
+            }
+            if (typeof savedState?.presentationName === 'string') {
+              currentPresentationName = savedState.presentationName;
+            }
+            if (savedPresentationId) {
+              currentPresentationId = savedPresentationId;
+            }
           }
         }
       }
@@ -286,6 +596,64 @@
       slides.push({ id: crypto.randomUUID(), title: 'Slide 1', backgroundColor: '#ffffff', backgroundImage: null, elements: [] });
     }
 
+    try {
+      const loadRequestRaw = localStorage.getItem(LOAD_REQUEST_KEY);
+      if (loadRequestRaw) {
+        const loadRequest = JSON.parse(loadRequestRaw);
+        const recentsRaw = localStorage.getItem(RECENTS_STORAGE_KEY);
+        const recents = recentsRaw ? JSON.parse(recentsRaw) : [];
+        if (loadRequest && loadRequest.presentationId) {
+          const presentation = Array.isArray(recents) ? recents.find(item => item.id === loadRequest.presentationId) : null;
+          if (presentation) {
+            const versions = Array.isArray(presentation.versions) ? presentation.versions : [];
+            const version = versions.find(v => v.id === loadRequest.versionId) || versions[0];
+            if (version && Array.isArray(version.slides)) {
+              slides = JSON.parse(JSON.stringify(version.slides));
+              activeSlideIndex = Math.min(Math.max(version.activeSlideIndex ?? 0, 0), Math.max(slides.length - 1, 0));
+              currentPresentationId = presentation.id;
+              currentPresentationName = presentation.name || presentation.preview?.title || currentPresentationName;
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to load requested presentation version', error);
+    } finally {
+      localStorage.removeItem(LOAD_REQUEST_KEY);
+    }
+
+    let queuedPresentationName = null;
+    try {
+      if (typeof window !== 'undefined') {
+        const storedName = localStorage.getItem(NEW_PRESENTATION_NAME_KEY);
+        if (storedName) {
+          queuedPresentationName = storedName;
+          localStorage.removeItem(NEW_PRESENTATION_NAME_KEY);
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to read pending presentation name', error);
+    }
+
+    if (!slides.length) {
+      slides.push({ id: crypto.randomUUID(), title: 'Slide 1', backgroundColor: '#ffffff', backgroundImage: null, elements: [] });
+    }
+
+    if (!currentPresentationId && queuedPresentationName) {
+      currentPresentationName = queuedPresentationName;
+    }
+
+    if (!currentPresentationName || !currentPresentationName.trim()) {
+      currentPresentationName = slides[0]?.title?.trim() || 'Untitled presentation';
+    }
+
+    if (slides.length && currentPresentationName) {
+      const firstSlide = slides[0];
+      if (firstSlide && (!firstSlide.title || /^Slide\s\d+$/.test(firstSlide.title))) {
+        firstSlide.title = currentPresentationName;
+      }
+    }
+
     // DOM refs
     const thumbnailsEl = document.getElementById('thumbnails');
     const canvasContainerEl = document.getElementById('canvasContainer');
@@ -294,6 +662,17 @@
     const autosaveStatusEl = document.getElementById('autosaveStatus');
     const presenceAvatarsEl = document.getElementById('presenceAvatars');
     const collaborationStatusEl = document.getElementById('collaborationStatus');
+    const presentationNameDisplayEl = document.getElementById('presentationNameDisplay');
+    const presentationNameTextEl = document.getElementById('presentationNameText');
+    const renamePresentationOverlay = document.getElementById('renamePresentationModal');
+    const renamePresentationInput = document.getElementById('renamePresentationInput');
+    const renamePresentationConfirmBtn = document.getElementById('renamePresentationConfirm');
+    const renamePresentationCancelBtn = document.getElementById('renamePresentationCancel');
+    const returnHomeButton = document.getElementById('returnHomeButton');
+    const leaveConfirmOverlay = document.getElementById('leaveConfirmOverlay');
+    const leaveConfirmCancelBtn = document.getElementById('leaveConfirmCancel');
+    const leaveConfirmDiscardBtn = document.getElementById('leaveConfirmDiscard');
+    const leaveConfirmSaveBtn = document.getElementById('leaveConfirmSave');
 
     // Tool refs
     const addSlideBtn = document.getElementById('addSlideBtn');
@@ -350,6 +729,10 @@
     const shareCopyBtn = document.getElementById('shareCopyBtn');
     const shareLinkInput = document.getElementById('shareLinkInput');
     const shareCollaboratorList = document.getElementById('shareCollaboratorList');
+
+    const deleteConfirmOverlay = document.getElementById('deleteConfirmOverlay');
+    const deleteConfirmConfirmBtn = document.getElementById('deleteConfirmConfirm');
+    const deleteConfirmCancelBtn = document.getElementById('deleteConfirmCancel');
 
     const presenterOverlay = document.getElementById('presenterOverlay');
     const presenterCanvasEl = document.getElementById('presenterCanvas');
@@ -408,7 +791,8 @@
       }, 6000);
     }
 
-    function markDirty() {
+    function markDirty({ skipHistory = false } = {}) {
+      void skipHistory;
       needsAutosave = true;
       updateAutosaveStatus('Saving…', 'saving');
       scheduleAutosave();
@@ -420,12 +804,13 @@
     }
 
     function runAutosave() {
+      if (skipRunAutosave) return;
       if (!needsAutosave) return;
       try {
-        const payload = JSON.stringify({ slides, activeSlideIndex });
-        localStorage.setItem(AUTOSAVE_KEY, payload);
-        const syncPayload = JSON.stringify({ sessionId: SESSION_ID, timestamp: Date.now(), slides, activeSlideIndex });
-        localStorage.setItem(SYNC_KEY, syncPayload);
+        const payload = JSON.stringify({ slides, activeSlideIndex, presentationName: currentPresentationName, presentationId: currentPresentationId });
+        localStorage.setItem(getAutosaveStorageKey(), payload);
+        const syncPayload = JSON.stringify({ sessionId: SESSION_ID, timestamp: Date.now(), slides, activeSlideIndex, presentationName: currentPresentationName, presentationId: currentPresentationId });
+        localStorage.setItem(getSyncStorageKey(), syncPayload);
         needsAutosave = false;
         lastSavedAt = new Date();
         updateAutosaveStatus('Saved just now', 'saved');
@@ -486,6 +871,67 @@
       }
     }
 
+    function getEffectivePresentationName() {
+      const normalized = (currentPresentationName || '').trim();
+      if (normalized.length) return normalized;
+      const slideTitle = slides[0]?.title;
+      if (slideTitle && slideTitle.trim().length) return slideTitle.trim();
+      return 'Untitled presentation';
+    }
+
+    function updatePresentationNameDisplay() {
+      if (!presentationNameTextEl) return;
+      presentationNameTextEl.textContent = getEffectivePresentationName();
+    }
+
+    function setPresentationName(name, options = {}) {
+      const normalized = (name || '').trim();
+      const finalName = normalized.length ? normalized : 'Untitled presentation';
+      if (finalName === getEffectivePresentationName()) {
+        updatePresentationNameDisplay();
+        return;
+      }
+      pushHistorySnapshot(true);
+      currentPresentationName = finalName;
+      updatePresentationNameDisplay();
+      markDirty();
+      lastHistorySignature = JSON.stringify(captureCurrentState());
+    }
+
+    function openRenamePresentationModal(initialValue) {
+      if (!renamePresentationOverlay || !renamePresentationInput || !renamePresentationConfirmBtn) {
+        const fallback = window.prompt('Presentation name', getEffectivePresentationName());
+        if (fallback !== null) {
+          setPresentationName(fallback);
+        }
+        return;
+      }
+      const value = typeof initialValue === 'string' && initialValue.trim().length
+        ? initialValue.trim()
+        : getEffectivePresentationName();
+      renamePresentationInput.value = value;
+      renamePresentationOverlay.classList.add('open');
+      setTimeout(() => {
+        renamePresentationInput.focus();
+        renamePresentationInput.select();
+      }, 10);
+    }
+
+    function closeRenamePresentationModal() {
+      if (!renamePresentationOverlay) return;
+      renamePresentationOverlay.classList.remove('open');
+      if (renamePresentationInput) {
+        renamePresentationInput.value = '';
+      }
+    }
+
+    function applyRenamePresentation() {
+      if (!renamePresentationInput) return;
+      const newName = renamePresentationInput.value;
+      closeRenamePresentationModal();
+      setPresentationName(newName);
+    }
+
     function simulateCollaborationTick() {
       collaborators.forEach(collab => {
         const roll = Math.random();
@@ -498,6 +944,270 @@
         }
       });
       renderPresenceIndicators();
+    }
+
+    function captureCurrentState() {
+      return {
+        slides: JSON.parse(JSON.stringify(slides)),
+        activeSlideIndex,
+        presentationName: currentPresentationName,
+        presentationId: currentPresentationId
+      };
+    }
+
+    function pushHistorySnapshot(force = false) {
+      if (isRestoringHistory) return;
+      const snapshot = captureCurrentState();
+      const signature = JSON.stringify(snapshot);
+      if (!force && signature === lastHistorySignature) {
+        return;
+      }
+      historyStack.push(snapshot);
+      if (historyStack.length > HISTORY_LIMIT) {
+        historyStack.shift();
+      }
+      redoStack = [];
+      lastHistorySignature = signature;
+    }
+
+    function applySnapshot(snapshot) {
+      if (!snapshot) return;
+      isRestoringHistory = true;
+      slides = Array.isArray(snapshot.slides)
+        ? JSON.parse(JSON.stringify(snapshot.slides))
+        : [];
+      if (!slides.length) {
+        slides = [createBlankSlide('Slide 1')];
+      }
+      activeSlideIndex = Math.min(Math.max(snapshot.activeSlideIndex ?? 0, 0), Math.max(slides.length - 1, 0));
+      selectedElementId = null;
+      if (typeof snapshot.presentationName === 'string') {
+        currentPresentationName = snapshot.presentationName;
+      }
+      if (snapshot.presentationId) {
+        currentPresentationId = snapshot.presentationId;
+      }
+      isRestoringHistory = false;
+      render();
+      updatePresentationNameDisplay();
+      lastHistorySignature = JSON.stringify(captureCurrentState());
+    }
+
+    function undo() {
+      if (!historyStack.length) {
+        return;
+      }
+      const previous = historyStack.pop();
+      redoStack.push(captureCurrentState());
+      applySnapshot(previous);
+      markDirty({ skipHistory: true });
+    }
+
+    function redo() {
+      if (!redoStack.length) {
+        return;
+      }
+      const next = redoStack.pop();
+      historyStack.push(captureCurrentState());
+      if (historyStack.length > HISTORY_LIMIT) {
+        historyStack.shift();
+      }
+      applySnapshot(next);
+      markDirty({ skipHistory: true });
+    }
+
+    function createBlankSlide(title = '') {
+      const defaultTitle = title || `Slide ${slides.length + 1}`;
+      return {
+        id: crypto.randomUUID(),
+        title: defaultTitle,
+        backgroundColor: '#ffffff',
+        backgroundImage: null,
+        elements: [],
+      };
+    }
+
+    function derivePresentationName() {
+      return getEffectivePresentationName();
+    }
+
+    async function confirmSlideDeletion() {
+      if (!deleteConfirmOverlay || !deleteConfirmConfirmBtn || !deleteConfirmCancelBtn) {
+        return true;
+      }
+      if (pendingDeleteConfirmResolver) {
+        pendingDeleteConfirmResolver(false);
+      }
+      deleteConfirmOverlay.classList.add('open');
+      return new Promise((resolve) => {
+        pendingDeleteConfirmResolver = (result) => {
+          deleteConfirmOverlay.classList.remove('open');
+          deleteConfirmConfirmBtn.removeEventListener('click', handleConfirm);
+          deleteConfirmCancelBtn.removeEventListener('click', handleCancel);
+          deleteConfirmOverlay.removeEventListener('click', handleOverlayClick);
+          document.removeEventListener('keydown', handleKeydown);
+          pendingDeleteConfirmResolver = null;
+          resolve(result);
+        };
+
+        function handleConfirm(e) {
+          e.preventDefault();
+          pendingDeleteConfirmResolver?.(true);
+        }
+
+        function handleCancel(e) {
+          e.preventDefault();
+          pendingDeleteConfirmResolver?.(false);
+        }
+
+        function handleOverlayClick(e) {
+          if (e.target === deleteConfirmOverlay) {
+            pendingDeleteConfirmResolver?.(false);
+          }
+        }
+
+        function handleKeydown(e) {
+          if (e.key === 'Escape') {
+            e.preventDefault();
+            pendingDeleteConfirmResolver?.(false);
+          }
+        }
+
+        deleteConfirmConfirmBtn.addEventListener('click', handleConfirm);
+        deleteConfirmCancelBtn.addEventListener('click', handleCancel);
+        deleteConfirmOverlay.addEventListener('click', handleOverlayClick);
+        document.addEventListener('keydown', handleKeydown);
+        deleteConfirmConfirmBtn.focus();
+      });
+    }
+
+    function addNewSlide(afterIndex = activeSlideIndex) {
+      pushHistorySnapshot(true);
+      const newSlide = createBlankSlide();
+      slides.splice(afterIndex + 1, 0, newSlide);
+      activeSlideIndex = Math.min(afterIndex + 1, slides.length - 1);
+      selectedElementId = null;
+      markDirty();
+      render();
+    }
+
+    function duplicateSlideAt(index = activeSlideIndex) {
+      const source = slides[index];
+      if (!source) return;
+      pushHistorySnapshot(true);
+      const clone = JSON.parse(JSON.stringify(source));
+      clone.id = crypto.randomUUID();
+      clone.title = source.title ? `${source.title} Copy` : `Slide ${slides.length + 1}`;
+      clone.elements = (clone.elements || []).map(element => ({ ...element, id: crypto.randomUUID() }));
+      slides.splice(index + 1, 0, clone);
+      activeSlideIndex = Math.min(index + 1, slides.length - 1);
+      selectedElementId = null;
+      markDirty();
+      render();
+    }
+
+    async function deleteSlideAt(index = activeSlideIndex, options = {}) {
+      const { requireConfirm = true } = options;
+      if (requireConfirm) {
+        const confirmed = await confirmSlideDeletion();
+        if (!confirmed) {
+          return false;
+        }
+      }
+      pushHistorySnapshot(true);
+      if (slides.length === 1) {
+        slides[0] = createBlankSlide('Slide 1');
+        activeSlideIndex = 0;
+      } else {
+        slides.splice(index, 1);
+        if (activeSlideIndex >= slides.length) {
+          activeSlideIndex = slides.length - 1;
+        }
+      }
+      selectedElementId = null;
+      markDirty();
+      render();
+      return true;
+    }
+
+    function formatTimestamp(isoString) {
+      try {
+        const date = new Date(isoString);
+        return date.toLocaleString();
+      } catch (error) {
+        return isoString;
+      }
+    }
+
+    function savePresentation() {
+      try {
+        const snapshot = captureCurrentState();
+        const recentsRaw = localStorage.getItem(RECENTS_STORAGE_KEY);
+        let recents = [];
+        if (recentsRaw) {
+          recents = JSON.parse(recentsRaw);
+          if (!Array.isArray(recents)) {
+            recents = [];
+          }
+        }
+        let presentationIndex = recents.findIndex(item => item.id === currentPresentationId);
+        const nowIso = new Date().toISOString();
+        if (presentationIndex === -1) {
+          currentPresentationId = crypto.randomUUID();
+          recents.unshift({
+            id: currentPresentationId,
+            name: derivePresentationName(),
+            createdAt: nowIso,
+            lastSavedAt: nowIso,
+            latestVersionId: null,
+            versions: [],
+          });
+          presentationIndex = 0;
+        } else if (presentationIndex > 0) {
+          const [presentation] = recents.splice(presentationIndex, 1);
+          recents.unshift(presentation);
+          presentationIndex = 0;
+        }
+        const presentation = recents[presentationIndex];
+        if (!presentation.versions) {
+          presentation.versions = [];
+        }
+        presentation.name = derivePresentationName();
+        currentPresentationName = presentation.name;
+        updatePresentationNameDisplay();
+        const version = {
+          id: crypto.randomUUID(),
+          savedAt: nowIso,
+          slides: snapshot.slides,
+          activeSlideIndex: snapshot.activeSlideIndex,
+        };
+        presentation.versions.unshift(version);
+        if (presentation.versions.length > 20) {
+          presentation.versions = presentation.versions.slice(0, 20);
+        }
+        presentation.lastSavedAt = nowIso;
+        presentation.latestVersionId = version.id;
+        presentation.preview = {
+          backgroundColor: snapshot.slides[0]?.backgroundColor || '#ffffff',
+          title: presentation.name,
+          savedLabel: `Presentation saved: ${formatTimestamp(nowIso)}`
+        };
+        localStorage.setItem(RECENTS_STORAGE_KEY, JSON.stringify(recents));
+        localStorage.setItem(CURRENT_PRESENTATION_ID_KEY, currentPresentationId);
+        updateAutosaveStatus('Presentation saved', 'saved');
+        scheduleAutosaveIdleReset();
+      } catch (error) {
+        console.warn('Failed to save presentation', error);
+        updateAutosaveStatus('Save failed', 'error');
+      }
+    }
+
+    function isEditableTarget(target) {
+      if (!target) return false;
+      if (target === document.body) return false;
+      if (target.isContentEditable) return true;
+      const editableTags = ['INPUT', 'TEXTAREA'];
+      return editableTags.includes(target.tagName);
     }
 
     function openShareModal() {
@@ -665,6 +1375,7 @@
     }
 
     function render() {
+      updatePresentationNameDisplay();
       // Counters
       slideIndexLabelEl.textContent = String(activeSlideIndex + 1);
       slideCountLabelEl.textContent = String(slides.length);
@@ -680,22 +1391,66 @@
           render();
         });
 
-        const thumb = document.createElement('div');
-        thumb.className = 'relative w-full aspect-video bg-white rounded border border-slate-200 overflow-hidden';
-        thumb.style.backgroundColor = slide.backgroundColor || '#ffffff';
+        const container = document.createElement('div');
+        container.className = 'slide-thumbnail-container relative w-full aspect-video bg-white rounded border border-slate-200 overflow-hidden';
+        container.style.backgroundColor = slide.backgroundColor || '#ffffff';
         if (slide.backgroundImage) {
-          thumb.style.backgroundImage = `url(${slide.backgroundImage})`;
-          thumb.style.backgroundSize = 'cover';
-          thumb.style.backgroundPosition = 'center';
+          container.style.backgroundImage = `url(${slide.backgroundImage})`;
+          container.style.backgroundSize = 'cover';
+          container.style.backgroundPosition = 'center';
         }
 
+        // Overlay for hover effect
+        const overlay = document.createElement('div');
+        overlay.className = 'slide-thumbnail-overlay';
+
+        // Hover buttons container
+        const hoverButtons = document.createElement('div');
+        hoverButtons.className = 'slide-hover-buttons';
+
+        // Add slide button (green +)
+        const addBtn = document.createElement('button');
+        addBtn.className = 'slide-hover-btn add';
+        addBtn.innerHTML = '+';
+        addBtn.title = 'Add slide';
+        addBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          addNewSlide(index);
+        });
+
+        // Duplicate slide button (two squares icon)
+        const duplicateBtn = document.createElement('button');
+        duplicateBtn.className = 'slide-hover-btn duplicate';
+        duplicateBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="2" width="8" height="8" stroke="white" stroke-width="1.5" fill="none"/><rect x="8" y="8" width="8" height="8" stroke="white" stroke-width="1.5" fill="none"/></svg>';
+        duplicateBtn.title = 'Duplicate slide';
+        duplicateBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          duplicateSlideAt(index);
+        });
+
+        // Delete slide button (red -)
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'slide-hover-btn delete';
+        deleteBtn.innerHTML = '−';
+        deleteBtn.title = 'Delete slide';
+        deleteBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          deleteSlideAt(index).catch(() => {});
+        });
+
+        hoverButtons.appendChild(addBtn);
+        hoverButtons.appendChild(duplicateBtn);
+        hoverButtons.appendChild(deleteBtn);
+
         const label = document.createElement('div');
-        label.className = 'absolute bottom-1 right-1 text-[10px] px-1.5 py-0.5 rounded bg-black/60 text-white';
+        label.className = 'absolute bottom-1 right-1 text-[10px] px-1.5 py-0.5 rounded bg-black/60 text-white z-20';
         const labelTitle = slide.title ? slide.title : `Slide ${index + 1}`;
         label.textContent = `${index + 1}. ${labelTitle}`;
 
-        thumb.appendChild(label);
-        btn.appendChild(thumb);
+        container.appendChild(overlay);
+        container.appendChild(hoverButtons);
+        container.appendChild(label);
+        btn.appendChild(container);
         thumbnailsEl.appendChild(btn);
       });
 
@@ -1045,53 +1800,19 @@
     // Add slide
     if (addSlideBtn) {
       addSlideBtn.addEventListener('click', () => {
-        const newSlide = {
-          id: crypto.randomUUID(),
-          title: `Slide ${slides.length + 1}`,
-          backgroundColor: '#ffffff',
-          backgroundImage: null,
-          elements: [],
-        };
-        slides.splice(activeSlideIndex + 1, 0, newSlide);
-        activeSlideIndex = Math.min(activeSlideIndex + 1, slides.length - 1);
-        selectedElementId = null;
-        markDirty();
-        render();
+        addNewSlide(activeSlideIndex);
       });
     }
 
     if (duplicateSlideBtn) {
       duplicateSlideBtn.addEventListener('click', () => {
-        const source = getActiveSlide();
-        if (!source) return;
-        const clone = JSON.parse(JSON.stringify(source));
-        clone.id = crypto.randomUUID();
-        clone.title = source.title ? `${source.title} Copy` : `Slide ${slides.length + 1}`;
-        clone.elements = (clone.elements || []).map(element => ({ ...element, id: crypto.randomUUID() }));
-        slides.splice(activeSlideIndex + 1, 0, clone);
-        activeSlideIndex = Math.min(activeSlideIndex + 1, slides.length - 1);
-        selectedElementId = null;
-        markDirty();
-        render();
+        duplicateSlideAt(activeSlideIndex);
       });
     }
 
     if (deleteSlideBtn) {
       deleteSlideBtn.addEventListener('click', () => {
-        if (slides.length === 1) {
-          alert('You need at least one slide.');
-          return;
-        }
-        if (!confirm('Delete the current slide?')) {
-          return;
-        }
-        slides.splice(activeSlideIndex, 1);
-        if (activeSlideIndex >= slides.length) {
-          activeSlideIndex = slides.length - 1;
-        }
-        selectedElementId = null;
-        markDirty();
-        render();
+        deleteSlideAt(activeSlideIndex).catch(() => {});
       });
     }
 
@@ -1363,24 +2084,36 @@
     }
 
     window.addEventListener('storage', (event) => {
-      if (event.storageArea !== localStorage) return;
-      if (event.key === SYNC_KEY && event.newValue) {
-        try {
-          const payload = JSON.parse(event.newValue);
-          if (payload.sessionId === SESSION_ID) return;
-          if (Array.isArray(payload.slides)) {
-            slides = payload.slides;
-            activeSlideIndex = Math.min(Math.max(payload.activeSlideIndex ?? 0, 0), slides.length - 1);
-            selectedElementId = null;
-            needsAutosave = false;
-            updateAutosaveStatus('Live update received', 'synced');
-            scheduleAutosaveIdleReset();
-            render();
-          }
-        } catch (error) {
-          console.warn('Failed to process sync payload', error);
-        }
-      }
+       if (event.storageArea !== localStorage) return;
+       const key = event.key || '';
+       const isSyncEvent = key === SYNC_KEY || key.startsWith(`${SYNC_KEY}-`);
+       if (isSyncEvent && event.newValue) {
+         try {
+           const payload = JSON.parse(event.newValue);
+           if (payload.presentationId && currentPresentationId && payload.presentationId !== currentPresentationId) {
+             return;
+           }
+           if (payload.sessionId === SESSION_ID) return;
+           if (Array.isArray(payload.slides)) {
+             slides = payload.slides;
+             activeSlideIndex = Math.min(Math.max(payload.activeSlideIndex ?? 0, 0), slides.length - 1);
+             if (typeof payload.presentationName === 'string') {
+               currentPresentationName = payload.presentationName;
+               updatePresentationNameDisplay();
+             }
+             if (payload.presentationId) {
+               currentPresentationId = payload.presentationId;
+             }
+             selectedElementId = null;
+             needsAutosave = false;
+             updateAutosaveStatus('Live update received', 'synced');
+             scheduleAutosaveIdleReset();
+             render();
+           }
+         } catch (error) {
+           console.warn('Failed to process sync payload', error);
+         }
+       }
     });
 
     if (shareBtn) {
@@ -1429,6 +2162,74 @@
     if (exportPdfBtn) {
       exportPdfBtn.addEventListener('click', exportActiveSlideToPdf);
     }
+
+    document.addEventListener('keydown', (event) => {
+      const key = event.key.toLowerCase();
+      const ctrlOrMeta = event.ctrlKey || event.metaKey;
+      const shift = event.shiftKey;
+      const confirmOpen = deleteConfirmOverlay && deleteConfirmOverlay.classList.contains('open');
+      const leaveConfirmOpen = leaveConfirmOverlay && leaveConfirmOverlay.classList.contains('open');
+      const renameOpen = renamePresentationOverlay && renamePresentationOverlay.classList.contains('open');
+
+      if (confirmOpen && key !== 'escape') {
+        return;
+      }
+
+      if (leaveConfirmOpen) {
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          cancelLeavePresentation();
+        }
+        return;
+      }
+
+      if (renameOpen) {
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          closeRenamePresentationModal();
+        }
+        return;
+      }
+
+      if (isEditableTarget(event.target) && !(ctrlOrMeta && key === 's')) {
+        return;
+      }
+
+      if (ctrlOrMeta && key === 's') {
+        event.preventDefault();
+        savePresentation();
+        return;
+      }
+
+      if (ctrlOrMeta && !shift && key === 'z') {
+        event.preventDefault();
+        undo();
+        return;
+      }
+
+      if ((ctrlOrMeta && shift && key === 'z') || (event.ctrlKey && key === 'y')) {
+        event.preventDefault();
+        redo();
+        return;
+      }
+
+      if (ctrlOrMeta && key === 'n') {
+        event.preventDefault();
+        addNewSlide(activeSlideIndex);
+        return;
+      }
+
+      if (ctrlOrMeta && key === 'd') {
+        event.preventDefault();
+        duplicateSlideAt(activeSlideIndex);
+        return;
+      }
+
+      if (key === 'backspace' && !isEditableTarget(event.target)) {
+        event.preventDefault();
+        deleteSlideAt(activeSlideIndex).catch(() => {});
+      }
+    });
 
     // Image tools
     if (uploadImageInput) {
@@ -1552,12 +2353,175 @@
       }
       updateAutosaveStatus('Autosave ready', 'idle');
       render();
+      historyStack = [];
+      redoStack = [];
+      lastHistorySignature = JSON.stringify(captureCurrentState());
       renderPresenceIndicators();
       updateShareLink();
       simulateCollaborationTick();
       window.setInterval(simulateCollaborationTick, 8000);
       window.addEventListener('beforeunload', runAutosave);
     })();
+
+    if (presentationNameDisplayEl) {
+      presentationNameDisplayEl.addEventListener('click', () => openRenamePresentationModal());
+      presentationNameDisplayEl.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          openRenamePresentationModal();
+        }
+      });
+    }
+
+    if (renamePresentationCancelBtn) {
+      renamePresentationCancelBtn.addEventListener('click', (event) => {
+        event.preventDefault();
+        closeRenamePresentationModal();
+      });
+    }
+
+    if (renamePresentationConfirmBtn) {
+      renamePresentationConfirmBtn.addEventListener('click', (event) => {
+        event.preventDefault();
+        applyRenamePresentation();
+      });
+    }
+
+    if (renamePresentationOverlay) {
+      renamePresentationOverlay.addEventListener('click', (event) => {
+        if (event.target === renamePresentationOverlay) {
+          closeRenamePresentationModal();
+        }
+      });
+    }
+
+    if (renamePresentationInput) {
+      renamePresentationInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          applyRenamePresentation();
+        }
+      });
+    }
+
+    if (returnHomeButton) {
+      returnHomeButton.addEventListener('click', () => {
+        closeRenamePresentationModal();
+        openLeaveConfirmModal('home.html');
+      });
+      returnHomeButton.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          closeRenamePresentationModal();
+          openLeaveConfirmModal('home.html');
+        }
+      });
+    }
+
+    if (leaveConfirmCancelBtn) {
+      leaveConfirmCancelBtn.addEventListener('click', (event) => {
+        event.preventDefault();
+        cancelLeavePresentation();
+      });
+    }
+
+    if (leaveConfirmDiscardBtn) {
+      leaveConfirmDiscardBtn.addEventListener('click', (event) => {
+        event.preventDefault();
+        leaveWithoutSaving();
+      });
+    }
+
+    if (leaveConfirmSaveBtn) {
+      leaveConfirmSaveBtn.addEventListener('click', (event) => {
+        event.preventDefault();
+        saveAndLeave();
+      });
+    }
+
+    if (leaveConfirmOverlay) {
+      leaveConfirmOverlay.addEventListener('click', (event) => {
+        if (event.target === leaveConfirmOverlay) {
+          cancelLeavePresentation();
+        }
+      });
+    }
+
+    function applyRenamePresentation() {
+      if (!renamePresentationInput) return;
+      const newName = renamePresentationInput.value;
+      closeRenamePresentationModal();
+      setPresentationName(newName);
+    }
+
+    function openLeaveConfirmModal(target = 'home.html') {
+      const destination = target || 'home.html';
+      if (!needsAutosave) {
+        finalizeNavigation(destination);
+        return;
+      }
+      pendingNavigationTarget = destination;
+      skipRunAutosave = false;
+      if (!leaveConfirmOverlay) {
+        const shouldSave = window.confirm('Leave without saving?');
+        if (shouldSave) {
+          savePresentation();
+        }
+        finalizeNavigation(destination);
+        return;
+      }
+      leaveConfirmOverlay.classList.add('open');
+      setTimeout(() => {
+        if (leaveConfirmSaveBtn) {
+          leaveConfirmSaveBtn.focus();
+        } else if (leaveConfirmCancelBtn) {
+          leaveConfirmCancelBtn.focus();
+        }
+      }, 10);
+    }
+
+    function closeLeaveConfirmModal(options = {}) {
+      const { resetPending = true } = options;
+      if (!leaveConfirmOverlay) return;
+      leaveConfirmOverlay.classList.remove('open');
+      if (resetPending) {
+        pendingNavigationTarget = null;
+      }
+    }
+
+    function finalizeNavigation(target) {
+      const destination = target || pendingNavigationTarget || 'home.html';
+      closeLeaveConfirmModal({ resetPending: false });
+      pendingNavigationTarget = null;
+      window.location.href = destination;
+    }
+
+    function leaveWithoutSaving() {
+      skipRunAutosave = true;
+      needsAutosave = false;
+      try {
+        localStorage.removeItem(getAutosaveStorageKey());
+        localStorage.removeItem(getSyncStorageKey());
+        if (currentPresentationId) {
+          localStorage.removeItem(getAutosaveStorageKey(currentPresentationId));
+          localStorage.removeItem(getSyncStorageKey(currentPresentationId));
+        }
+      } catch (error) {
+        console.warn('Failed to clear autosave data', error);
+      }
+      finalizeNavigation(pendingNavigationTarget || 'home.html');
+    }
+
+    function saveAndLeave() {
+      skipRunAutosave = false;
+      savePresentation();
+      finalizeNavigation(pendingNavigationTarget || 'home.html');
+    }
+
+    function cancelLeavePresentation() {
+      skipRunAutosave = false;
+      closeLeaveConfirmModal();
+    }
   </script>
 </body>
 </html>
