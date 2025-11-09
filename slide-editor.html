@@ -13,10 +13,94 @@
   <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
   <style>
     body { font-family: 'Inter', sans-serif; }
-    /* Canvas drag placeholder (no real drag-drop yet) */
     .draggable-placeholder { cursor: move; }
+    .draggable-placeholder:active { cursor: grabbing; }
+    .chart-wrapper {
+      position: absolute;
+      transform-origin: center;
+      cursor: move;
+    }
+    .chart-wrapper canvas {
+      width: 100%;
+      height: 100%;
+    }
+    .chart-resize-handle {
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      border-radius: 999px;
+      background: #ffffff;
+      border: 2px solid #2563eb;
+      box-shadow: 0 6px 14px rgba(15, 23, 42, 0.25);
+      z-index: 10;
+    }
+    .chart-resize-handle[data-handle="nw"],
+    .chart-resize-handle[data-handle="se"] { cursor: nwse-resize; }
+    .chart-resize-handle[data-handle="ne"],
+    .chart-resize-handle[data-handle="sw"] { cursor: nesw-resize; }
+    .slides-sidebar {
+      flex: 0 0 auto;
+      transition: width 0.25s ease, min-width 0.25s ease, max-width 0.25s ease, padding 0.25s ease;
+    }
+    .slides-sidebar--collapsed {
+      width: 40px;
+      min-width: 40px;
+      max-width: 40px;
+      padding: 0;
+    }
+    .slides-sidebar--collapsed + .canvas-wrapper {
+      margin-left: 0;
+    }
+    .slides-sidebar--collapsed .slides-sidebar__title,
+    .slides-sidebar--collapsed #thumbnails {
+      display: none;
+    }
+    .slides-sidebar--collapsed .slides-sidebar__header {
+      justify-content: center;
+      padding: 12px 0;
+      background: transparent;
+    }
+    .slides-sidebar-toggle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 999px;
+      border: 1px solid rgba(0, 76, 151, 0.2);
+      background: rgba(0, 76, 151, 0.08);
+      color: #004c97;
+      cursor: pointer;
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+    .slides-sidebar-toggle:hover {
+      background: rgba(0, 76, 151, 0.16);
+    }
+    .slides-sidebar-toggle__icon {
+      display: inline-block;
+      transform: rotate(0deg);
+      transition: transform 0.2s ease;
+    }
+    .slides-sidebar--collapsed .slides-sidebar-toggle__icon {
+      transform: rotate(180deg);
+    }
     /* Hide native file inputs */
     input[type=file] { display: none; }
+    .canvas-wrapper {
+      flex: 1 1 0%;
+      min-width: 0;
+      transition: margin 0.25s ease;
+    }
+    .slides-sidebar--collapsed + .canvas-wrapper .canvas-area {
+      padding-right: 24px;
+      justify-content: flex-start;
+    }
+    .canvas-area {
+      transition: max-width 0.25s ease, padding 0.25s ease;
+    }
+    .slides-sidebar--collapsed + .canvas-wrapper .canvas-area > div {
+      max-width: none;
+    }
   </style>
 </head>
 <body class="min-h-screen bg-[#f5f7fa] text-slate-800">
@@ -145,16 +229,6 @@
                 <option value="midnight">Midnight</option>
               </select>
             </div>
-            <div class="flex items-center gap-2">
-              <span class="text-sm text-white/80">Width</span>
-              <input id="chartWidthRange" type="range" min="240" max="900" value="420" class="h-1 w-40 accent-[#004c97]">
-              <span id="chartWidthValue" class="text-xs text-white/80">420px</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <span class="text-sm text-white/80">Height</span>
-              <input id="chartHeightRange" type="range" min="160" max="600" value="280" class="h-1 w-40 accent-[#004c97]">
-              <span id="chartHeightValue" class="text-xs text-white/80">280px</span>
-            </div>
             <button id="chartRandomizeBtn" class="rounded-full border border-white/30 px-3 py-1.5 text-sm hover:bg-white/10">Randomize Data</button>
           </div>
           <div data-tab-panel="background" class="hidden flex flex-wrap items-center gap-4">
@@ -173,9 +247,12 @@
     <!-- Content Row -->
     <div class="flex flex-1">
       <!-- Left Sidebar -->
-      <aside class="w-1/5 min-w-[240px] max-w-[320px] border-r border-slate-200 bg-white">
-        <div class="p-4 border-b border-slate-200 bg-gradient-to-r from-[#004c97]/10 to-emerald-500/10">
-          <h1 class="text-lg font-semibold text-[#004c97]">Slides</h1>
+      <aside id="slidesSidebar" class="slides-sidebar w-1/5 min-w-[240px] max-w-[320px] border-r border-slate-200 bg-white">
+        <div class="slides-sidebar__header flex items-center justify-between gap-2 border-b border-slate-200 bg-gradient-to-r from-[#004c97]/10 to-emerald-500/10 px-4 py-4">
+          <h1 class="slides-sidebar__title text-lg font-semibold text-[#004c97]">Slides</h1>
+          <button id="toggleSlidesSidebar" type="button" class="slides-sidebar-toggle" title="Toggle Slides">
+            <span class="slides-sidebar-toggle__icon">❮</span>
+          </button>
         </div>
         <div id="thumbnails" class="overflow-y-auto p-3 space-y-3">
           <!-- Thumbnails injected by JS -->
@@ -183,16 +260,39 @@
       </aside>
 
       <!-- Center Canvas -->
-      <main class="flex-1 flex flex-col items-center overflow-auto">
-        <div class="w-full p-4 md:p-6 lg:p-8">
-          <div class="w-full flex justify-center">
-            <!-- 16:9 container -->
-            <div class="relative w-full max-w-5xl aspect-video bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden" id="canvasContainer">
-              <!-- Active slide content injected here -->
+      <div class="canvas-wrapper flex-1">
+        <main class="flex h-full flex-col items-center overflow-auto">
+          <div class="w-full p-4 md:p-6 lg:p-8">
+            <div class="canvas-area flex w-full justify-center">
+              <div class="relative w-full max-w-5xl aspect-video bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden" id="canvasContainer">
+                <!-- Active slide content injected here -->
+              </div>
             </div>
           </div>
+        </main>
+      </div>
+      <aside id="chartInspector" class="hidden w-96 max-w-md border-l border-slate-200 bg-white/95 backdrop-blur-sm px-5 py-6 shadow-inner">
+        <div class="flex flex-col gap-4 text-slate-800">
+          <div>
+            <p class="text-xs uppercase tracking-wide text-slate-400">Chart</p>
+            <h2 class="text-lg font-semibold text-slate-900">Data &amp; Styling</h2>
+          </div>
+          <div id="chartDetailsSection" class="flex flex-col gap-4">
+            <div>
+              <label class="text-xs uppercase tracking-wide text-slate-500">Title</label>
+              <input id="chartTitleInput" type="text" class="mt-1 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus:border-[#004c97] focus:outline-none focus:ring-2 focus:ring-[#004c97]/30" placeholder="Chart title" />
+            </div>
+            <div>
+              <div class="mb-2 flex items-center justify-between">
+                <span class="text-xs uppercase tracking-wide text-slate-500">Data Points</span>
+                <button id="chartAddRowBtn" type="button" class="rounded-full bg-[#004c97] px-3 py-1 text-xs font-semibold text-white shadow-sm transition hover:bg-[#003471]">Add row</button>
+              </div>
+              <div id="chartDatasetList" class="flex max-h-64 flex-col gap-2 overflow-y-auto pr-1"></div>
+            </div>
+          </div>
+          <p class="text-xs text-slate-400">Tip: drag the chart on the canvas to move it, or use the corner handles to resize.</p>
         </div>
-      </main>
+      </aside>
     </div>
   </div>
 
@@ -329,11 +429,12 @@
     const addPieChartBtn = document.getElementById('addPieChartBtn');
     const chartTypeSelect = document.getElementById('chartTypeSelect');
     const chartPaletteSelect = document.getElementById('chartPaletteSelect');
-    const chartWidthRange = document.getElementById('chartWidthRange');
-    const chartHeightRange = document.getElementById('chartHeightRange');
-    const chartWidthValue = document.getElementById('chartWidthValue');
-    const chartHeightValue = document.getElementById('chartHeightValue');
     const chartRandomizeBtn = document.getElementById('chartRandomizeBtn');
+    const chartInspector = document.getElementById('chartInspector');
+    const chartDetailsSection = document.getElementById('chartDetailsSection');
+    const chartTitleInput = document.getElementById('chartTitleInput');
+    const chartDatasetList = document.getElementById('chartDatasetList');
+    const chartAddRowBtn = document.getElementById('chartAddRowBtn');
 
     const bgColorInput = document.getElementById('bgColorInput');
     const bgImageInput = document.getElementById('bgImageInput');
@@ -341,6 +442,9 @@
 
     const tabButtons = document.querySelectorAll('[data-tab-target]');
     const tabPanels = document.querySelectorAll('[data-tab-panel]');
+
+    const slidesSidebar = document.getElementById('slidesSidebar');
+    const toggleSlidesSidebarBtn = document.getElementById('toggleSlidesSidebar');
 
     const shareBtn = document.getElementById('shareBtn');
     const exportPdfBtn = document.getElementById('exportPdfBtn');
@@ -812,29 +916,51 @@
         }
 
         if (el.type === 'chart') {
+          const width = typeof el.width === 'number' ? el.width : 420;
+          const height = typeof el.height === 'number' ? el.height : 280;
           const wrapper = document.createElement('div');
-          wrapper.className = 'absolute draggable-placeholder flex items-center justify-center bg-white border border-slate-200 rounded-xl shadow-lg p-4';
+          wrapper.className = 'chart-wrapper draggable-placeholder flex items-center justify-center bg-white border border-slate-200 rounded-xl shadow-lg p-4';
           wrapper.style.left = (el.left || 100) + 'px';
           wrapper.style.top = (el.top || 100) + 'px';
-          wrapper.style.width = (el.width || 420) + 'px';
-          wrapper.style.height = (el.height || 280) + 'px';
+          wrapper.style.width = width + 'px';
+          wrapper.style.height = height + 'px';
           wrapper.dataset.elementId = el.id;
+
+          if (typeof el.width !== 'number') el.width = width;
+          if (typeof el.height !== 'number') el.height = height;
 
           if (selectedElementId === el.id) {
             wrapper.classList.add('ring-2', 'ring-[#004c97]');
           }
 
+          wrapper.addEventListener('pointerdown', (e) => {
+            if (!e.target.classList.contains('chart-resize-handle')) {
+              if (selectedElementId !== el.id) {
+                selectedElementId = el.id;
+              }
+              wrapper.classList.add('ring-2', 'ring-[#004c97]');
+              addChartHandles(wrapper, el);
+              startChartDrag(e, wrapper, el);
+            }
+          });
+
           wrapper.addEventListener('click', (e) => {
             e.stopPropagation();
-            selectedElementId = el.id;
-            render();
+            if (selectedElementId !== el.id) {
+              selectedElementId = el.id;
+              render();
+            }
           });
 
           const canvas = document.createElement('canvas');
           canvas.className = 'h-full w-full';
           wrapper.appendChild(canvas);
-          canvasContainerEl.appendChild(wrapper);
 
+          if (selectedElementId === el.id) {
+            addChartHandles(wrapper, el);
+          }
+
+          canvasContainerEl.appendChild(wrapper);
           renderChartForElement(el, canvas);
         }
       });
@@ -849,8 +975,8 @@
 
     function renderChartForElement(element, canvas, options = {}) {
       const ctx = canvas.getContext('2d');
-      const data = element.dataset || createDefaultChartData();
-      element.dataset = data;
+      const data = ensureChartDataset(element);
+      if (!data) return;
       const palette = getPaletteColors(element.palette || 'ocean');
       const baseColors = element.chartType === 'line'
         ? palette.map(color => color)
@@ -980,28 +1106,24 @@
         chartPaletteSelect.disabled = !isChart;
       }
 
-      if (chartWidthRange) {
-        if (isChart && selected) {
-          const w = Math.round(selected.width || 420);
-          chartWidthRange.value = String(w);
-          if (chartWidthValue) chartWidthValue.textContent = `${w}px`;
-        } else {
-          chartWidthRange.value = '420';
-          if (chartWidthValue) chartWidthValue.textContent = `${chartWidthRange.value}px`;
-        }
-        chartWidthRange.disabled = !isChart;
+      if (chartInspector) {
+        chartInspector.classList.toggle('hidden', !isChart);
       }
-
-      if (chartHeightRange) {
-        if (isChart && selected) {
-          const h = Math.round(selected.height || 280);
-          chartHeightRange.value = String(h);
-          if (chartHeightValue) chartHeightValue.textContent = `${h}px`;
-        } else {
-          chartHeightRange.value = '280';
-          if (chartHeightValue) chartHeightValue.textContent = `${chartHeightRange.value}px`;
-        }
-        chartHeightRange.disabled = !isChart;
+      if (chartDetailsSection) {
+        chartDetailsSection.classList.toggle('opacity-60', !isChart);
+        chartDetailsSection.classList.toggle('pointer-events-none', !isChart);
+      }
+      if (chartAddRowBtn) {
+        chartAddRowBtn.disabled = !isChart;
+      }
+      if (chartTitleInput) {
+        chartTitleInput.disabled = !isChart;
+        chartTitleInput.value = isChart && selected ? (selected.title || '') : '';
+      }
+      if (isChart && selected) {
+        renderChartDatasetEditor(selected);
+      } else if (chartDatasetList) {
+        chartDatasetList.innerHTML = '';
       }
 
       if (chartRandomizeBtn) {
@@ -1027,6 +1149,12 @@
       btn.addEventListener('click', () => setActiveTab(btn.dataset.tabTarget));
     });
 
+    if (toggleSlidesSidebarBtn && slidesSidebar) {
+      toggleSlidesSidebarBtn.addEventListener('click', () => {
+        slidesSidebar.classList.toggle('slides-sidebar--collapsed');
+      });
+    }
+
     setActiveTab('slides');
 
     // Helpers
@@ -1036,11 +1164,257 @@
       return slide.elements.find(e => e.id === selectedElementId) || null;
     }
 
+    function deleteSelectedElement() {
+      if (!selectedElementId) return;
+      const slide = getActiveSlide();
+      if (!slide) return;
+      const index = slide.elements.findIndex((el) => el.id === selectedElementId);
+      if (index === -1) return;
+      slide.elements.splice(index, 1);
+      selectedElementId = null;
+      markDirty();
+      render();
+    }
+
+    const MIN_CHART_DIMENSION = 120;
+
+    function ensureChartDataset(element) {
+      if (!element) return null;
+      let data = element.dataset;
+      if (!data || typeof data !== 'object') {
+        data = createDefaultChartData();
+        element.dataset = data;
+      }
+      if (!Array.isArray(data.labels)) data.labels = [];
+      if (!Array.isArray(data.values)) data.values = [];
+      while (data.labels.length < data.values.length) {
+        data.labels.push(`Label ${data.labels.length + 1}`);
+      }
+      while (data.values.length < data.labels.length) {
+        data.values.push(10);
+      }
+      return data;
+    }
+
+    function addChartHandles(wrapper, element) {
+      if (!wrapper) return;
+      wrapper.querySelectorAll('.chart-resize-handle').forEach(handle => handle.remove());
+      if (!element || element.type !== 'chart') return;
+      const handles = [
+        { handle: 'nw', style: { top: '-8px', left: '-8px' } },
+        { handle: 'ne', style: { top: '-8px', right: '-8px' } },
+        { handle: 'sw', style: { bottom: '-8px', left: '-8px' } },
+        { handle: 'se', style: { bottom: '-8px', right: '-8px' } },
+      ];
+
+      handles.forEach(({ handle, style }) => {
+        const node = document.createElement('div');
+        node.className = 'chart-resize-handle';
+        node.dataset.handle = handle;
+        Object.entries(style).forEach(([key, value]) => {
+          node.style[key] = value;
+        });
+        node.addEventListener('pointerdown', (event) => startChartResize(event, handle, wrapper, element));
+        wrapper.appendChild(node);
+      });
+    }
+
+    function startChartResize(event, handle, wrapper, element) {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const pointerId = event.pointerId;
+      if (event.target.setPointerCapture && pointerId !== undefined) {
+        event.target.setPointerCapture(pointerId);
+      }
+
+      const startX = event.clientX;
+      const startY = event.clientY;
+      const startWidth = element.width || wrapper.offsetWidth;
+      const startHeight = element.height || wrapper.offsetHeight;
+      const startLeft = element.left || parseFloat(wrapper.style.left) || 0;
+      const startTop = element.top || parseFloat(wrapper.style.top) || 0;
+
+      document.body.style.userSelect = 'none';
+
+      const onMove = (moveEvent) => {
+        const dx = moveEvent.clientX - startX;
+        const dy = moveEvent.clientY - startY;
+
+        let newWidth = startWidth;
+        let newHeight = startHeight;
+        let newLeft = startLeft;
+        let newTop = startTop;
+
+        if (handle.includes('e')) {
+          newWidth = Math.max(MIN_CHART_DIMENSION, startWidth + dx);
+        }
+        if (handle.includes('s')) {
+          newHeight = Math.max(MIN_CHART_DIMENSION, startHeight + dy);
+        }
+        if (handle.includes('w')) {
+          newWidth = Math.max(MIN_CHART_DIMENSION, startWidth - dx);
+          newLeft = startLeft + (startWidth - newWidth);
+        }
+        if (handle.includes('n')) {
+          newHeight = Math.max(MIN_CHART_DIMENSION, startHeight - dy);
+          newTop = startTop + (startHeight - newHeight);
+        }
+
+        const canvasRect = canvasContainerEl.getBoundingClientRect();
+        const maxLeft = Math.max(0, canvasRect.width - newWidth);
+        const maxTop = Math.max(0, canvasRect.height - newHeight);
+
+        element.width = newWidth;
+        element.height = newHeight;
+        element.left = Math.max(0, Math.min(newLeft, maxLeft));
+        element.top = Math.max(0, Math.min(newTop, maxTop));
+
+        wrapper.style.width = `${element.width}px`;
+        wrapper.style.height = `${element.height}px`;
+        wrapper.style.left = `${element.left}px`;
+        wrapper.style.top = `${element.top}px`;
+      };
+
+      const onUp = () => {
+        document.removeEventListener('pointermove', onMove);
+        document.removeEventListener('pointerup', onUp);
+        document.body.style.userSelect = '';
+        if (event.target.releasePointerCapture && pointerId !== undefined) {
+          event.target.releasePointerCapture(pointerId);
+        }
+        markDirty();
+        render();
+      };
+
+      document.addEventListener('pointermove', onMove);
+      document.addEventListener('pointerup', onUp);
+    }
+
+  function renderChartDatasetEditor(element) {
+    if (!chartDatasetList) return;
+    chartDatasetList.innerHTML = '';
+    if (!element || element.type !== 'chart') return;
+
+    const data = ensureChartDataset(element);
+    const labels = data.labels;
+    const values = data.values;
+
+    labels.forEach((label, index) => {
+      const row = document.createElement('div');
+      row.className = 'flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm';
+      row.dataset.index = String(index);
+
+      const labelInput = document.createElement('input');
+      labelInput.type = 'text';
+      labelInput.value = label;
+      labelInput.dataset.field = 'label';
+      labelInput.className = 'flex-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-sm text-slate-700 focus:border-[#004c97] focus:outline-none focus:ring-2 focus:ring-[#004c97]/30';
+      row.appendChild(labelInput);
+
+      const valueInput = document.createElement('input');
+      valueInput.type = 'number';
+      valueInput.step = '1';
+      valueInput.value = values[index];
+      valueInput.dataset.field = 'value';
+      valueInput.className = 'w-24 rounded-md border border-slate-200 bg-white px-2 py-1 text-sm text-slate-700 focus:border-[#004c97] focus:outline-none focus:ring-2 focus:ring-[#004c97]/30';
+      row.appendChild(valueInput);
+
+      const deleteBtn = document.createElement('button');
+      deleteBtn.type = 'button';
+      deleteBtn.dataset.action = 'delete';
+      deleteBtn.className = 'rounded-full bg-rose-500 px-3 py-1 text-xs font-semibold text-white shadow-sm transition hover:bg-rose-600 focus:outline-none focus:ring-2 focus:ring-rose-400';
+      deleteBtn.textContent = 'Remove';
+      row.appendChild(deleteBtn);
+
+      chartDatasetList.appendChild(row);
+    });
+  }
+
+    function startChartDrag(event, wrapper, element) {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const pointerId = event.pointerId;
+      if (wrapper.setPointerCapture && pointerId !== undefined) {
+        wrapper.setPointerCapture(pointerId);
+      }
+
+      const startX = event.clientX;
+      const startY = event.clientY;
+      const startLeft = element.left || parseFloat(wrapper.style.left) || 0;
+      const startTop = element.top || parseFloat(wrapper.style.top) || 0;
+      let moved = false;
+
+      document.body.style.userSelect = 'none';
+
+      const onMove = (moveEvent) => {
+        const dx = moveEvent.clientX - startX;
+        const dy = moveEvent.clientY - startY;
+        if (!moved && (Math.abs(dx) > 2 || Math.abs(dy) > 2)) {
+          moved = true;
+        }
+        const canvasRect = canvasContainerEl.getBoundingClientRect();
+        const newLeft = Math.max(0, Math.min(startLeft + dx, canvasRect.width - wrapper.offsetWidth));
+        const newTop = Math.max(0, Math.min(startTop + dy, canvasRect.height - wrapper.offsetHeight));
+        element.left = newLeft;
+        element.top = newTop;
+        wrapper.style.left = `${newLeft}px`;
+        wrapper.style.top = `${newTop}px`;
+      };
+
+      const onUp = () => {
+        document.removeEventListener('pointermove', onMove);
+        document.removeEventListener('pointerup', onUp);
+        document.body.style.userSelect = '';
+        if (wrapper.releasePointerCapture && pointerId !== undefined) {
+          wrapper.releasePointerCapture(pointerId);
+        }
+        if (moved) {
+          markDirty();
+          render();
+        } else {
+          render();
+        }
+      };
+
+      document.addEventListener('pointermove', onMove);
+      document.addEventListener('pointerup', onUp);
+    }
+
+    function updateChartInstance(element) {
+      if (!element || element.type !== 'chart') return;
+      const dataset = ensureChartDataset(element);
+      const chart = chartInstances.get(element.id);
+      if (!chart) return;
+      chart.data.labels = [...dataset.labels];
+      chart.data.datasets[0].data = [...dataset.values];
+      chart.data.datasets[0].label = element.title || 'Dataset';
+      chart.update();
+    }
+
     // Events: outer click clears selection
     canvasContainerEl.addEventListener('click', () => {
       selectedElementId = null;
       render();
     });
+
+  document.addEventListener('keydown', (event) => {
+    if (!selectedElementId) return;
+    if (event.key !== 'Delete' && event.key !== 'Backspace') return;
+
+    const target = event.target;
+    const isEditableTarget =
+      target &&
+      (target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.isContentEditable);
+
+    if (isEditableTarget) return;
+
+    event.preventDefault();
+    deleteSelectedElement();
+  });
 
     // Add slide
     if (addSlideBtn) {
@@ -1269,13 +1643,15 @@
       const element = {
         id: crypto.randomUUID(),
         type: 'chart',
+        title: 'New Chart',
         chartType,
         palette,
         dataset,
         left: 120,
         top: 120,
-        width: chartWidthRange ? parseInt(chartWidthRange.value, 10) || 420 : 420,
-        height: chartHeightRange ? parseInt(chartHeightRange.value, 10) || 280 : 280,
+        width: 420,
+        height: 280,
+        rotation: 0,
       };
       slide.elements.push(element);
       selectedElementId = element.id;
@@ -1286,9 +1662,8 @@
 
     function randomizeChartData(element) {
       if (!element) return;
-      const labels = element.dataset?.labels || ['A', 'B', 'C', 'D', 'E'];
-      const values = labels.map(() => Math.floor(Math.random() * 70) + 5);
-      element.dataset = { labels, values };
+      const data = ensureChartDataset(element);
+      data.values = data.labels.map(() => Math.floor(Math.random() * 70) + 5);
       markDirty();
     }
 
@@ -1324,31 +1699,72 @@
       });
     }
 
-    if (chartWidthRange) {
-      chartWidthRange.addEventListener('input', () => {
+    if (chartTitleInput) {
+      chartTitleInput.addEventListener('input', () => {
         const el = getSelectedElement();
         if (el && el.type === 'chart') {
-          el.width = parseInt(chartWidthRange.value, 10) || el.width;
-          if (chartWidthValue) chartWidthValue.textContent = `${Math.round(el.width)}px`;
+          el.title = chartTitleInput.value;
+          updateChartInstance(el);
           markDirty();
-          render();
-        } else if (chartWidthValue) {
-          chartWidthValue.textContent = `${chartWidthRange.value}px`;
         }
       });
     }
 
-    if (chartHeightRange) {
-      chartHeightRange.addEventListener('input', () => {
+    if (chartAddRowBtn) {
+      chartAddRowBtn.addEventListener('click', () => {
         const el = getSelectedElement();
-        if (el && el.type === 'chart') {
-          el.height = parseInt(chartHeightRange.value, 10) || el.height;
-          if (chartHeightValue) chartHeightValue.textContent = `${Math.round(el.height)}px`;
-          markDirty();
-          render();
-        } else if (chartHeightValue) {
-          chartHeightValue.textContent = `${chartHeightRange.value}px`;
+        if (!el || el.type !== 'chart') return;
+        const data = ensureChartDataset(el);
+        data.labels.push(`Label ${data.labels.length + 1}`);
+        data.values.push(10);
+        renderChartDatasetEditor(el);
+        updateChartInstance(el);
+        markDirty();
+      });
+    }
+
+    if (chartDatasetList) {
+      chartDatasetList.addEventListener('input', (event) => {
+        const target = event.target;
+        const row = target.closest('[data-index]');
+        if (!row) return;
+        const el = getSelectedElement();
+        if (!el || el.type !== 'chart') return;
+        const data = ensureChartDataset(el);
+        const index = Number(row.dataset.index);
+        if (Number.isNaN(index)) return;
+        if (target.dataset.field === 'label') {
+          data.labels[index] = target.value;
+        } else if (target.dataset.field === 'value') {
+          let value = parseFloat(target.value);
+          if (!Number.isFinite(value)) value = 0;
+          data.values[index] = value;
+          target.value = value;
         }
+        updateChartInstance(el);
+        markDirty();
+      });
+
+      chartDatasetList.addEventListener('click', (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) return;
+        if (target.dataset.action !== 'delete') return;
+        const row = target.closest('[data-index]');
+        if (!row) return;
+        const el = getSelectedElement();
+        if (!el || el.type !== 'chart') return;
+        const data = ensureChartDataset(el);
+        const index = Number(row.dataset.index);
+        if (Number.isNaN(index)) return;
+        data.labels.splice(index, 1);
+        data.values.splice(index, 1);
+        if (!data.labels.length) {
+          data.labels.push('Label 1');
+          data.values.push(10);
+        }
+        renderChartDatasetEditor(el);
+        updateChartInstance(el);
+        markDirty();
       });
     }
 
