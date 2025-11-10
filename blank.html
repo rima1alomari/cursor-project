@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Blank</title>
+    <title>LumenSlides – Blank Canvas</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
@@ -11,23 +11,48 @@
   </head>
   <body class="bg-white bg-modern bg-corner-dots">
     <header class="site-header">
-      <img class="site-logo" src="./assets/aramco-digital.png" alt="Aramco Digital logo" onerror="this.remove(); var b=document.querySelector('.site-brand'); if(b){ b.textContent='Aramco Digital'; }" />
-      <span class="site-brand"></span>
+      <div class="header-left">
+        <img class="site-logo site-logo--mark" src="./assets/LumenSlides.jpg" alt="LumenSlides logo" />
+        <span class="site-brand">LumenSlides</span>
+      </div>
+      <div class="header-actions">
+        <a class="btn btn-outline btn--sm" href="./home.html">Back to home</a>
+      </div>
     </header>
     <main class="center-wrapper">
-      <section class="card card--center" aria-label="Blank slide">
+      <section class="card card--center blank-card" aria-label="Blank slide">
         <div class="logo-circle" aria-hidden="true">
           <span class="logo-dot logo-dot--green"></span>
           <span class="logo-dot logo-dot--blue"></span>
         </div>
-        <h1 class="title">Blank</h1>
-        <p class="subtitle">This page is intentionally left blank. Add your content here.</p>
-        <div class="row">
-          <a class="btn btn-outline" href="./index.html">Back</a>
+        <h1 class="title title--xl">Blank Canvas</h1>
+        <p class="subtitle">Start from scratch, remix the layout, and let your story glow with LumenSlides.</p>
+
+        <div class="blank-preview" role="presentation">
+          <span class="blank-preview__badge">new slide</span>
+          <div class="blank-preview__toolbar">
+            <span class="blank-preview__dot"></span>
+            <span class="blank-preview__dot blank-preview__dot--blue"></span>
+            <span class="blank-preview__dot blank-preview__dot--green"></span>
+            <span>canvas</span>
+          </div>
+          <div class="blank-preview__stage">your slide lives here</div>
         </div>
+
+        <ul class="blank-checklist">
+          <li><strong>1.</strong><span>Pick a mood – solid color, gradient, or image backdrop.</span></li>
+          <li><strong>2.</strong><span>Drop your headline and story beats into tidy text blocks.</span></li>
+          <li><strong>3.</strong><span>Add charts, media, or shapes to highlight the big spark.</span></li>
+        </ul>
+
+        <div class="blank-actions">
+          <a class="btn btn-primary" href="./slide-editor.html">Open live editor</a>
+          <a class="btn btn-outline" href="./templates.html">Browse templates</a>
+        </div>
+        <p class="blank-note">Need a nudge? The editor toolbar has AI assists to help you shape the slide.</p>
       </section>
     </main>
-    <footer class="credits">Made by: Reema Alomari, Abdullah Alqahtani, Yara AlSardi</footer>
+    <footer class="credits">Crafted with LumenSlides · Illuminate every idea</footer>
   </body>
   </html>
 

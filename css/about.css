@@ -1,0 +1,125 @@
+.page--about {
+  position: relative;
+  min-height: 100vh;
+  padding: clamp(40px, 6vw, 80px);
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: clamp(40px, 6vw, 70px);
+  overflow: hidden;
+}
+
+.about-main {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  justify-items: center;
+  gap: clamp(32px, 4vw, 56px);
+  text-align: center;
+}
+
+.about-hero {
+  max-width: min(720px, 90vw);
+  display: grid;
+  gap: 16px;
+}
+
+.about-hero h1 {
+  margin: 0;
+  font-size: clamp(2.4rem, 5vw, 3.4rem);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.about-hero p {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: var(--text-muted, #6c6c6c);
+}
+
+.about-mission {
+  max-width: min(860px, 92vw);
+  padding: clamp(24px, 5vw, 36px);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--border, rgba(0, 0, 0, 0.05));
+  box-shadow: 0 24px 48px rgba(17, 24, 39, 0.12);
+  display: grid;
+  gap: 12px;
+  text-align: left;
+}
+
+.about-mission strong {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent, #4b57f2);
+}
+
+.about-mission p {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.7;
+  color: var(--text-main, #111111);
+}
+
+.team-section {
+  width: 100%;
+  max-width: 960px;
+  display: grid;
+  gap: 32px;
+}
+
+.team-section h2 {
+  margin: 0;
+  font-size: clamp(1.8rem, 3vw, 2.4rem);
+}
+
+.team-grid {
+  display: grid;
+  gap: clamp(16px, 3vw, 24px);
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.team-member {
+  padding: clamp(20px, 4vw, 28px);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 18px 40px rgba(17, 24, 39, 0.1);
+  display: grid;
+  gap: 6px;
+  text-align: center;
+}
+
+.team-member h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+  color: var(--accent, #4b57f2);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.back-link:hover,
+.back-link:focus-visible {
+  color: var(--text-main, #111111);
+}
+
+@media (max-width: 720px) {
+  .about-mission {
+    text-align: center;
+  }
+
+  .team-member {
+    text-align: center;
+  }
+}
+

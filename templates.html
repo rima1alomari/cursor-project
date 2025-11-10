@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LumenSlides · Templates</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="css/templates.css" />
+  </head>
+  <body class="bg-white bg-modern bg-corner-dots">
+    <header class="site-header">
+      <div class="header-left">
+        <img class="site-logo site-logo--banner" src="./Screenshot 2025-11-06 at 1.14.39 PM.png" alt="Aramco Digital banner" onerror="this.remove(); var b=document.querySelector('.site-brand'); if(b){ b.textContent='Aramco Digital'; }" />
+      </div>
+      <nav class="site-nav site-nav--centered" aria-label="Primary">
+        <a href="home.html" class="nav-link">Home</a>
+        <a href="templates.html" class="nav-link nav-link--current" aria-current="page">Templates</a>
+        <a href="about.html" class="nav-link">About</a>
+      </nav>
+      <div class="header-right">
+        <img class="site-logo site-logo--mark" src="./logo.png" alt="Aramco Digital logo" />
+      </div>
+    </header>
+    <header class="templates-header">
+      <div class="templates-shell">
+        <h1>Templates</h1>
+        <p>Select the vibe you're aiming for. Every template is clean, modern, and presentation-ready.</p>
+        <div class="template-filters" role="tablist">
+          <button class="filter-chip active" data-filter="all">Business</button>
+          <button class="filter-chip" data-filter="Aesthetic">Aesthetic</button>
+          <button class="filter-chip" data-filter="Education">Education</button>
+          <button class="filter-chip" data-filter="Minimal">Minimal</button>
+          <button class="filter-chip" data-filter="Dark Play">Dark Play</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="templates-shell">
+      <section class="templates-grid">
+        <article class="template-card" data-template="Blank Template" data-tag="Minimal">
+          <div class="template-preview preview-blank" aria-hidden="true">
+            <span class="preview-shape shape-square"></span>
+            <span class="preview-dot dot-a"></span>
+            <span class="preview-dot dot-b"></span>
+          </div>
+          <div class="template-info">
+            <span class="template-tag">Minimal</span>
+            <h2>Blank Template</h2>
+            <p>Start with a calm, balanced canvas. Ideal for custom storytelling.</p>
+          </div>
+          <button class="template-button">Use Template</button>
+        </article>
+
+        <article class="template-card" data-template="Business Template" data-tag="Business">
+          <div class="template-preview preview-business" aria-hidden="true">
+            <span class="preview-shape shape-rect"></span>
+            <span class="preview-dot dot-a"></span>
+            <span class="preview-dot dot-c"></span>
+          </div>
+          <div class="template-info">
+            <span class="template-tag">Business</span>
+            <h2>Business Template</h2>
+            <p>Slides structured for executive summaries, metrics, and strategy.</p>
+          </div>
+          <button class="template-button">Use Template</button>
+        </article>
+
+        <article class="template-card" data-template="Education Template" data-tag="Education">
+          <div class="template-preview preview-education" aria-hidden="true">
+            <span class="preview-shape shape-circle"></span>
+            <span class="preview-dot dot-b"></span>
+            <span class="preview-dot dot-c"></span>
+          </div>
+          <div class="template-info">
+            <span class="template-tag">Education</span>
+            <h2>Education Template</h2>
+            <p>Lesson-friendly layouts that keep students focused and engaged.</p>
+          </div>
+          <button class="template-button">Use Template</button>
+        </article>
+      </section>
+    </main>
+
+    <script src="scripts/templates.js"></script>
+  </body>
+</html>
