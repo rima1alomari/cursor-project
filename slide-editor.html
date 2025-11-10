@@ -183,6 +183,151 @@
     .slides-sidebar--collapsed + .canvas-wrapper .canvas-area > div {
       max-width: none;
     }
+    .slide-thumbnail-button {
+      position: relative;
+      display: block;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+    }
+    .slide-thumbnail-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 22px rgba(15, 23, 42, 0.14);
+    }
+    .slide-thumbnail-button--active {
+      border-color: #004c97;
+      background: linear-gradient(135deg, rgba(0, 76, 151, 0.12), rgba(16, 185, 129, 0.08));
+      box-shadow: 0 12px 32px rgba(15, 23, 42, 0.18);
+    }
+    .slide-thumbnail-button--drag-over::after {
+      content: '';
+      position: absolute;
+      inset: -6px;
+      border: 2px dashed rgba(0, 76, 151, 0.55);
+      border-radius: 18px;
+      pointer-events: none;
+    }
+    .slide-thumbnail-button--dragging {
+      opacity: 0.55;
+      transform: scale(0.97);
+    }
+    .thumbnails-dragging .slide-thumbnail-button {
+      cursor: grab;
+    }
+    .thumbnails-dragging .slide-thumbnail-button--dragging {
+      cursor: grabbing;
+    }
+    #canvasContainer {
+      transition: transform 0.35s ease, box-shadow 0.35s ease, opacity 0.35s ease;
+    }
+    #canvasContainer.is-switching {
+      animation: slideFadeIn 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    @keyframes slideFadeIn {
+      0% {
+        opacity: 0.35;
+        transform: scale(0.97) translateY(14px);
+        box-shadow: none;
+      }
+      100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+    .slide-animation-preview {
+      animation-fill-mode: both;
+      pointer-events: none;
+    }
+    .element-animation-preview {
+      animation-fill-mode: both;
+      pointer-events: none;
+    }
+    .animation-preview-running {
+      will-change: transform, opacity;
+    }
+    .slide-animation-fade,
+    .element-animation-fade {
+      animation-name: previewFadeIn;
+    }
+    .slide-animation-slide-up,
+    .element-animation-slide-up {
+      animation-name: previewSlideUp;
+    }
+    .slide-animation-slide-down,
+    .element-animation-slide-down {
+      animation-name: previewSlideDown;
+    }
+    .slide-animation-slide-left,
+    .element-animation-slide-left {
+      animation-name: previewSlideLeft;
+    }
+    .slide-animation-slide-right,
+    .element-animation-slide-right {
+      animation-name: previewSlideRight;
+    }
+    .slide-animation-zoom-in,
+    .element-animation-zoom-in {
+      animation-name: previewZoomIn;
+    }
+    .slide-animation-zoom-out,
+    .element-animation-zoom-out {
+      animation-name: previewZoomOut;
+    }
+    .slide-animation-pop,
+    .element-animation-pop {
+      animation-name: previewPop;
+    }
+    .slide-animation-bounce,
+    .element-animation-bounce {
+      animation-name: previewBounce;
+    }
+    .slide-animation-flip,
+    .element-animation-flip {
+      animation-name: previewFlip;
+      transform-origin: center;
+    }
+    @keyframes previewFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes previewSlideUp {
+      0% { transform: translateY(28px); opacity: 0; }
+      100% { transform: translateY(0); opacity: 1; }
+    }
+    @keyframes previewSlideDown {
+      0% { transform: translateY(-28px); opacity: 0; }
+      100% { transform: translateY(0); opacity: 1; }
+    }
+    @keyframes previewSlideLeft {
+      0% { transform: translateX(32px); opacity: 0; }
+      100% { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes previewSlideRight {
+      0% { transform: translateX(-32px); opacity: 0; }
+      100% { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes previewZoomIn {
+      0% { transform: scale(0.82); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    @keyframes previewZoomOut {
+      0% { transform: scale(1.18); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    @keyframes previewPop {
+      0% { transform: scale(0.8); opacity: 0; }
+      60% { transform: scale(1.05); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    @keyframes previewBounce {
+      0% { transform: translateY(-24px); opacity: 0; }
+      55% { transform: translateY(8px); opacity: 1; }
+      75% { transform: translateY(-4px); }
+      100% { transform: translateY(0); }
+    }
+    @keyframes previewFlip {
+      0% { transform: rotateX(-70deg); opacity: 0; }
+      60% { transform: rotateX(12deg); opacity: 1; }
+      100% { transform: rotateX(0); opacity: 1; }
+    }
   </style>
 </head>
 <body class="min-h-screen bg-[#f5f7fa] text-slate-800">
@@ -202,7 +347,7 @@
             <div class="rounded-full bg-black/20 px-3 py-1.5 text-sm">Slide <span id="slideIndexLabel" class="font-semibold">1</span>/<span id="slideCountLabel">1</span></div>
             <span id="autosaveStatus" class="text-xs text-white/80">Autosave ready</span>
             <button id="shareBtn" class="rounded-full border border-white/30 px-3 py-1.5 text-sm hover:bg-white/10">Share</button>
-            <button id="presentModeBtn" class="rounded-full border border-white/30 px-3 py-1.5 text-sm hover:bg-white/10">Presenter Mode</button>
+            <button id="presentBtn" class="rounded-full border border-white/30 px-3 py-1.5 text-sm hover:bg-white/10">Present</button>
             <button id="exportPdfBtn" class="rounded-full bg-white/20 px-3 py-1.5 text-sm shadow-sm transition hover:bg-white/30">Export PDF</button>
           </div>
         </div>
@@ -212,6 +357,7 @@
             <button data-tab-target="text" class="tool-tab rounded-full px-4 py-1.5 text-sm font-medium text-white/70 transition">Text</button>
             <button data-tab-target="image" class="tool-tab rounded-full px-4 py-1.5 text-sm font-medium text-white/70 transition">Image</button>
             <button data-tab-target="chart" class="tool-tab rounded-full px-4 py-1.5 text-sm font-medium text-white/70 transition">Chart</button>
+            <button data-tab-target="animation" class="tool-tab rounded-full px-4 py-1.5 text-sm font-medium text-white/70 transition">Animation</button>
             <button data-tab-target="shapes" class="tool-tab rounded-full px-4 py-1.5 text-sm font-medium text-white/70 transition">Shapes</button>
             <button data-tab-target="background" class="tool-tab rounded-full px-4 py-1.5 text-sm font-medium text-white/70 transition">Background</button>
           </div>
@@ -355,6 +501,18 @@
             </div>
             <button id="chartRandomizeBtn" class="rounded-full border border-white/30 px-3 py-1.5 text-sm hover:bg-white/10">Randomize Data</button>
           </div>
+          <div data-tab-panel="animation" id="animationsTabQuickActions" class="hidden flex flex-wrap items-center gap-4">
+            <div class="flex flex-col gap-2">
+              <p class="text-sm text-white/80">Add energy to your story. Apply slide entrance effects or animate selected items.</p>
+              <div class="flex flex-wrap items-center gap-2">
+                <button type="button" data-slide-animation="fade" class="rounded-full bg-white/20 px-3 py-1.5 text-sm hover:bg-white/30">Fade Slide</button>
+                <button type="button" data-slide-animation="slide-up" class="rounded-full bg-white/20 px-3 py-1.5 text-sm hover:bg-white/30">Slide Up</button>
+                <button type="button" data-slide-animation="zoom-in" class="rounded-full border border-white/30 px-3 py-1.5 text-sm hover:bg-white/10">Zoom In</button>
+                <button type="button" data-element-animation="pop" class="rounded-full border border-white/30 px-3 py-1.5 text-sm hover:bg-white/10">Pop Selected</button>
+                <button type="button" data-element-animation="slide-right" class="rounded-full border border-white/30 px-3 py-1.5 text-sm hover:bg-white/10">Slide Right Selected</button>
+              </div>
+            </div>
+          </div>
           <div data-tab-panel="shapes" id="shapesTabQuickActions" class="hidden flex flex-wrap items-center gap-4">
             <p class="text-sm text-white/80">Pick a shape from the right-hand Shapes panel or add a quick shape below.</p>
             <div class="flex flex-wrap items-center gap-2">
@@ -402,6 +560,95 @@
           </div>
         </main>
       </div>
+      <aside id="animationInspector" class="hidden w-96 max-w-md border-l border-slate-200 bg-white/95 backdrop-blur-sm px-5 py-6 shadow-inner">
+        <div class="flex flex-col gap-6 text-slate-800">
+          <div>
+            <p class="text-xs uppercase tracking-wide text-slate-400">Animation</p>
+            <h2 class="text-lg font-semibold text-slate-900">Motion &amp; Timing</h2>
+            <p class="mt-1 text-xs text-slate-500">Customize how this slide and its items come to life. Preview anytime.</p>
+          </div>
+          <div class="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white/70 p-4 shadow-sm">
+            <div class="flex items-center justify-between">
+              <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-500">Slide Entrance</h3>
+              <button id="slideAnimationPreviewBtn" type="button" class="rounded-full border border-[#004c97]/30 px-3 py-1 text-xs font-semibold text-[#004c97] transition hover:bg-[#004c97]/10">Preview Slide</button>
+            </div>
+            <div class="flex flex-col gap-3">
+              <label class="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Effect
+                <select id="slideAnimationSelect" class="mt-1 w-full rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm focus:border-[#004c97] focus:outline-none focus:ring-2 focus:ring-[#004c97]/30">
+                  <option value="none">None</option>
+                  <option value="fade">Fade</option>
+                  <option value="slide-up">Slide Up</option>
+                  <option value="slide-down">Slide Down</option>
+                  <option value="slide-left">Slide Left</option>
+                  <option value="slide-right">Slide Right</option>
+                  <option value="zoom-in">Zoom In</option>
+                  <option value="zoom-out">Zoom Out</option>
+                  <option value="pop">Pop</option>
+                  <option value="bounce">Bounce</option>
+                  <option value="flip">Flip</option>
+                </select>
+              </label>
+              <div>
+                <div class="flex items-center justify-between text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                  <span>Duration</span>
+                  <span id="slideAnimDurationLabel">0.6s</span>
+                </div>
+                <input id="slideAnimDurationInput" type="range" min="200" max="2000" step="50" value="600" class="mt-1 h-1 w-full accent-[#004c97]">
+              </div>
+              <div>
+                <div class="flex items-center justify-between text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                  <span>Delay</span>
+                  <span id="slideAnimDelayLabel">0 ms</span>
+                </div>
+                <input id="slideAnimDelayInput" type="range" min="0" max="2000" step="50" value="0" class="mt-1 h-1 w-full accent-[#004c97]">
+              </div>
+            </div>
+          </div>
+          <div class="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white/70 p-4 shadow-sm">
+            <div class="flex items-center justify-between">
+              <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-500">Selected Item</h3>
+              <div class="flex items-center gap-2">
+                <button id="elementAnimationPreviewBtn" type="button" class="rounded-full border border-slate-300 px-3 py-1 text-xs font-semibold text-slate-600 transition hover:bg-slate-100">Preview</button>
+                <button id="elementAnimationResetBtn" type="button" class="rounded-full border border-rose-300 px-3 py-1 text-xs font-semibold text-rose-500 transition hover:bg-rose-50">Reset</button>
+              </div>
+            </div>
+            <p id="elementAnimationEmptyState" class="text-xs text-slate-400">Select any item on the slide to animate it.</p>
+            <div id="elementAnimationControls" class="hidden flex flex-col gap-3">
+              <label class="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Effect
+                <select id="elementAnimationSelect" class="mt-1 w-full rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm focus:border-[#004c97] focus:outline-none focus:ring-2 focus:ring-[#004c97]/30">
+                  <option value="none">None</option>
+                  <option value="fade">Fade</option>
+                  <option value="slide-up">Slide Up</option>
+                  <option value="slide-down">Slide Down</option>
+                  <option value="slide-left">Slide Left</option>
+                  <option value="slide-right">Slide Right</option>
+                  <option value="zoom-in">Zoom In</option>
+                  <option value="zoom-out">Zoom Out</option>
+                  <option value="pop">Pop</option>
+                  <option value="bounce">Bounce</option>
+                  <option value="flip">Flip</option>
+                </select>
+              </label>
+              <div>
+                <div class="flex items-center justify-between text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                  <span>Duration</span>
+                  <span id="elementAnimDurationLabel">0.6s</span>
+                </div>
+                <input id="elementAnimDurationInput" type="range" min="150" max="2000" step="50" value="600" class="mt-1 h-1 w-full accent-[#004c97]">
+              </div>
+              <div>
+                <div class="flex items-center justify-between text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                  <span>Delay</span>
+                  <span id="elementAnimDelayLabel">0 ms</span>
+                </div>
+                <input id="elementAnimDelayInput" type="range" min="0" max="3000" step="50" value="0" class="mt-1 h-1 w-full accent-[#004c97]">
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
       <aside id="shapeInspector" class="hidden w-96 max-w-md border-l border-slate-200 bg-white/95 backdrop-blur-sm px-5 py-6 shadow-inner">
         <div class="flex flex-col gap-5 text-slate-800">
           <div>
@@ -561,7 +808,7 @@
   <div id="presenterOverlay" class="fixed inset-0 z-50 hidden flex flex-col bg-slate-900/95 text-white">
     <div class="flex items-center justify-between px-8 py-6">
       <div>
-        <p class="text-xs uppercase tracking-[0.4em] text-slate-300">Presenter Mode</p>
+        <p class="text-xs uppercase tracking-[0.4em] text-slate-300">Present</p>
         <h2 id="presenterTitle" class="text-2xl font-semibold">Slide 1</h2>
       </div>
       <div class="flex items-center gap-3 text-sm">
@@ -582,8 +829,8 @@
   <script>
     // Simple in-memory slides model
     let slides = [
-      { id: crypto.randomUUID(), title: 'Slide 1', backgroundColor: '#ffffff', backgroundImage: null, elements: [] },
-      { id: crypto.randomUUID(), title: 'Slide 2', backgroundColor: '#ffffff', backgroundImage: null, elements: [] },
+      { id: crypto.randomUUID(), title: 'Slide 1', backgroundColor: '#ffffff', backgroundImage: null, elements: [], animation: { type: 'none', duration: 600, delay: 0 } },
+      { id: crypto.randomUUID(), title: 'Slide 2', backgroundColor: '#ffffff', backgroundImage: null, elements: [], animation: { type: 'none', duration: 600, delay: 0 } },
     ];
     let activeSlideIndex = 0;
     let selectedElementId = null; // currently selected element on canvas
@@ -675,7 +922,24 @@
     const chartTitleInput = document.getElementById('chartTitleInput');
     const chartDatasetList = document.getElementById('chartDatasetList');
     const chartAddRowBtn = document.getElementById('chartAddRowBtn');
+    const animationsTabQuickActions = document.getElementById('animationsTabQuickActions');
     const shapesTabQuickActions = document.getElementById('shapesTabQuickActions');
+    const animationInspector = document.getElementById('animationInspector');
+    const slideAnimationSelect = document.getElementById('slideAnimationSelect');
+    const slideAnimDurationInput = document.getElementById('slideAnimDurationInput');
+    const slideAnimDurationLabel = document.getElementById('slideAnimDurationLabel');
+    const slideAnimDelayInput = document.getElementById('slideAnimDelayInput');
+    const slideAnimDelayLabel = document.getElementById('slideAnimDelayLabel');
+    const slideAnimationPreviewBtn = document.getElementById('slideAnimationPreviewBtn');
+    const elementAnimationSelect = document.getElementById('elementAnimationSelect');
+    const elementAnimDurationInput = document.getElementById('elementAnimDurationInput');
+    const elementAnimDurationLabel = document.getElementById('elementAnimDurationLabel');
+    const elementAnimDelayInput = document.getElementById('elementAnimDelayInput');
+    const elementAnimDelayLabel = document.getElementById('elementAnimDelayLabel');
+    const elementAnimationPreviewBtn = document.getElementById('elementAnimationPreviewBtn');
+    const elementAnimationResetBtn = document.getElementById('elementAnimationResetBtn');
+    const elementAnimationControls = document.getElementById('elementAnimationControls');
+    const elementAnimationEmptyState = document.getElementById('elementAnimationEmptyState');
     const shapeInspector = document.getElementById('shapeInspector');
     const shapeLibrary = document.getElementById('shapeLibrary');
     const shapeFillInput = document.getElementById('shapeFillInput');
@@ -701,7 +965,7 @@
 
     const shareBtn = document.getElementById('shareBtn');
     const exportPdfBtn = document.getElementById('exportPdfBtn');
-    const presentModeBtn = document.getElementById('presentModeBtn');
+    const presentBtn = document.getElementById('presentBtn');
     const shareModal = document.getElementById('shareModal');
     const shareCloseBtn = document.getElementById('shareCloseBtn');
     const shareCopyBtn = document.getElementById('shareCopyBtn');
@@ -741,6 +1005,13 @@
       opacity: 1,
       cornerRadius: 24
     };
+    const availableAnimationTypes = ['none', 'fade', 'slide-up', 'slide-down', 'slide-left', 'slide-right', 'zoom-in', 'zoom-out', 'pop', 'bounce', 'flip'];
+    const slideAnimationDefaults = { type: 'none', duration: 600, delay: 0 };
+    const elementAnimationDefaults = { type: 'none', duration: 600, delay: 0 };
+    const slideAnimationClassList = availableAnimationTypes.filter(type => type !== 'none').map(type => `slide-animation-${type}`);
+    const elementAnimationClassList = availableAnimationTypes.filter(type => type !== 'none').map(type => `element-animation-${type}`);
+    const elementAnimationTimeouts = new WeakMap();
+    let slideAnimationTimeout = null;
     const SVG_NS = 'http://www.w3.org/2000/svg';
 
     function getShapePreset(shapeType) {
@@ -1041,7 +1312,211 @@
       markDirty();
       render();
     }
+
+    function normalizeAnimationConfig(animation, defaults) {
+      if (!animation || typeof animation !== 'object') {
+        return { ...defaults };
+      }
+      const normalized = { ...defaults, ...animation };
+      if (!availableAnimationTypes.includes(normalized.type)) {
+        normalized.type = defaults.type;
+      }
+      normalized.duration = Math.min(Math.max(Number(normalized.duration) || defaults.duration, 100), 4000);
+      normalized.delay = Math.min(Math.max(Number(normalized.delay) || defaults.delay, 0), 5000);
+      return normalized;
+    }
+
+    function ensureSlideAnimation(slide) {
+      if (!slide) return;
+      slide.animation = normalizeAnimationConfig(slide.animation, slideAnimationDefaults);
+    }
+
+    function ensureElementAnimation(element) {
+      if (!element) return;
+      element.animation = normalizeAnimationConfig(element.animation, elementAnimationDefaults);
+    }
+
+    function formatDurationLabel(ms) {
+      const seconds = Math.max(ms, 0) / 1000;
+      return `${parseFloat(seconds.toFixed(2))}s`;
+    }
+
+    function formatDelayLabel(ms) {
+      return `${Math.max(ms, 0)} ms`;
+    }
+
+    function playSlideAnimationPreview(animation, targetNode = canvasContainerEl, options = {}) {
+      if (!targetNode) return;
+      const track = options.track ?? (targetNode === canvasContainerEl);
+      if (track && targetNode === canvasContainerEl && slideAnimationTimeout) {
+        window.clearTimeout(slideAnimationTimeout);
+        slideAnimationTimeout = null;
+      }
+      targetNode.classList.remove('slide-animation-preview', ...slideAnimationClassList, 'animation-preview-running');
+      targetNode.style.animation = 'none';
+      void targetNode.offsetWidth;
+      targetNode.style.animation = '';
+      if (!animation || animation.type === 'none') {
+        targetNode.style.animationDuration = '';
+        targetNode.style.animationDelay = '';
+        return;
+      }
+      const duration = Math.min(Math.max(animation.duration || 600, 100), 4000);
+      const delay = Math.min(Math.max(animation.delay || 0, 0), 5000);
+      targetNode.classList.add('slide-animation-preview', `slide-animation-${animation.type}`, 'animation-preview-running');
+      targetNode.style.animationDuration = `${duration}ms`;
+      targetNode.style.animationDelay = `${delay}ms`;
+      const total = duration + delay + 60;
+      const timeoutId = window.setTimeout(() => {
+        targetNode.classList.remove('slide-animation-preview', ...slideAnimationClassList, 'animation-preview-running');
+        targetNode.style.animationDuration = '';
+        targetNode.style.animationDelay = '';
+      }, total);
+      if (track && targetNode === canvasContainerEl) {
+        slideAnimationTimeout = timeoutId;
+      }
+    }
+
+    function playElementAnimationPreview(node, animation, options = {}) {
+      if (!node) return;
+      const track = options.track ?? true;
+      const timeoutMap = track ? elementAnimationTimeouts : null;
+      if (!animation || animation.type === 'none') {
+        if (timeoutMap && timeoutMap.has(node)) {
+          window.clearTimeout(timeoutMap.get(node));
+          timeoutMap.delete(node);
+        }
+        node.classList.remove('element-animation-preview', ...elementAnimationClassList, 'animation-preview-running');
+        node.style.animationDuration = '';
+        node.style.animationDelay = '';
+        return;
+      }
+      if (timeoutMap && timeoutMap.has(node)) {
+        window.clearTimeout(timeoutMap.get(node));
+        timeoutMap.delete(node);
+      }
+      node.classList.remove('element-animation-preview', ...elementAnimationClassList, 'animation-preview-running');
+      node.style.animation = 'none';
+      void node.offsetWidth;
+      node.style.animation = '';
+      const duration = Math.min(Math.max(animation.duration || 600, 100), 4000);
+      const delay = Math.min(Math.max(animation.delay || 0, 0), 5000);
+      node.classList.add('element-animation-preview', `element-animation-${animation.type}`, 'animation-preview-running');
+      node.style.animationDuration = `${duration}ms`;
+      node.style.animationDelay = `${delay}ms`;
+      const total = duration + delay + 60;
+      const timeoutId = window.setTimeout(() => {
+        node.classList.remove('element-animation-preview', ...elementAnimationClassList, 'animation-preview-running');
+        node.style.animationDuration = '';
+        node.style.animationDelay = '';
+        if (timeoutMap) {
+          timeoutMap.delete(node);
+        }
+      }, total);
+      if (timeoutMap) {
+        timeoutMap.set(node, timeoutId);
+      }
+    }
+
+    function handleSlideDragStart(event) {
+      const button = event.currentTarget;
+      if (!(button instanceof HTMLElement)) return;
+      const slideId = button.dataset.slideId;
+      if (!slideId) return;
+      draggingSlideId = slideId;
+      dragOverSlideId = null;
+      thumbnailsEl.classList.add('thumbnails-dragging');
+      button.classList.add('slide-thumbnail-button--dragging');
+      if (event.dataTransfer) {
+        event.dataTransfer.effectAllowed = 'move';
+        event.dataTransfer.setData('text/plain', slideId);
+        try {
+          event.dataTransfer.setDragImage(button, button.offsetWidth / 2, 24);
+        } catch (err) {
+          // Some browsers may throw; ignore quietly.
+        }
+      }
+    }
+
+    function handleSlideDragOver(event) {
+      if (!draggingSlideId) return;
+      const button = event.currentTarget;
+      if (!(button instanceof HTMLElement)) return;
+      const slideId = button.dataset.slideId;
+      if (!slideId || slideId === draggingSlideId) return;
+      event.preventDefault();
+      if (event.dataTransfer) {
+        event.dataTransfer.dropEffect = 'move';
+      }
+      if (dragOverSlideId !== slideId) {
+        if (dragOverSlideId) {
+          const previous = thumbnailsEl.querySelector(`[data-slide-id="${dragOverSlideId}"]`);
+          previous?.classList.remove('slide-thumbnail-button--drag-over');
+        }
+        dragOverSlideId = slideId;
+        button.classList.add('slide-thumbnail-button--drag-over');
+      }
+    }
+
+    function handleSlideDragLeave(event) {
+      if (!draggingSlideId) return;
+      const button = event.currentTarget;
+      if (!(button instanceof HTMLElement)) return;
+      const slideId = button.dataset.slideId;
+      if (slideId && slideId === dragOverSlideId) {
+        button.classList.remove('slide-thumbnail-button--drag-over');
+        dragOverSlideId = null;
+      }
+    }
+
+    function handleSlideDrop(event) {
+      if (!draggingSlideId) return;
+      event.preventDefault();
+      const button = event.currentTarget;
+      if (!(button instanceof HTMLElement)) return;
+      const targetId = button.dataset.slideId;
+      if (!targetId || targetId === draggingSlideId) {
+        resetSlideDragState();
+        return;
+      }
+      reorderSlidesById(draggingSlideId, targetId);
+      resetSlideDragState();
+      render();
+    }
+
+    function handleSlideDragEnd() {
+      resetSlideDragState();
+    }
+
+    function resetSlideDragState() {
+      draggingSlideId = null;
+      dragOverSlideId = null;
+      if (!thumbnailsEl) return;
+      thumbnailsEl.classList.remove('thumbnails-dragging');
+      thumbnailsEl.querySelectorAll('.slide-thumbnail-button--drag-over, .slide-thumbnail-button--dragging').forEach(node => {
+        node.classList.remove('slide-thumbnail-button--drag-over', 'slide-thumbnail-button--dragging');
+      });
+    }
+
+    function reorderSlidesById(sourceId, targetId) {
+      if (!sourceId || !targetId || sourceId === targetId) return;
+      const fromIndex = slides.findIndex(slide => slide.id === sourceId);
+      const toIndex = slides.findIndex(slide => slide.id === targetId);
+      if (fromIndex === -1 || toIndex === -1) return;
+      const activeSlideId = slides[activeSlideIndex]?.id || null;
+      const [moved] = slides.splice(fromIndex, 1);
+      const insertIndex = fromIndex < toIndex ? Math.max(0, toIndex - 1) : toIndex;
+      slides.splice(insertIndex, 0, moved);
+      if (activeSlideId) {
+        activeSlideIndex = Math.max(0, slides.findIndex(slide => slide.id === activeSlideId));
+      }
+      markDirty();
+    }
     let activeToolTab = 'slides';
+    let draggingSlideId = null;
+    let dragOverSlideId = null;
+    let previousActiveSlideId = null;
+    let canvasSwitchTimeout = null;
 
     if (shapeFillInput) {
       shapeFillInput.value = shapeDefaults.fill;
@@ -1067,6 +1542,13 @@
     if (shapeCornerRadiusLabel) {
       shapeCornerRadiusLabel.textContent = `${shapeDefaults.cornerRadius} px`;
     }
+
+    slides.forEach(slide => {
+      ensureSlideAnimation(slide);
+      if (Array.isArray(slide.elements)) {
+        slide.elements.forEach(ensureElementAnimation);
+      }
+    });
 
     function createDefaultChartData() {
       const labels = ['A', 'B', 'C', 'D', 'E'];
@@ -1257,6 +1739,10 @@
       if (!presenterOverlay || presenterOverlay.classList.contains('hidden')) return;
       const slide = slides[presenterIndex];
       if (!slide || !presenterCanvasEl) return;
+      ensureSlideAnimation(slide);
+      if (Array.isArray(slide.elements)) {
+        slide.elements.forEach(ensureElementAnimation);
+      }
       presenterCanvasEl.innerHTML = '';
       const frame = document.createElement('div');
       frame.className = 'relative aspect-video w-full overflow-hidden rounded-3xl';
@@ -1267,6 +1753,7 @@
         frame.style.backgroundPosition = 'center';
       }
       presenterCanvasEl.appendChild(frame);
+      playSlideAnimationPreview(slide.animation, frame, { track: false });
 
       slide.elements.forEach(el => {
         if (el.type === 'text') {
@@ -1293,6 +1780,7 @@
           }
           div.textContent = el.text || '';
           frame.appendChild(div);
+          playElementAnimationPreview(div, el.animation, { track: false });
         }
         if (el.type === 'image') {
           const img = document.createElement('img');
@@ -1308,6 +1796,7 @@
           img.src = el.src;
           img.alt = '';
           frame.appendChild(img);
+          playElementAnimationPreview(img, el.animation, { track: false });
         }
         if (el.type === 'chart') {
           const wrapper = document.createElement('div');
@@ -1320,6 +1809,7 @@
           wrapper.appendChild(canvas);
           frame.appendChild(wrapper);
           renderChartForElement(el, canvas, { registerInstance: false });
+          playElementAnimationPreview(wrapper, el.animation, { track: false });
         }
         if (el.type === 'shape') {
           const preset = getShapePreset(el.shape);
@@ -1336,6 +1826,7 @@
           svg.style.pointerEvents = 'none';
           wrapper.appendChild(svg);
           frame.appendChild(wrapper);
+          playElementAnimationPreview(wrapper, el.animation, { track: false });
         }
       });
 
@@ -1393,17 +1884,50 @@
       slideIndexLabelEl.textContent = String(activeSlideIndex + 1);
       slideCountLabelEl.textContent = String(slides.length);
 
+      const currentActiveSlideId = slides[activeSlideIndex]?.id || null;
+      const shouldAnimateCanvas = previousActiveSlideId && previousActiveSlideId !== currentActiveSlideId;
+      if (shouldAnimateCanvas && canvasContainerEl) {
+        canvasContainerEl.classList.remove('is-switching');
+        // Force reflow so animation can restart consistently across browsers
+        void canvasContainerEl.offsetWidth;
+        canvasContainerEl.classList.add('is-switching');
+        if (canvasSwitchTimeout) window.clearTimeout(canvasSwitchTimeout);
+        canvasSwitchTimeout = window.setTimeout(() => {
+          canvasContainerEl.classList.remove('is-switching');
+        }, 360);
+      }
+      previousActiveSlideId = currentActiveSlideId;
+
       // Thumbnails
       thumbnailsEl.innerHTML = '';
+      thumbnailsEl.classList.toggle('thumbnails-dragging', Boolean(draggingSlideId));
       slides.forEach((slide, index) => {
         const btn = document.createElement('button');
-        btn.className = `w-full p-2 text-left rounded-md border ${index === activeSlideIndex ? 'border-[#004c97] bg-blue-50' : 'border-slate-200 bg-white'} hover:bg-slate-50 shadow-sm`;
+        btn.type = 'button';
+        const isActive = index === activeSlideIndex;
+        btn.className = 'slide-thumbnail-button w-full p-2 text-left rounded-xl border border-slate-200 bg-white hover:bg-slate-50 shadow-sm';
+        if (isActive) {
+          btn.classList.add('slide-thumbnail-button--active');
+        }
+        if (slide.id === draggingSlideId) {
+          btn.classList.add('slide-thumbnail-button--dragging');
+        }
+        if (slide.id === dragOverSlideId) {
+          btn.classList.add('slide-thumbnail-button--drag-over');
+        }
+        btn.dataset.slideId = slide.id;
+        btn.draggable = slides.length > 1;
         btn.addEventListener('click', () => {
           activeSlideIndex = index;
           selectedElementId = null;
           editingTextElementId = null;
           render();
         });
+        btn.addEventListener('dragstart', handleSlideDragStart);
+        btn.addEventListener('dragover', handleSlideDragOver);
+        btn.addEventListener('dragleave', handleSlideDragLeave);
+        btn.addEventListener('drop', handleSlideDrop);
+        btn.addEventListener('dragend', handleSlideDragEnd);
 
         const thumb = document.createElement('div');
         thumb.className = 'relative w-full aspect-video bg-white rounded border border-slate-200 overflow-hidden';
@@ -1412,6 +1936,9 @@
           thumb.style.backgroundImage = `url(${slide.backgroundImage})`;
           thumb.style.backgroundSize = 'cover';
           thumb.style.backgroundPosition = 'center';
+        }
+        if (isActive) {
+          thumb.classList.add('ring-2', 'ring-[#004c97]/70');
         }
 
         const label = document.createElement('div');
@@ -1426,6 +1953,7 @@
 
       // Canvas content
       const slide = slides[activeSlideIndex];
+      ensureSlideAnimation(slide);
       chartInstances.forEach(instance => instance.destroy());
       chartInstances.clear();
       canvasContainerEl.innerHTML = '';
@@ -1441,6 +1969,7 @@
       // Render elements
       slide.elements.forEach(el => {
         if (el.type === 'text') {
+          ensureElementAnimation(el);
           const div = document.createElement('div');
           div.className = 'absolute draggable-placeholder';
           div.style.left = el.left + 'px';
@@ -1527,9 +2056,15 @@
           });
 
           canvasContainerEl.appendChild(div);
+          if (activeToolTab === 'animation' || selectedElementId === el.id) {
+            playElementAnimationPreview(div, el.animation);
+          } else {
+            playElementAnimationPreview(div, { type: 'none' });
+          }
         }
 
         if (el.type === 'image') {
+          ensureElementAnimation(el);
           const width = typeof el.width === 'number' ? el.width : 400;
           let height;
           if (typeof el.height === 'number') {
@@ -1607,9 +2142,15 @@
           }
 
           canvasContainerEl.appendChild(wrapper);
+          if (activeToolTab === 'animation' || selectedElementId === el.id) {
+            playElementAnimationPreview(wrapper, el.animation);
+          } else {
+            playElementAnimationPreview(wrapper, { type: 'none' });
+          }
         }
 
         if (el.type === 'chart') {
+          ensureElementAnimation(el);
           const width = typeof el.width === 'number' ? el.width : 420;
           const height = typeof el.height === 'number' ? el.height : 280;
           const wrapper = document.createElement('div');
@@ -1656,9 +2197,16 @@
 
           canvasContainerEl.appendChild(wrapper);
           renderChartForElement(el, canvas);
+          const chartNode = wrapper;
+          if (activeToolTab === 'animation' || selectedElementId === el.id) {
+            playElementAnimationPreview(chartNode, el.animation);
+          } else {
+            playElementAnimationPreview(chartNode, { type: 'none' });
+          }
         }
 
         if (el.type === 'shape') {
+          ensureElementAnimation(el);
           const preset = getShapePreset(el.shape);
           const defaultWidth = typeof el.width === 'number' ? el.width : preset.width;
           const defaultHeight = typeof el.height === 'number' ? el.height : preset.height;
@@ -1721,8 +2269,19 @@
           }
 
           canvasContainerEl.appendChild(wrapper);
+          if (activeToolTab === 'animation' || selectedElementId === el.id) {
+            playElementAnimationPreview(wrapper, el.animation);
+          } else {
+            playElementAnimationPreview(wrapper, { type: 'none' });
+          }
         }
       });
+
+      if (activeToolTab === 'animation') {
+        playSlideAnimationPreview(slide.animation);
+      } else {
+        playSlideAnimationPreview({ type: 'none' });
+      }
 
       syncInspectorControls();
       updateShareLink();
@@ -1794,6 +2353,7 @@
 
     function syncInspectorControls() {
       const slide = getActiveSlide();
+      ensureSlideAnimation(slide);
       if (bgColorInput) {
         const color = slide.backgroundColor && /^#/.test(slide.backgroundColor)
           ? slide.backgroundColor
@@ -1805,12 +2365,15 @@
       }
 
       const selected = getSelectedElement();
+      if (selected) ensureElementAnimation(selected);
       const isText = selected && selected.type === 'text';
       const isImage = selected && selected.type === 'image';
       const isChart = selected && selected.type === 'chart';
       const isShape = selected && selected.type === 'shape';
       const shapePreset = isShape ? getShapePreset(selected.shape) : null;
       const shapeControlsEnabled = activeToolTab === 'shapes' || isShape;
+      const slideAnimationControlsEnabled = activeToolTab === 'animation';
+      const elementAnimationEnabled = Boolean(selected);
 
       const textControls = [fontFamilySelect, fontSizeSelect, textColorInput, textBgColorInput, textBgClearBtn, boldBtn, italicBtn, underlineBtn, alignLeftBtn, alignCenterBtn, alignRightBtn, lineHeightSelect, letterSpacingSelect, textTransformSelect];
       textControls.forEach(control => {
@@ -1950,6 +2513,61 @@
         shapesTabQuickActions.classList.toggle('pointer-events-none', !shapeControlsEnabled);
       }
 
+      if (animationsTabQuickActions) {
+        const quickActionsEnabled = slideAnimationControlsEnabled;
+        animationsTabQuickActions.classList.toggle('opacity-60', !quickActionsEnabled);
+        animationsTabQuickActions.classList.toggle('pointer-events-none', !quickActionsEnabled);
+      }
+
+      if (slideAnimationSelect) {
+        slideAnimationSelect.value = slide.animation.type;
+        slideAnimationSelect.disabled = !slideAnimationControlsEnabled;
+      }
+      if (slideAnimDurationInput) {
+        slideAnimDurationInput.value = String(slide.animation.duration);
+        slideAnimDurationInput.disabled = !slideAnimationControlsEnabled;
+        if (slideAnimDurationLabel) slideAnimDurationLabel.textContent = formatDurationLabel(slide.animation.duration);
+      }
+      if (slideAnimDelayInput) {
+        slideAnimDelayInput.value = String(slide.animation.delay);
+        slideAnimDelayInput.disabled = !slideAnimationControlsEnabled;
+        if (slideAnimDelayLabel) slideAnimDelayLabel.textContent = formatDelayLabel(slide.animation.delay);
+      }
+      if (slideAnimationPreviewBtn) {
+        slideAnimationPreviewBtn.disabled = !slideAnimationControlsEnabled || slide.animation.type === 'none';
+      }
+
+      if (elementAnimationControls && elementAnimationEmptyState) {
+        elementAnimationControls.classList.toggle('hidden', !elementAnimationEnabled);
+        elementAnimationEmptyState.classList.toggle('hidden', elementAnimationEnabled);
+      }
+      if (elementAnimationSelect) {
+        elementAnimationSelect.value = elementAnimationEnabled ? selected.animation.type : 'none';
+        elementAnimationSelect.disabled = !elementAnimationEnabled;
+      }
+      if (elementAnimDurationInput) {
+        elementAnimDurationInput.value = String(elementAnimationEnabled ? selected.animation.duration : elementAnimationDefaults.duration);
+        elementAnimDurationInput.disabled = !elementAnimationEnabled;
+        if (elementAnimDurationLabel) {
+          const ms = elementAnimationEnabled ? selected.animation.duration : elementAnimationDefaults.duration;
+          elementAnimDurationLabel.textContent = formatDurationLabel(ms);
+        }
+      }
+      if (elementAnimDelayInput) {
+        elementAnimDelayInput.value = String(elementAnimationEnabled ? selected.animation.delay : elementAnimationDefaults.delay);
+        elementAnimDelayInput.disabled = !elementAnimationEnabled;
+        if (elementAnimDelayLabel) {
+          const ms = elementAnimationEnabled ? selected.animation.delay : elementAnimationDefaults.delay;
+          elementAnimDelayLabel.textContent = formatDelayLabel(ms);
+        }
+      }
+      if (elementAnimationPreviewBtn) {
+        elementAnimationPreviewBtn.disabled = !elementAnimationEnabled || selected.animation.type === 'none';
+      }
+      if (elementAnimationResetBtn) {
+        elementAnimationResetBtn.disabled = !elementAnimationEnabled || (selected && selected.animation.type === 'none' && selected.animation.delay === 0 && selected.animation.duration === elementAnimationDefaults.duration);
+      }
+
       if (chartDetailsSection) {
         chartDetailsSection.classList.toggle('opacity-60', !isChart);
         chartDetailsSection.classList.toggle('pointer-events-none', !isChart);
@@ -2013,6 +2631,8 @@
       const selected = getSelectedElement();
       const isShape = selected && selected.type === 'shape';
       const isChart = selected && selected.type === 'chart';
+      const hasSelection = Boolean(selected);
+      const showAnimationInspector = activeToolTab === 'animation';
       if (shapeInspector) {
         const shouldShowShapePanel = activeToolTab === 'shapes' || isShape;
         shapeInspector.classList.toggle('hidden', !shouldShowShapePanel);
@@ -2020,6 +2640,9 @@
       if (chartInspector) {
         const shouldShowChartPanel = activeToolTab === 'chart' || isChart;
         chartInspector.classList.toggle('hidden', !shouldShowChartPanel);
+      }
+      if (animationInspector) {
+        animationInspector.classList.toggle('hidden', !showAnimationInspector);
       }
     }
 
@@ -2634,7 +3257,9 @@
       render();
     });
 
-  document.addEventListener('keydown', (event) => {
+    document.addEventListener('keydown', handleSlideKeyboardNavigation);
+
+    document.addEventListener('keydown', (event) => {
     if (!selectedElementId) return;
     if (event.key !== 'Delete' && event.key !== 'Backspace') return;
 
@@ -2669,6 +3294,7 @@
           backgroundColor: '#ffffff',
           backgroundImage: null,
           elements: [],
+          animation: { ...slideAnimationDefaults },
         };
         slides.splice(activeSlideIndex + 1, 0, newSlide);
         activeSlideIndex = Math.min(activeSlideIndex + 1, slides.length - 1);
@@ -2686,7 +3312,12 @@
         const clone = JSON.parse(JSON.stringify(source));
         clone.id = crypto.randomUUID();
         clone.title = source.title ? `${source.title} Copy` : `Slide ${slides.length + 1}`;
-        clone.elements = (clone.elements || []).map(element => ({ ...element, id: crypto.randomUUID() }));
+        clone.animation = normalizeAnimationConfig(clone.animation, slideAnimationDefaults);
+        clone.elements = (clone.elements || []).map(element => {
+          const next = { ...element, id: crypto.randomUUID() };
+          next.animation = normalizeAnimationConfig(next.animation, elementAnimationDefaults);
+          return next;
+        });
         slides.splice(activeSlideIndex + 1, 0, clone);
         activeSlideIndex = Math.min(activeSlideIndex + 1, slides.length - 1);
         selectedElementId = null;
@@ -2769,7 +3400,8 @@
           align: 'left',
           lineHeight: 1.4,
           letterSpacing: 0,
-          textTransform: 'none'
+          textTransform: 'none',
+          animation: { ...elementAnimationDefaults }
         };
         slide.elements.push(element);
         selectedElementId = element.id;
@@ -3037,6 +3669,158 @@
       shapeSendToBackBtn.addEventListener('click', () => reorderSelectedElement('back'));
     }
 
+    if (animationsTabQuickActions) {
+      animationsTabQuickActions.addEventListener('click', (event) => {
+        const root = event.target instanceof Element ? event.target.closest('[data-slide-animation],[data-element-animation]') : null;
+        if (!root) return;
+        event.preventDefault();
+        const slide = getActiveSlide();
+        const slideType = root.getAttribute('data-slide-animation');
+        const elementType = root.getAttribute('data-element-animation');
+        if (slideType) {
+          ensureSlideAnimation(slide);
+          slide.animation.type = slideType;
+          slide.animation.duration = slide.animation.duration ?? slideAnimationDefaults.duration;
+          slide.animation.delay = slide.animation.delay ?? slideAnimationDefaults.delay;
+          markDirty();
+          setActiveTab('animation');
+          render();
+          playSlideAnimationPreview(slide.animation);
+        } else if (elementType) {
+          const selected = getSelectedElement();
+          if (!selected) {
+            alert('Select an item on the slide to animate it.');
+            return;
+          }
+          ensureElementAnimation(selected);
+          selected.animation.type = elementType;
+          selected.animation.duration = selected.animation.duration ?? elementAnimationDefaults.duration;
+          selected.animation.delay = selected.animation.delay ?? elementAnimationDefaults.delay;
+          markDirty();
+          setActiveTab('animation');
+          render();
+          const targetNode = canvasContainerEl.querySelector(`[data-element-id="${selected.id}"]`) || canvasContainerEl.querySelector(`[data-element-id="${selected.id}"] *`);
+          if (targetNode instanceof HTMLElement) {
+            playElementAnimationPreview(targetNode, selected.animation);
+          }
+        }
+      });
+    }
+
+    if (slideAnimationSelect) {
+      slideAnimationSelect.addEventListener('change', () => {
+        const slide = getActiveSlide();
+        ensureSlideAnimation(slide);
+        slide.animation.type = slideAnimationSelect.value;
+        markDirty();
+        render();
+        if (slide.animation.type !== 'none') {
+          playSlideAnimationPreview(slide.animation);
+        }
+      });
+    }
+
+    if (slideAnimDurationInput) {
+      slideAnimDurationInput.addEventListener('input', () => {
+        const slide = getActiveSlide();
+        ensureSlideAnimation(slide);
+        slide.animation.duration = parseInt(slideAnimDurationInput.value, 10) || slideAnimationDefaults.duration;
+        if (slideAnimDurationLabel) slideAnimDurationLabel.textContent = formatDurationLabel(slide.animation.duration);
+        markDirty();
+        if (activeToolTab === 'animation' && slide.animation.type !== 'none') {
+          playSlideAnimationPreview(slide.animation);
+        }
+      });
+    }
+
+    if (slideAnimDelayInput) {
+      slideAnimDelayInput.addEventListener('input', () => {
+        const slide = getActiveSlide();
+        ensureSlideAnimation(slide);
+        slide.animation.delay = parseInt(slideAnimDelayInput.value, 10) || slideAnimationDefaults.delay;
+        if (slideAnimDelayLabel) slideAnimDelayLabel.textContent = formatDelayLabel(slide.animation.delay);
+        markDirty();
+        if (activeToolTab === 'animation' && slide.animation.type !== 'none') {
+          playSlideAnimationPreview(slide.animation);
+        }
+      });
+    }
+
+    if (slideAnimationPreviewBtn) {
+      slideAnimationPreviewBtn.addEventListener('click', () => {
+        const slide = getActiveSlide();
+        ensureSlideAnimation(slide);
+        playSlideAnimationPreview(slide.animation);
+      });
+    }
+
+    if (elementAnimationSelect) {
+      elementAnimationSelect.addEventListener('change', () => {
+        const el = getSelectedElement();
+        if (!el) return;
+        ensureElementAnimation(el);
+        el.animation.type = elementAnimationSelect.value;
+        markDirty();
+        render();
+        const node = canvasContainerEl.querySelector(`[data-element-id="${el.id}"]`);
+        if (node instanceof HTMLElement && el.animation.type !== 'none') {
+          playElementAnimationPreview(node, el.animation);
+        }
+      });
+    }
+
+    if (elementAnimDurationInput) {
+      elementAnimDurationInput.addEventListener('input', () => {
+        const el = getSelectedElement();
+        if (!el) return;
+        ensureElementAnimation(el);
+        el.animation.duration = parseInt(elementAnimDurationInput.value, 10) || elementAnimationDefaults.duration;
+        if (elementAnimDurationLabel) elementAnimDurationLabel.textContent = formatDurationLabel(el.animation.duration);
+        markDirty();
+        const node = canvasContainerEl.querySelector(`[data-element-id="${el.id}"]`);
+        if (node instanceof HTMLElement && el.animation.type !== 'none') {
+          playElementAnimationPreview(node, el.animation);
+        }
+      });
+    }
+
+    if (elementAnimDelayInput) {
+      elementAnimDelayInput.addEventListener('input', () => {
+        const el = getSelectedElement();
+        if (!el) return;
+        ensureElementAnimation(el);
+        el.animation.delay = parseInt(elementAnimDelayInput.value, 10) || elementAnimationDefaults.delay;
+        if (elementAnimDelayLabel) elementAnimDelayLabel.textContent = formatDelayLabel(el.animation.delay);
+        markDirty();
+        const node = canvasContainerEl.querySelector(`[data-element-id="${el.id}"]`);
+        if (node instanceof HTMLElement && el.animation.type !== 'none') {
+          playElementAnimationPreview(node, el.animation);
+        }
+      });
+    }
+
+    if (elementAnimationPreviewBtn) {
+      elementAnimationPreviewBtn.addEventListener('click', () => {
+        const el = getSelectedElement();
+        if (!el) return;
+        ensureElementAnimation(el);
+        const node = canvasContainerEl.querySelector(`[data-element-id="${el.id}"]`);
+        if (node instanceof HTMLElement) {
+          playElementAnimationPreview(node, el.animation);
+        }
+      });
+    }
+
+    if (elementAnimationResetBtn) {
+      elementAnimationResetBtn.addEventListener('click', () => {
+        const el = getSelectedElement();
+        if (!el) return;
+        el.animation = { ...elementAnimationDefaults };
+        markDirty();
+        render();
+      });
+    }
+
     function createShapeElement(shapeType) {
       const slide = getActiveSlide();
       if (!slide) return;
@@ -3073,6 +3857,7 @@
         strokeWidth: strokeWidthValue,
         opacity: opacityValue,
         cornerRadius: preset.allowCornerRadius ? cornerRadiusValue : null,
+        animation: { ...elementAnimationDefaults },
       };
       slide.elements.push(element);
       selectedElementId = element.id;
@@ -3097,6 +3882,7 @@
         width: 420,
         height: 280,
         rotation: 0,
+        animation: { ...elementAnimationDefaults },
       };
       slide.elements.push(element);
       selectedElementId = element.id;
@@ -3253,6 +4039,31 @@
       }
     });
 
+    function handleSlideKeyboardNavigation(event) {
+      if (!slides.length) return;
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      const target = event.target;
+      const isFormField = target && (target instanceof HTMLElement) && (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.tagName === 'TEXTAREA' || target.isContentEditable);
+      if (isFormField) return;
+      if (event.key === 'ArrowUp' || event.key === 'PageUp') {
+        if (activeSlideIndex > 0) {
+          event.preventDefault();
+          activeSlideIndex -= 1;
+          selectedElementId = null;
+          editingTextElementId = null;
+          render();
+        }
+      } else if (event.key === 'ArrowDown' || event.key === 'PageDown') {
+        if (activeSlideIndex < slides.length - 1) {
+          event.preventDefault();
+          activeSlideIndex += 1;
+          selectedElementId = null;
+          editingTextElementId = null;
+          render();
+        }
+      }
+    }
+
     if (shareBtn) {
       shareBtn.addEventListener('click', openShareModal);
     }
@@ -3283,8 +4094,8 @@
       });
     }
 
-    if (presentModeBtn) {
-      presentModeBtn.addEventListener('click', openPresenterMode);
+    if (presentBtn) {
+      presentBtn.addEventListener('click', openPresenterMode);
     }
     if (presenterExitBtn) {
       presenterExitBtn.addEventListener('click', closePresenterMode);
@@ -3318,7 +4129,8 @@
             height: 300,
             aspectRatio: 0.75,
             fit: 'contain',
-            opacity: 1
+            opacity: 1,
+            animation: { ...elementAnimationDefaults }
           };
           slide.elements.push(element);
           selectedElementId = element.id;
