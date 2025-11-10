@@ -8,7 +8,7 @@
   <meta name="color-scheme" content="light">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Merriweather:wght@400;700&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Lato:wght@300;400;700&family=Montserrat:wght@400;600;700&family=Merriweather:wght@400;700&family=Poppins:wght@400;600&family=Playfair+Display:wght@400;700&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
   <style>
@@ -38,6 +38,88 @@
     .chart-resize-handle[data-handle="se"] { cursor: nwse-resize; }
     .chart-resize-handle[data-handle="ne"],
     .chart-resize-handle[data-handle="sw"] { cursor: nesw-resize; }
+    .image-wrapper {
+      position: absolute;
+      cursor: move;
+    }
+    .image-resize-handle {
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      border-radius: 999px;
+      background: #ffffff;
+      border: 2px solid #2563eb;
+      box-shadow: 0 6px 14px rgba(15, 23, 42, 0.25);
+      z-index: 12;
+    }
+    .image-resize-handle[data-handle="nw"],
+    .image-resize-handle[data-handle="se"] { cursor: nwse-resize; }
+    .image-resize-handle[data-handle="ne"],
+    .image-resize-handle[data-handle="sw"] { cursor: nesw-resize; }
+    .shape-wrapper {
+      position: absolute;
+      cursor: move;
+    }
+    .shape-resize-handle {
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      border-radius: 999px;
+      background: #ffffff;
+      border: 2px solid #2563eb;
+      box-shadow: 0 6px 14px rgba(15, 23, 42, 0.25);
+      z-index: 12;
+    }
+    .shape-resize-handle[data-handle="nw"],
+    .shape-resize-handle[data-handle="se"] { cursor: nwse-resize; }
+    .shape-resize-handle[data-handle="ne"],
+    .shape-resize-handle[data-handle="sw"] { cursor: nesw-resize; }
+    .shape-icon-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 60px;
+      height: 60px;
+      border-radius: 18px;
+      border: 1px solid rgba(37, 99, 235, 0.35);
+      background: linear-gradient(135deg, rgba(37, 99, 235, 0.12), rgba(16, 185, 129, 0.1));
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+      color: #2563eb;
+    }
+    .shape-icon-button:hover {
+      transform: translateY(-2px);
+      border-color: rgba(37, 99, 235, 0.6);
+      box-shadow: 0 10px 20px rgba(15, 23, 42, 0.15);
+    }
+    .shape-icon-button svg {
+      width: 32px;
+      height: 32px;
+    }
+    .shape-control-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #64748b;
+      font-weight: 600;
+    }
+    .text-resize-handle {
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+      background: #ffffff;
+      border: 2px solid #2563eb;
+      box-shadow: 0 4px 10px rgba(15, 23, 42, 0.2);
+      cursor: se-resize;
+      z-index: 15;
+    }
+    .text-resize-handle[data-handle="se"] {
+      right: -10px;
+      bottom: -10px;
+    }
     .slides-sidebar {
       flex: 0 0 auto;
       transition: width 0.25s ease, min-width 0.25s ease, max-width 0.25s ease, padding 0.25s ease;
@@ -130,6 +212,7 @@
             <button data-tab-target="text" class="tool-tab rounded-full px-4 py-1.5 text-sm font-medium text-white/70 transition">Text</button>
             <button data-tab-target="image" class="tool-tab rounded-full px-4 py-1.5 text-sm font-medium text-white/70 transition">Image</button>
             <button data-tab-target="chart" class="tool-tab rounded-full px-4 py-1.5 text-sm font-medium text-white/70 transition">Chart</button>
+            <button data-tab-target="shapes" class="tool-tab rounded-full px-4 py-1.5 text-sm font-medium text-white/70 transition">Shapes</button>
             <button data-tab-target="background" class="tool-tab rounded-full px-4 py-1.5 text-sm font-medium text-white/70 transition">Background</button>
           </div>
         </div>
@@ -148,20 +231,31 @@
               <select id="fontFamilySelect" class="rounded-md border-0 bg-white/20 px-2 py-1.5 text-sm text-white focus:ring-2 focus:ring-white/40">
                 <option value="Inter, sans-serif">Inter</option>
                 <option value="Poppins, sans-serif">Poppins</option>
-                <option value="Roboto, sans-serif">Roboto</option>
+                <option value="Lato, sans-serif">Lato</option>
+                <option value="Montserrat, sans-serif">Montserrat</option>
+                <option value="Source Sans 3, sans-serif">Source Sans</option>
                 <option value="Merriweather, serif">Merriweather</option>
+                <option value="Playfair Display, serif">Playfair Display</option>
               </select>
             </div>
             <div class="flex items-center gap-2">
               <label class="text-sm text-white/80">Size</label>
               <select id="fontSizeSelect" class="rounded-md border-0 bg-white/20 px-2 py-1.5 text-sm text-white focus:ring-2 focus:ring-white/40">
+                <option value="12">12</option>
                 <option value="14">14</option>
                 <option value="16" selected>16</option>
+                <option value="18">18</option>
                 <option value="20">20</option>
                 <option value="24">24</option>
+                <option value="28">28</option>
                 <option value="32">32</option>
+                <option value="36">36</option>
                 <option value="40">40</option>
                 <option value="48">48</option>
+                <option value="56">56</option>
+                <option value="64">64</option>
+                <option value="72">72</option>
+                <option value="96">96</option>
               </select>
             </div>
             <div class="flex items-center gap-2">
@@ -183,6 +277,36 @@
               <button id="alignCenterBtn" class="rounded-full border border-white/30 px-3 py-1.5 text-sm hover:bg-white/10">Center</button>
               <button id="alignRightBtn" class="rounded-full border border-white/30 px-3 py-1.5 text-sm hover:bg-white/10">Right</button>
             </div>
+            <div class="flex items-center gap-2">
+              <label class="text-sm text-white/80">Line Height</label>
+              <select id="lineHeightSelect" class="rounded-md border-0 bg-white/20 px-2 py-1.5 text-sm text-white focus:ring-2 focus:ring-white/40">
+                <option value="1">1.0</option>
+                <option value="1.2">1.2</option>
+                <option value="1.4" selected>1.4</option>
+                <option value="1.6">1.6</option>
+                <option value="1.8">1.8</option>
+                <option value="2">2.0</option>
+              </select>
+            </div>
+            <div class="flex items-center gap-2">
+              <label class="text-sm text-white/80">Letter</label>
+              <select id="letterSpacingSelect" class="rounded-md border-0 bg-white/20 px-2 py-1.5 text-sm text-white focus:ring-2 focus:ring-white/40">
+                <option value="0">Normal</option>
+                <option value="0.5">Relaxed</option>
+                <option value="1">Wide</option>
+                <option value="1.5">Extra Wide</option>
+                <option value="2">Ultra</option>
+              </select>
+            </div>
+            <div class="flex items-center gap-2">
+              <label class="text-sm text-white/80">Case</label>
+              <select id="textTransformSelect" class="rounded-md border-0 bg-white/20 px-2 py-1.5 text-sm text-white focus:ring-2 focus:ring-white/40">
+                <option value="none" selected>Normal</option>
+                <option value="uppercase">UPPERCASE</option>
+                <option value="lowercase">lowercase</option>
+                <option value="capitalize">Capitalize</option>
+              </select>
+            </div>
           </div>
           <div data-tab-panel="image" class="hidden flex flex-wrap items-center gap-4">
             <label for="uploadImageInput" class="cursor-pointer rounded-full bg-white/20 px-3 py-1.5 text-sm hover:bg-white/30">Upload Image</label>
@@ -195,11 +319,6 @@
               <button id="fillBtn" class="rounded-full border border-white/30 px-3 py-1.5 text-sm hover:bg-white/10">Cover</button>
             </div>
             <div class="flex items-center gap-2">
-              <span class="text-sm text-white/80">Width</span>
-              <input id="imageWidthRange" type="range" min="120" max="800" value="400" class="h-1 w-40 accent-[#004c97]">
-              <span id="imageWidthValue" class="text-xs text-white/80">400px</span>
-            </div>
-            <div class="flex items-center gap-2">
               <span class="text-sm text-white/80">Opacity</span>
               <input id="imageOpacityRange" type="range" min="20" max="100" value="100" class="h-1 w-32 accent-[#004c97]">
               <span id="imageOpacityValue" class="text-xs text-white/80">100%</span>
@@ -210,6 +329,9 @@
               <button id="addBarChartBtn" class="rounded-full bg-white/20 px-3 py-1.5 text-sm hover:bg-white/30">Add Bar</button>
               <button id="addLineChartBtn" class="rounded-full bg-white/20 px-3 py-1.5 text-sm hover:bg-white/30">Add Line</button>
               <button id="addPieChartBtn" class="rounded-full bg-white/20 px-3 py-1.5 text-sm hover:bg-white/30">Add Pie</button>
+              <button id="addDoughnutChartBtn" class="rounded-full bg-white/20 px-3 py-1.5 text-sm hover:bg-white/30">Add Doughnut</button>
+              <button id="addRadarChartBtn" class="rounded-full bg-white/20 px-3 py-1.5 text-sm hover:bg-white/30">Add Radar</button>
+              <button id="addPolarChartBtn" class="rounded-full bg-white/20 px-3 py-1.5 text-sm hover:bg-white/30">Add Polar</button>
             </div>
             <div class="flex items-center gap-2">
               <label class="text-sm text-white/80">Type</label>
@@ -218,6 +340,8 @@
                 <option value="line">Line</option>
                 <option value="pie">Pie</option>
                 <option value="doughnut">Doughnut</option>
+                <option value="radar">Radar</option>
+                <option value="polarArea">Polar Area</option>
               </select>
             </div>
             <div class="flex items-center gap-2">
@@ -230,6 +354,14 @@
               </select>
             </div>
             <button id="chartRandomizeBtn" class="rounded-full border border-white/30 px-3 py-1.5 text-sm hover:bg-white/10">Randomize Data</button>
+          </div>
+          <div data-tab-panel="shapes" id="shapesTabQuickActions" class="hidden flex flex-wrap items-center gap-4">
+            <p class="text-sm text-white/80">Pick a shape from the right-hand Shapes panel or add a quick shape below.</p>
+            <div class="flex flex-wrap items-center gap-2">
+              <button type="button" data-shape="rectangle" class="rounded-full bg-white/20 px-3 py-1.5 text-sm hover:bg-white/30">Add Rectangle</button>
+              <button type="button" data-shape="ellipse" class="rounded-full bg-white/20 px-3 py-1.5 text-sm hover:bg-white/30">Add Circle</button>
+              <button type="button" data-shape="triangle" class="rounded-full border border-white/30 px-3 py-1.5 text-sm hover:bg-white/10">Add Triangle</button>
+            </div>
           </div>
           <div data-tab-panel="background" class="hidden flex flex-wrap items-center gap-4">
             <div class="flex items-center gap-2">
@@ -258,7 +390,6 @@
           <!-- Thumbnails injected by JS -->
         </div>
       </aside>
-
       <!-- Center Canvas -->
       <div class="canvas-wrapper flex-1">
         <main class="flex h-full flex-col items-center overflow-auto">
@@ -271,6 +402,110 @@
           </div>
         </main>
       </div>
+      <aside id="shapeInspector" class="hidden w-96 max-w-md border-l border-slate-200 bg-white/95 backdrop-blur-sm px-5 py-6 shadow-inner">
+        <div class="flex flex-col gap-5 text-slate-800">
+          <div>
+            <p class="text-xs uppercase tracking-wide text-slate-400">Shapes</p>
+            <h2 class="text-lg font-semibold text-slate-900">Library &amp; Styling</h2>
+            <p class="mt-1 text-xs text-slate-500">Click any icon to insert a shape. Select a shape on the canvas to edit its styling.</p>
+          </div>
+          <div>
+            <div class="shape-control-label mb-2">
+              <span>Shape Library</span>
+              <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Click to add</span>
+            </div>
+            <div id="shapeLibrary" class="grid grid-cols-3 gap-3">
+              <button type="button" class="shape-icon-button" data-shape="rectangle" title="Rectangle">
+                <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="24" y="44" width="152" height="112" rx="12" fill="currentColor" stroke="currentColor" stroke-width="10" />
+                </svg>
+              </button>
+              <button type="button" class="shape-icon-button" data-shape="rounded-rectangle" title="Rounded rectangle">
+                <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="24" y="52" width="152" height="96" rx="42" fill="currentColor" stroke="currentColor" stroke-width="10" />
+                </svg>
+              </button>
+              <button type="button" class="shape-icon-button" data-shape="ellipse" title="Circle">
+                <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                  <ellipse cx="100" cy="100" rx="70" ry="70" fill="currentColor" stroke="currentColor" stroke-width="12" />
+                </svg>
+              </button>
+              <button type="button" class="shape-icon-button" data-shape="triangle" title="Triangle">
+                <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                  <polygon points="100,28 176,172 24,172" fill="currentColor" stroke="currentColor" stroke-width="12" />
+                </svg>
+              </button>
+              <button type="button" class="shape-icon-button" data-shape="diamond" title="Diamond">
+                <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                  <polygon points="100,24 176,100 100,176 24,100" fill="currentColor" stroke="currentColor" stroke-width="12" />
+                </svg>
+              </button>
+              <button type="button" class="shape-icon-button" data-shape="arrow-right" title="Right arrow">
+                <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M32 60H116V36L180 100L116 164V140H32Z" fill="currentColor" stroke="currentColor" stroke-width="10" />
+                </svg>
+              </button>
+              <button type="button" class="shape-icon-button" data-shape="line" title="Line">
+                <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                  <line x1="20" y1="100" x2="180" y2="100" stroke="currentColor" stroke-width="18" stroke-linecap="round" />
+                </svg>
+              </button>
+              <button type="button" class="shape-icon-button" data-shape="pentagon" title="Pentagon">
+                <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                  <polygon points="100,20 182,88 148,180 52,180 18,88" fill="currentColor" stroke="currentColor" stroke-width="12" />
+                </svg>
+              </button>
+              <button type="button" class="shape-icon-button" data-shape="star" title="Star">
+                <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                  <polygon points="100,20 122,80 184,80 134,120 154,180 100,144 46,180 66,120 16,80 78,80" fill="currentColor" stroke="currentColor" stroke-width="10" />
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label for="shapeFillInput" class="shape-control-label mb-1">
+                <span>Fill</span>
+              </label>
+              <input id="shapeFillInput" type="color" class="h-10 w-full rounded-lg border border-slate-200 bg-white px-2 py-1">
+            </div>
+            <div>
+              <label for="shapeStrokeInput" class="shape-control-label mb-1">
+                <span>Stroke</span>
+              </label>
+              <input id="shapeStrokeInput" type="color" class="h-10 w-full rounded-lg border border-slate-200 bg-white px-2 py-1">
+            </div>
+          </div>
+          <div class="flex flex-col gap-4">
+            <div>
+              <label for="shapeStrokeWidthInput" class="shape-control-label">
+                <span>Stroke Width</span>
+                <span id="shapeStrokeWidthLabel" class="text-[11px] font-semibold text-slate-500">2 px</span>
+              </label>
+              <input id="shapeStrokeWidthInput" type="range" min="0" max="20" value="2" class="mt-2 h-1 w-full accent-[#004c97]">
+            </div>
+            <div>
+              <label for="shapeOpacityInput" class="shape-control-label">
+                <span>Opacity</span>
+                <span id="shapeOpacityLabel" class="text-[11px] font-semibold text-slate-500">100%</span>
+              </label>
+              <input id="shapeOpacityInput" type="range" min="10" max="100" value="100" class="mt-2 h-1 w-full accent-[#004c97]">
+            </div>
+            <div>
+              <label for="shapeCornerRadiusInput" class="shape-control-label">
+                <span>Corner Radius</span>
+                <span id="shapeCornerRadiusLabel" class="text-[11px] font-semibold text-slate-500">0 px</span>
+              </label>
+              <input id="shapeCornerRadiusInput" type="range" min="0" max="100" value="0" class="mt-2 h-1 w-full accent-[#004c97]">
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="shapeBringToFrontBtn" type="button" class="flex-1 rounded-full bg-[#004c97] px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#003471]">Bring to Front</button>
+            <button id="shapeSendToBackBtn" type="button" class="flex-1 rounded-full border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-100">Send to Back</button>
+          </div>
+          <p class="text-xs text-slate-400">Tip: Shift-drag a corner handle to resize while keeping proportions.</p>
+        </div>
+      </aside>
       <aside id="chartInspector" class="hidden w-96 max-w-md border-l border-slate-200 bg-white/95 backdrop-blur-sm px-5 py-6 shadow-inner">
         <div class="flex flex-col gap-4 text-slate-800">
           <div>
@@ -352,6 +587,7 @@
     ];
     let activeSlideIndex = 0;
     let selectedElementId = null; // currently selected element on canvas
+    let editingTextElementId = null; // track text element being edited
 
     const AUTOSAVE_KEY = 'slide-editor-autosave-v1';
     const SYNC_KEY = `${AUTOSAVE_KEY}-sync`;
@@ -414,19 +650,23 @@
     const alignLeftBtn = document.getElementById('alignLeftBtn');
     const alignCenterBtn = document.getElementById('alignCenterBtn');
     const alignRightBtn = document.getElementById('alignRightBtn');
+    const lineHeightSelect = document.getElementById('lineHeightSelect');
+    const letterSpacingSelect = document.getElementById('letterSpacingSelect');
+    const textTransformSelect = document.getElementById('textTransformSelect');
 
     const uploadImageInput = document.getElementById('uploadImageInput');
     const replaceImageInput = document.getElementById('replaceImageInput');
     const fitBtn = document.getElementById('fitBtn');
     const fillBtn = document.getElementById('fillBtn');
-    const imageWidthRange = document.getElementById('imageWidthRange');
     const imageOpacityRange = document.getElementById('imageOpacityRange');
-    const imageWidthValue = document.getElementById('imageWidthValue');
     const imageOpacityValue = document.getElementById('imageOpacityValue');
 
     const addBarChartBtn = document.getElementById('addBarChartBtn');
     const addLineChartBtn = document.getElementById('addLineChartBtn');
     const addPieChartBtn = document.getElementById('addPieChartBtn');
+    const addDoughnutChartBtn = document.getElementById('addDoughnutChartBtn');
+    const addRadarChartBtn = document.getElementById('addRadarChartBtn');
+    const addPolarChartBtn = document.getElementById('addPolarChartBtn');
     const chartTypeSelect = document.getElementById('chartTypeSelect');
     const chartPaletteSelect = document.getElementById('chartPaletteSelect');
     const chartRandomizeBtn = document.getElementById('chartRandomizeBtn');
@@ -435,6 +675,19 @@
     const chartTitleInput = document.getElementById('chartTitleInput');
     const chartDatasetList = document.getElementById('chartDatasetList');
     const chartAddRowBtn = document.getElementById('chartAddRowBtn');
+    const shapesTabQuickActions = document.getElementById('shapesTabQuickActions');
+    const shapeInspector = document.getElementById('shapeInspector');
+    const shapeLibrary = document.getElementById('shapeLibrary');
+    const shapeFillInput = document.getElementById('shapeFillInput');
+    const shapeStrokeInput = document.getElementById('shapeStrokeInput');
+    const shapeStrokeWidthInput = document.getElementById('shapeStrokeWidthInput');
+    const shapeStrokeWidthLabel = document.getElementById('shapeStrokeWidthLabel');
+    const shapeOpacityInput = document.getElementById('shapeOpacityInput');
+    const shapeOpacityLabel = document.getElementById('shapeOpacityLabel');
+    const shapeCornerRadiusInput = document.getElementById('shapeCornerRadiusInput');
+    const shapeCornerRadiusLabel = document.getElementById('shapeCornerRadiusLabel');
+    const shapeBringToFrontBtn = document.getElementById('shapeBringToFrontBtn');
+    const shapeSendToBackBtn = document.getElementById('shapeSendToBackBtn');
 
     const bgColorInput = document.getElementById('bgColorInput');
     const bgImageInput = document.getElementById('bgImageInput');
@@ -470,6 +723,350 @@
       citrus: ['#22c55e', '#84cc16', '#f59e0b', '#34d399', '#fde047'],
       midnight: ['#0f172a', '#1e293b', '#3b82f6', '#64748b', '#312e81']
     };
+    const SHAPE_PRESETS = {
+      rectangle: { width: 280, height: 180, minWidth: 60, minHeight: 60, allowCornerRadius: true, defaultCornerRadius: 16 },
+      'rounded-rectangle': { width: 280, height: 160, minWidth: 60, minHeight: 60, allowCornerRadius: true, defaultCornerRadius: 36 },
+      ellipse: { width: 220, height: 220, minWidth: 100, minHeight: 100, allowCornerRadius: false },
+      triangle: { width: 240, height: 200, minWidth: 110, minHeight: 90, allowCornerRadius: false },
+      diamond: { width: 220, height: 220, minWidth: 100, minHeight: 100, allowCornerRadius: false },
+      'arrow-right': { width: 260, height: 160, minWidth: 140, minHeight: 80, allowCornerRadius: false },
+      line: { width: 260, height: 16, minWidth: 140, minHeight: 6, allowCornerRadius: false, strokeOnly: true },
+      pentagon: { width: 240, height: 210, minWidth: 110, minHeight: 90, allowCornerRadius: false },
+      star: { width: 260, height: 250, minWidth: 120, minHeight: 120, allowCornerRadius: false }
+    };
+    const shapeDefaults = {
+      fill: '#60a5fa',
+      stroke: '#1d4ed8',
+      strokeWidth: 2,
+      opacity: 1,
+      cornerRadius: 24
+    };
+    const SVG_NS = 'http://www.w3.org/2000/svg';
+
+    function getShapePreset(shapeType) {
+      return SHAPE_PRESETS[shapeType] || SHAPE_PRESETS.rectangle;
+    }
+
+    function buildShapeSvg(element) {
+      const svg = document.createElementNS(SVG_NS, 'svg');
+      svg.setAttribute('viewBox', '0 0 200 200');
+      svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+      svg.classList.add('h-full', 'w-full');
+      svg.style.pointerEvents = 'none';
+
+      const preset = getShapePreset(element.shape);
+      const fill = preset.strokeOnly ? 'none' : (element.fill || shapeDefaults.fill);
+      const stroke = element.stroke || shapeDefaults.stroke;
+      const strokeWidth = typeof element.strokeWidth === 'number' ? element.strokeWidth : shapeDefaults.strokeWidth;
+      const baseWidth = typeof element.width === 'number' && element.width > 0
+        ? element.width
+        : (preset.width || 200);
+      const strokeScale = baseWidth > 0 ? 200 / baseWidth : 1;
+      const svgStrokeWidth = Math.max(0.5, strokeWidth * strokeScale);
+      const opacity = typeof element.opacity === 'number' ? element.opacity : shapeDefaults.opacity;
+
+      svg.style.opacity = String(opacity);
+
+      let node;
+      switch (element.shape) {
+        case 'rounded-rectangle':
+        case 'rectangle': {
+          node = document.createElementNS(SVG_NS, 'rect');
+          node.setAttribute('x', '16');
+          node.setAttribute('y', '16');
+          node.setAttribute('width', '168');
+          node.setAttribute('height', '168');
+          const defaultCorner = element.shape === 'rounded-rectangle'
+            ? (element.cornerRadius ?? getShapePreset('rounded-rectangle').defaultCornerRadius ?? shapeDefaults.cornerRadius)
+            : (element.cornerRadius ?? 0);
+          const baseHeight = typeof element.height === 'number' && element.height > 0
+            ? element.height
+            : (preset.height || 200);
+          const maxCornerPx = Math.min(baseWidth, baseHeight) / 2;
+          const cornerPx = Math.max(0, Math.min(defaultCorner, maxCornerPx));
+          const radius = (baseWidth > 0) ? (cornerPx / baseWidth) * 168 : 0;
+          node.setAttribute('rx', String(radius));
+          node.setAttribute('ry', String(radius));
+          break;
+        }
+        case 'ellipse': {
+          node = document.createElementNS(SVG_NS, 'ellipse');
+          node.setAttribute('cx', '100');
+          node.setAttribute('cy', '100');
+          node.setAttribute('rx', '80');
+          node.setAttribute('ry', '80');
+          break;
+        }
+        case 'triangle': {
+          node = document.createElementNS(SVG_NS, 'polygon');
+          node.setAttribute('points', '100,20 184,180 16,180');
+          break;
+        }
+        case 'diamond': {
+          node = document.createElementNS(SVG_NS, 'polygon');
+          node.setAttribute('points', '100,16 184,100 100,184 16,100');
+          break;
+        }
+        case 'arrow-right': {
+          node = document.createElementNS(SVG_NS, 'path');
+          node.setAttribute('d', 'M24 70H116V36L188 100L116 164V130H24Z');
+          break;
+        }
+        case 'line': {
+          node = document.createElementNS(SVG_NS, 'line');
+          node.setAttribute('x1', '24');
+          node.setAttribute('y1', '100');
+          node.setAttribute('x2', '176');
+          node.setAttribute('y2', '100');
+          node.setAttribute('stroke-linecap', 'round');
+          break;
+        }
+        case 'pentagon': {
+          node = document.createElementNS(SVG_NS, 'polygon');
+          node.setAttribute('points', '100,20 182,90 152,184 48,184 18,90');
+          break;
+        }
+        case 'star': {
+          node = document.createElementNS(SVG_NS, 'polygon');
+          node.setAttribute('points', '100,18 122,78 186,78 134,118 154,182 100,146 46,182 66,118 14,78 78,78');
+          break;
+        }
+        default: {
+          node = document.createElementNS(SVG_NS, 'rect');
+          node.setAttribute('x', '16');
+          node.setAttribute('y', '16');
+          node.setAttribute('width', '168');
+          node.setAttribute('height', '168');
+        }
+      }
+
+      node.setAttribute('fill', fill);
+      node.setAttribute('stroke', stroke);
+      node.setAttribute('stroke-width', String(svgStrokeWidth));
+      node.setAttribute('stroke-linejoin', 'round');
+      node.setAttribute('stroke-linecap', 'round');
+
+      if (preset.strokeOnly) {
+        node.setAttribute('fill', 'none');
+      }
+
+      svg.appendChild(node);
+      return svg;
+    }
+
+    function addShapeHandles(wrapper, element) {
+      if (!wrapper || !element || element.type !== 'shape') return;
+      wrapper.querySelectorAll('.shape-resize-handle').forEach(handle => handle.remove());
+      const handles = [
+        { handle: 'nw', style: { top: '-8px', left: '-8px' } },
+        { handle: 'ne', style: { top: '-8px', right: '-8px' } },
+        { handle: 'sw', style: { bottom: '-8px', left: '-8px' } },
+        { handle: 'se', style: { bottom: '-8px', right: '-8px' } },
+      ];
+      handles.forEach(({ handle, style }) => {
+        const node = document.createElement('div');
+        node.className = 'shape-resize-handle';
+        node.dataset.handle = handle;
+        Object.entries(style).forEach(([key, value]) => {
+          node.style[key] = value;
+        });
+        node.addEventListener('pointerdown', (event) => startShapeResize(event, handle, wrapper, element));
+        wrapper.appendChild(node);
+      });
+    }
+
+    function startShapeDrag(event, wrapper, element) {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const pointerId = event.pointerId;
+      if (wrapper.setPointerCapture && pointerId !== undefined) {
+        wrapper.setPointerCapture(pointerId);
+      }
+
+      const startX = event.clientX;
+      const startY = event.clientY;
+      const startLeft = typeof element.left === 'number' ? element.left : parseFloat(wrapper.style.left) || 0;
+      const startTop = typeof element.top === 'number' ? element.top : parseFloat(wrapper.style.top) || 0;
+      let moved = false;
+
+      document.body.style.userSelect = 'none';
+
+      const onMove = (moveEvent) => {
+        const dx = moveEvent.clientX - startX;
+        const dy = moveEvent.clientY - startY;
+        if (!moved && (Math.abs(dx) > 2 || Math.abs(dy) > 2)) {
+          moved = true;
+        }
+        if (!moved) return;
+
+        const canvasRect = canvasContainerEl.getBoundingClientRect();
+        const width = wrapper.offsetWidth;
+        const height = wrapper.offsetHeight;
+        const maxLeft = Math.max(0, canvasRect.width - width);
+        const maxTop = Math.max(0, canvasRect.height - height);
+        const newLeft = Math.max(0, Math.min(startLeft + dx, maxLeft));
+        const newTop = Math.max(0, Math.min(startTop + dy, maxTop));
+
+        element.left = newLeft;
+        element.top = newTop;
+        wrapper.style.left = `${newLeft}px`;
+        wrapper.style.top = `${newTop}px`;
+      };
+
+      const onUp = () => {
+        document.removeEventListener('pointermove', onMove);
+        document.removeEventListener('pointerup', onUp);
+        document.body.style.userSelect = '';
+        if (wrapper.releasePointerCapture && pointerId !== undefined) {
+          wrapper.releasePointerCapture(pointerId);
+        }
+        if (moved) {
+          markDirty();
+          render();
+        }
+      };
+
+      document.addEventListener('pointermove', onMove);
+      document.addEventListener('pointerup', onUp);
+    }
+
+    function startShapeResize(event, handle, wrapper, element) {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const pointerId = event.pointerId;
+      if (event.target.setPointerCapture && pointerId !== undefined) {
+        event.target.setPointerCapture(pointerId);
+      }
+
+      const preset = getShapePreset(element.shape);
+      const minWidth = preset.minWidth || 60;
+      const minHeight = preset.minHeight || 60;
+
+      const startX = event.clientX;
+      const startY = event.clientY;
+      const startWidth = typeof element.width === 'number' ? element.width : wrapper.offsetWidth;
+      const startHeight = typeof element.height === 'number' ? element.height : wrapper.offsetHeight;
+      const startLeft = typeof element.left === 'number' ? element.left : parseFloat(wrapper.style.left) || 0;
+      const startTop = typeof element.top === 'number' ? element.top : parseFloat(wrapper.style.top) || 0;
+      let resized = false;
+
+      document.body.style.userSelect = 'none';
+
+      const onMove = (moveEvent) => {
+        const dx = moveEvent.clientX - startX;
+        const dy = moveEvent.clientY - startY;
+
+        let newWidth = startWidth;
+        let newHeight = startHeight;
+        let newLeft = startLeft;
+        let newTop = startTop;
+
+        if (handle.includes('e')) {
+          newWidth = Math.max(minWidth, startWidth + dx);
+        }
+        if (handle.includes('s')) {
+          newHeight = Math.max(minHeight, startHeight + dy);
+        }
+        if (handle.includes('w')) {
+          newWidth = Math.max(minWidth, startWidth - dx);
+          newLeft = startLeft + (startWidth - newWidth);
+        }
+        if (handle.includes('n')) {
+          newHeight = Math.max(minHeight, startHeight - dy);
+          newTop = startTop + (startHeight - newHeight);
+        }
+
+        const canvasRect = canvasContainerEl.getBoundingClientRect();
+        const maxLeft = Math.max(0, canvasRect.width - newWidth);
+        const maxTop = Math.max(0, canvasRect.height - newHeight);
+
+        newLeft = Math.max(0, Math.min(newLeft, maxLeft));
+        newTop = Math.max(0, Math.min(newTop, maxTop));
+        const maxWidth = canvasRect.width - newLeft;
+        const maxHeight = canvasRect.height - newTop;
+        newWidth = Math.min(newWidth, maxWidth);
+        newHeight = Math.min(newHeight, maxHeight);
+
+        const widthChanged = Math.abs(newWidth - (element.width || startWidth)) > 0.5;
+        const heightChanged = Math.abs(newHeight - (element.height || startHeight)) > 0.5;
+        const leftChanged = Math.abs(newLeft - startLeft) > 0.5;
+        const topChanged = Math.abs(newTop - startTop) > 0.5;
+
+        element.width = newWidth;
+        element.height = newHeight;
+        element.left = newLeft;
+        element.top = newTop;
+
+        wrapper.style.width = `${element.width}px`;
+        wrapper.style.height = `${element.height}px`;
+        wrapper.style.left = `${element.left}px`;
+        wrapper.style.top = `${element.top}px`;
+
+        resized = widthChanged || heightChanged || leftChanged || topChanged;
+      };
+
+      const onUp = () => {
+        document.removeEventListener('pointermove', onMove);
+        document.removeEventListener('pointerup', onUp);
+        document.body.style.userSelect = '';
+        if (event.target.releasePointerCapture && pointerId !== undefined) {
+          event.target.releasePointerCapture(pointerId);
+        }
+        if (resized) {
+          markDirty();
+          render();
+        }
+      };
+
+      document.addEventListener('pointermove', onMove);
+      document.addEventListener('pointerup', onUp);
+    }
+
+    function reorderSelectedElement(position) {
+      const slide = getActiveSlide();
+      if (!slide || !selectedElementId) return;
+      const index = slide.elements.findIndex(el => el.id === selectedElementId);
+      if (index === -1) return;
+      const [element] = slide.elements.splice(index, 1);
+      if (position === 'front') {
+        slide.elements.push(element);
+      } else if (position === 'back') {
+        slide.elements.unshift(element);
+      } else {
+        slide.elements.splice(index, 0, element);
+        return;
+      }
+      markDirty();
+      render();
+    }
+    let activeToolTab = 'slides';
+
+    if (shapeFillInput) {
+      shapeFillInput.value = shapeDefaults.fill;
+    }
+    if (shapeStrokeInput) {
+      shapeStrokeInput.value = shapeDefaults.stroke;
+    }
+    if (shapeStrokeWidthInput) {
+      shapeStrokeWidthInput.value = String(shapeDefaults.strokeWidth);
+    }
+    if (shapeStrokeWidthLabel) {
+      shapeStrokeWidthLabel.textContent = `${shapeDefaults.strokeWidth} px`;
+    }
+    if (shapeOpacityInput) {
+      shapeOpacityInput.value = String(Math.round(shapeDefaults.opacity * 100));
+    }
+    if (shapeOpacityLabel) {
+      shapeOpacityLabel.textContent = `${Math.round(shapeDefaults.opacity * 100)}%`;
+    }
+    if (shapeCornerRadiusInput) {
+      shapeCornerRadiusInput.value = String(shapeDefaults.cornerRadius);
+    }
+    if (shapeCornerRadiusLabel) {
+      shapeCornerRadiusLabel.textContent = `${shapeDefaults.cornerRadius} px`;
+    }
 
     function createDefaultChartData() {
       const labels = ['A', 'B', 'C', 'D', 'E'];
@@ -651,6 +1248,7 @@
       presenterIndex = Math.min(Math.max(presenterIndex + delta, 0), slides.length - 1);
       activeSlideIndex = presenterIndex;
       selectedElementId = null;
+      editingTextElementId = null;
       render();
       renderPresenterSlide();
     }
@@ -684,6 +1282,10 @@
           div.style.textDecoration = el.underline ? 'underline' : 'none';
           div.style.textAlign = el.align || 'left';
           div.style.fontFamily = el.fontFamily || 'Inter, sans-serif';
+          div.style.lineHeight = String(typeof el.lineHeight === 'number' ? el.lineHeight : 1.4);
+          const letterSpacingValue = typeof el.letterSpacing === 'number' ? el.letterSpacing : 0;
+          div.style.letterSpacing = `${letterSpacingValue}px`;
+          div.style.textTransform = el.textTransform || 'none';
           if (el.backgroundColor) {
             div.style.backgroundColor = el.backgroundColor;
             div.style.padding = '4px 8px';
@@ -697,8 +1299,10 @@
           img.className = 'absolute';
           img.style.left = el.left + 'px';
           img.style.top = el.top + 'px';
-          img.style.width = (el.width || 320) + 'px';
-          img.style.height = 'auto';
+          const displayWidth = el.width || 320;
+          const displayHeight = el.height || Math.max(MIN_IMAGE_DIMENSION, Math.round(displayWidth * (el.aspectRatio && el.aspectRatio > 0 ? el.aspectRatio : 0.75)));
+          img.style.width = `${displayWidth}px`;
+          img.style.height = `${displayHeight}px`;
           img.style.objectFit = el.fit || 'contain';
           img.style.opacity = el.opacity != null ? el.opacity : 1;
           img.src = el.src;
@@ -716,6 +1320,22 @@
           wrapper.appendChild(canvas);
           frame.appendChild(wrapper);
           renderChartForElement(el, canvas, { registerInstance: false });
+        }
+        if (el.type === 'shape') {
+          const preset = getShapePreset(el.shape);
+          const wrapper = document.createElement('div');
+          wrapper.style.position = 'absolute';
+          wrapper.style.left = `${el.left ?? 0}px`;
+          wrapper.style.top = `${el.top ?? 0}px`;
+          wrapper.style.width = `${el.width ?? preset.width}px`;
+          wrapper.style.height = `${el.height ?? preset.height}px`;
+          wrapper.style.display = 'flex';
+          wrapper.style.alignItems = 'center';
+          wrapper.style.justifyContent = 'center';
+          const svg = buildShapeSvg(el);
+          svg.style.pointerEvents = 'none';
+          wrapper.appendChild(svg);
+          frame.appendChild(wrapper);
         }
       });
 
@@ -781,6 +1401,7 @@
         btn.addEventListener('click', () => {
           activeSlideIndex = index;
           selectedElementId = null;
+          editingTextElementId = null;
           render();
         });
 
@@ -825,6 +1446,15 @@
           div.style.left = el.left + 'px';
           div.style.top = el.top + 'px';
           div.style.width = (el.width || 300) + 'px';
+          div.style.minWidth = `${MIN_TEXT_WIDTH}px`;
+          div.style.minHeight = `${MIN_TEXT_HEIGHT}px`;
+          if (typeof el.height === 'number') {
+            div.style.height = `${el.height}px`;
+            div.style.overflow = 'auto';
+          } else {
+            div.style.height = 'auto';
+            div.style.overflow = 'visible';
+          }
           div.style.color = el.color || '#111827';
           div.style.fontSize = (el.fontSize || 16) + 'px';
           div.style.fontWeight = el.bold ? '700' : '400';
@@ -832,6 +1462,10 @@
           div.style.textDecoration = el.underline ? 'underline' : 'none';
           div.style.textAlign = el.align || 'left';
           div.style.fontFamily = el.fontFamily || 'Inter, sans-serif';
+          div.style.lineHeight = String(typeof el.lineHeight === 'number' ? el.lineHeight : 1.4);
+          const liveLetterSpacing = typeof el.letterSpacing === 'number' ? el.letterSpacing : 0;
+          div.style.letterSpacing = `${liveLetterSpacing}px`;
+          div.style.textTransform = el.textTransform || 'none';
           div.contentEditable = 'true';
           div.spellcheck = false;
           if (el.backgroundColor) {
@@ -849,31 +1483,23 @@
           // Selection styles
           if (selectedElementId === el.id) {
             div.classList.add('ring-2', 'ring-[#004c97]', 'rounded');
+            addTextHandles(div, el);
           }
+
+          div.addEventListener('pointerdown', (event) => handleTextPointerDown(event, div, el));
 
           // Select on click
           div.addEventListener('click', (e) => {
             e.stopPropagation();
-            if (selectedElementId !== el.id) {
+            const isDoubleClick = e.detail >= 2;
+            const wasSelected = selectedElementId === el.id;
+            if (!wasSelected) {
               selectedElementId = el.id;
+              editingTextElementId = null;
               render();
-              requestAnimationFrame(() => {
-                const refreshed = canvasContainerEl.querySelector(`[data-element-id="${el.id}"]`);
-                if (refreshed) {
-                  refreshed.focus();
-                  if (window.getSelection) {
-                    const sel = window.getSelection();
-                    if (sel) {
-                      const range = document.createRange();
-                      range.selectNodeContents(refreshed);
-                      sel.removeAllRanges();
-                      sel.addRange(range);
-                    }
-                  }
-                }
-              });
-            } else {
-              div.focus();
+            }
+            if (isDoubleClick) {
+              focusTextElement(el.id);
             }
           });
 
@@ -881,38 +1507,106 @@
             el.text = div.textContent || '';
             markDirty();
           });
+          div.addEventListener('focus', () => {
+            editingTextElementId = el.id;
+            selectedElementId = el.id;
+            addTextHandles(div, el);
+            div.classList.add('ring-2', 'ring-[#004c97]', 'rounded');
+          });
+
           div.addEventListener('blur', () => {
+            const wasSelected = selectedElementId === el.id;
             el.text = div.textContent || '';
             markDirty();
+            if (editingTextElementId === el.id) {
+              editingTextElementId = null;
+            }
+            if (wasSelected) {
+              render();
+            }
           });
 
           canvasContainerEl.appendChild(div);
         }
 
         if (el.type === 'image') {
-          const img = document.createElement('img');
-          img.className = 'absolute draggable-placeholder select-none';
-          img.style.left = el.left + 'px';
-          img.style.top = el.top + 'px';
-          img.style.width = (el.width || 320) + 'px';
-          img.style.height = 'auto';
-          img.style.objectFit = el.fit || 'contain';
-          img.style.opacity = el.opacity != null ? el.opacity : 1;
-          img.src = el.src;
-          img.alt = 'Slide Image';
-          img.dataset.elementId = el.id;
-
-          if (selectedElementId === el.id) {
-            img.classList.add('ring-2', 'ring-[#004c97]', 'rounded');
+          const width = typeof el.width === 'number' ? el.width : 400;
+          let height;
+          if (typeof el.height === 'number') {
+            height = el.height;
+          } else if (typeof el.aspectRatio === 'number' && el.aspectRatio > 0) {
+            height = Math.max(MIN_IMAGE_DIMENSION, Math.round(width * el.aspectRatio));
+          } else {
+            height = Math.max(MIN_IMAGE_DIMENSION, Math.round(width * 0.75));
           }
 
-          img.addEventListener('click', (e) => {
-            e.stopPropagation();
-            selectedElementId = el.id;
-            render();
+          if (typeof el.width !== 'number') el.width = width;
+          if (typeof el.height !== 'number') el.height = height;
+          if (typeof el.aspectRatio !== 'number' || el.aspectRatio <= 0) {
+            el.aspectRatio = el.height && el.width ? el.height / el.width : null;
+          }
+
+          const wrapper = document.createElement('div');
+          wrapper.className = 'image-wrapper draggable-placeholder select-none';
+          wrapper.style.left = (el.left || 0) + 'px';
+          wrapper.style.top = (el.top || 0) + 'px';
+          wrapper.style.width = `${el.width}px`;
+          wrapper.style.height = `${el.height}px`;
+          wrapper.dataset.elementId = el.id;
+
+          if (selectedElementId === el.id) {
+            wrapper.classList.add('ring-2', 'ring-[#004c97]', 'rounded');
+          }
+
+          wrapper.addEventListener('pointerdown', (e) => {
+            if (!e.target.classList.contains('image-resize-handle')) {
+              if (selectedElementId !== el.id) {
+                selectedElementId = el.id;
+              }
+              wrapper.classList.add('ring-2', 'ring-[#004c97]', 'rounded');
+              addImageHandles(wrapper, el);
+              startImageDrag(e, wrapper, el);
+            }
           });
 
-          canvasContainerEl.appendChild(img);
+          wrapper.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (selectedElementId !== el.id) {
+              selectedElementId = el.id;
+              render();
+            }
+          });
+
+          const img = document.createElement('img');
+          img.src = el.src;
+          img.alt = 'Slide Image';
+          img.draggable = false;
+          img.style.width = '100%';
+          img.style.height = '100%';
+          img.style.objectFit = el.fit || 'contain';
+          img.style.opacity = el.opacity != null ? el.opacity : 1;
+          img.style.userSelect = 'none';
+          img.style.pointerEvents = 'none';
+          wrapper.appendChild(img);
+
+          img.addEventListener('load', () => {
+            if (!img.naturalWidth || !img.naturalHeight) return;
+            const ratio = img.naturalHeight / img.naturalWidth;
+            if (!Number.isFinite(ratio) || ratio <= 0) return;
+            if (!el.aspectRatio || el.aspectRatio <= 0) {
+              el.aspectRatio = ratio;
+            }
+            if (!Number.isFinite(el.height) || el.height <= 0) {
+              el.height = Math.max(MIN_IMAGE_DIMENSION, Math.round(el.width * el.aspectRatio));
+              wrapper.style.height = `${el.height}px`;
+            }
+          });
+
+          if (selectedElementId === el.id) {
+            addImageHandles(wrapper, el);
+          }
+
+          canvasContainerEl.appendChild(wrapper);
         }
 
         if (el.type === 'chart') {
@@ -963,6 +1657,71 @@
           canvasContainerEl.appendChild(wrapper);
           renderChartForElement(el, canvas);
         }
+
+        if (el.type === 'shape') {
+          const preset = getShapePreset(el.shape);
+          const defaultWidth = typeof el.width === 'number' ? el.width : preset.width;
+          const defaultHeight = typeof el.height === 'number' ? el.height : preset.height;
+          if (typeof el.width !== 'number') el.width = defaultWidth;
+          if (typeof el.height !== 'number') el.height = defaultHeight;
+          if (typeof el.left !== 'number') el.left = 160;
+          if (typeof el.top !== 'number') el.top = 120;
+          if (typeof el.fill !== 'string') el.fill = shapeDefaults.fill;
+          if (typeof el.stroke !== 'string') el.stroke = shapeDefaults.stroke;
+          if (typeof el.strokeWidth !== 'number') el.strokeWidth = shapeDefaults.strokeWidth;
+          if (typeof el.opacity !== 'number') el.opacity = shapeDefaults.opacity;
+          if (preset.allowCornerRadius) {
+            if (typeof el.cornerRadius !== 'number') {
+              const defaultCorner = typeof preset.defaultCornerRadius === 'number'
+                ? preset.defaultCornerRadius
+                : shapeDefaults.cornerRadius;
+              el.cornerRadius = defaultCorner;
+            }
+          } else {
+            el.cornerRadius = null;
+          }
+          const wrapper = document.createElement('div');
+          wrapper.className = 'shape-wrapper draggable-placeholder flex items-center justify-center';
+          wrapper.style.left = `${el.left}px`;
+          wrapper.style.top = `${el.top}px`;
+          wrapper.style.width = `${el.width}px`;
+          wrapper.style.height = `${el.height}px`;
+          wrapper.dataset.elementId = el.id;
+
+          if (selectedElementId === el.id) {
+            wrapper.classList.add('ring-2', 'ring-[#004c97]', 'rounded');
+          }
+
+          const svg = buildShapeSvg(el);
+          wrapper.appendChild(svg);
+
+          wrapper.addEventListener('pointerdown', (event) => {
+            const target = event.target;
+            if (target instanceof HTMLElement && target.classList.contains('shape-resize-handle')) {
+              return;
+            }
+            if (selectedElementId !== el.id) {
+              selectedElementId = el.id;
+            }
+            wrapper.classList.add('ring-2', 'ring-[#004c97]', 'rounded');
+            addShapeHandles(wrapper, el);
+            startShapeDrag(event, wrapper, el);
+          });
+
+          wrapper.addEventListener('click', (event) => {
+            event.stopPropagation();
+            if (selectedElementId !== el.id) {
+              selectedElementId = el.id;
+              render();
+            }
+          });
+
+          if (selectedElementId === el.id) {
+            addShapeHandles(wrapper, el);
+          }
+
+          canvasContainerEl.appendChild(wrapper);
+        }
       });
 
       syncInspectorControls();
@@ -993,7 +1752,7 @@
             borderColor: palette,
             borderWidth: element.chartType === 'line' ? 3 : 1.5,
             tension: 0.35,
-            fill: element.chartType === 'line' ? false : true,
+            fill: element.chartType === 'line' ? false : element.chartType === 'radar',
           }]
         },
         options: {
@@ -1005,10 +1764,26 @@
               labels: { color: '#1f2937', font: { family: 'Inter, sans-serif' } }
             }
           },
-          scales: element.chartType === 'pie' || element.chartType === 'doughnut' ? {} : {
-            x: { ticks: { color: '#1f2937' }, grid: { color: '#e2e8f0' } },
-            y: { ticks: { color: '#1f2937' }, grid: { color: '#e2e8f0' }, beginAtZero: true }
-          }
+          scales: (() => {
+            if (['pie', 'doughnut', 'polarArea'].includes(element.chartType)) {
+              return {};
+            }
+            if (element.chartType === 'radar') {
+              return {
+                r: {
+                  ticks: { color: '#1f2937', backdropColor: 'transparent' },
+                  grid: { color: '#e2e8f0' },
+                  beginAtZero: true,
+                  angleLines: { color: '#e2e8f0' },
+                  pointLabels: { color: '#1f2937' },
+                }
+              };
+            }
+            return {
+              x: { ticks: { color: '#1f2937' }, grid: { color: '#e2e8f0' } },
+              y: { ticks: { color: '#1f2937' }, grid: { color: '#e2e8f0' }, beginAtZero: true }
+            };
+          })()
         }
       });
 
@@ -1033,8 +1808,11 @@
       const isText = selected && selected.type === 'text';
       const isImage = selected && selected.type === 'image';
       const isChart = selected && selected.type === 'chart';
+      const isShape = selected && selected.type === 'shape';
+      const shapePreset = isShape ? getShapePreset(selected.shape) : null;
+      const shapeControlsEnabled = activeToolTab === 'shapes' || isShape;
 
-      const textControls = [fontFamilySelect, fontSizeSelect, textColorInput, textBgColorInput, textBgClearBtn, boldBtn, italicBtn, underlineBtn, alignLeftBtn, alignCenterBtn, alignRightBtn];
+      const textControls = [fontFamilySelect, fontSizeSelect, textColorInput, textBgColorInput, textBgClearBtn, boldBtn, italicBtn, underlineBtn, alignLeftBtn, alignCenterBtn, alignRightBtn, lineHeightSelect, letterSpacingSelect, textTransformSelect];
       textControls.forEach(control => {
         if (!control) return;
         control.disabled = !isText;
@@ -1056,26 +1834,29 @@
         if (textBgClearBtn) {
           textBgClearBtn.disabled = !selected.backgroundColor;
         }
+        if (lineHeightSelect) {
+          const lh = typeof selected.lineHeight === 'number' ? selected.lineHeight : 1.4;
+          lineHeightSelect.value = String(lh);
+        }
+        if (letterSpacingSelect) {
+          const ls = typeof selected.letterSpacing === 'number' ? selected.letterSpacing : 0;
+          letterSpacingSelect.value = String(ls);
+        }
+        if (textTransformSelect) {
+          textTransformSelect.value = selected.textTransform || 'none';
+        }
       } else if (textBgClearBtn) {
         textBgClearBtn.disabled = true;
+        if (lineHeightSelect) lineHeightSelect.value = '1.4';
+        if (letterSpacingSelect) letterSpacingSelect.value = '0';
+        if (textTransformSelect) textTransformSelect.value = 'none';
       }
 
-      const imageControls = [replaceImageInput, fitBtn, fillBtn, imageWidthRange, imageOpacityRange];
+      const imageControls = [replaceImageInput, fitBtn, fillBtn, imageOpacityRange];
       imageControls.forEach(control => {
         if (!control) return;
         control.disabled = !isImage;
       });
-
-      if (imageWidthRange) {
-        if (isImage && selected) {
-          const widthValue = Math.round(selected.width || 320);
-          imageWidthRange.value = String(widthValue);
-          if (imageWidthValue) imageWidthValue.textContent = `${widthValue}px`;
-        } else {
-          imageWidthRange.value = '400';
-          if (imageWidthValue) imageWidthValue.textContent = '--';
-        }
-      }
 
       if (imageOpacityRange) {
         if (isImage && selected) {
@@ -1106,9 +1887,69 @@
         chartPaletteSelect.disabled = !isChart;
       }
 
-      if (chartInspector) {
-        chartInspector.classList.toggle('hidden', !isChart);
+      if (shapeFillInput) {
+        const fillValue = isShape ? (selected.fill || shapeDefaults.fill) : shapeDefaults.fill;
+        shapeFillInput.value = fillValue;
+        shapeFillInput.disabled = !shapeControlsEnabled || (shapePreset?.strokeOnly ?? false);
       }
+      if (shapeStrokeInput) {
+        const strokeValue = isShape ? (selected.stroke || shapeDefaults.stroke) : shapeDefaults.stroke;
+        shapeStrokeInput.value = strokeValue;
+        shapeStrokeInput.disabled = !shapeControlsEnabled;
+      }
+      if (shapeStrokeWidthInput) {
+        const widthValue = isShape ? (selected.strokeWidth ?? shapeDefaults.strokeWidth) : shapeDefaults.strokeWidth;
+        shapeStrokeWidthInput.value = String(widthValue);
+        shapeStrokeWidthInput.disabled = !shapeControlsEnabled;
+        if (shapeStrokeWidthLabel) {
+          shapeStrokeWidthLabel.textContent = `${widthValue} px`;
+        }
+      } else if (shapeStrokeWidthLabel) {
+        shapeStrokeWidthLabel.textContent = '--';
+      }
+      if (shapeOpacityInput) {
+        const opacityValue = isShape ? Math.round((selected.opacity != null ? selected.opacity : shapeDefaults.opacity) * 100) : Math.round(shapeDefaults.opacity * 100);
+        shapeOpacityInput.value = String(opacityValue);
+        shapeOpacityInput.disabled = !shapeControlsEnabled;
+        if (shapeOpacityLabel) {
+          shapeOpacityLabel.textContent = `${opacityValue}%`;
+        }
+      } else if (shapeOpacityLabel) {
+        shapeOpacityLabel.textContent = '--';
+      }
+      if (shapeCornerRadiusInput) {
+        const allowCorner = shapeControlsEnabled && (!shapePreset || shapePreset.allowCornerRadius !== false);
+        const currentRadius = isShape
+          ? (typeof selected.cornerRadius === 'number' ? selected.cornerRadius : shapeDefaults.cornerRadius)
+          : shapeDefaults.cornerRadius;
+        const maxCorner = isShape
+          ? Math.floor(Math.min(selected.width || shapePreset?.width || 200, selected.height || shapePreset?.height || 200) / 2)
+          : 100;
+        const clampedRadius = Math.max(0, Math.min(currentRadius, maxCorner));
+        shapeCornerRadiusInput.max = String(Math.max(4, maxCorner));
+        shapeCornerRadiusInput.value = String(clampedRadius);
+        shapeCornerRadiusInput.disabled = !allowCorner;
+        if (shapeCornerRadiusLabel) {
+          shapeCornerRadiusLabel.textContent = allowCorner ? `${shapeCornerRadiusInput.value} px` : '—';
+        }
+        if (isShape && allowCorner && clampedRadius !== currentRadius) {
+          selected.cornerRadius = clampedRadius;
+        }
+      } else if (shapeCornerRadiusLabel) {
+        shapeCornerRadiusLabel.textContent = '--';
+      }
+      if (shapeBringToFrontBtn) {
+        shapeBringToFrontBtn.disabled = !isShape;
+      }
+      if (shapeSendToBackBtn) {
+        shapeSendToBackBtn.disabled = !isShape;
+      }
+
+      if (shapesTabQuickActions) {
+        shapesTabQuickActions.classList.toggle('opacity-60', !shapeControlsEnabled);
+        shapesTabQuickActions.classList.toggle('pointer-events-none', !shapeControlsEnabled);
+      }
+
       if (chartDetailsSection) {
         chartDetailsSection.classList.toggle('opacity-60', !isChart);
         chartDetailsSection.classList.toggle('pointer-events-none', !isChart);
@@ -1129,9 +1970,11 @@
       if (chartRandomizeBtn) {
         chartRandomizeBtn.disabled = !isChart;
       }
+      updateInspectorVisibility();
     }
 
     function setActiveTab(name) {
+      activeToolTab = name;
       tabButtons.forEach(btn => {
         const isActive = btn.dataset.tabTarget === name;
         btn.classList.toggle('bg-white', isActive);
@@ -1143,6 +1986,8 @@
       tabPanels.forEach(panel => {
         panel.classList.toggle('hidden', panel.dataset.tabPanel !== name);
       });
+      updateInspectorVisibility();
+      syncInspectorControls();
     }
 
     tabButtons.forEach(btn => {
@@ -1164,6 +2009,20 @@
       return slide.elements.find(e => e.id === selectedElementId) || null;
     }
 
+    function updateInspectorVisibility() {
+      const selected = getSelectedElement();
+      const isShape = selected && selected.type === 'shape';
+      const isChart = selected && selected.type === 'chart';
+      if (shapeInspector) {
+        const shouldShowShapePanel = activeToolTab === 'shapes' || isShape;
+        shapeInspector.classList.toggle('hidden', !shouldShowShapePanel);
+      }
+      if (chartInspector) {
+        const shouldShowChartPanel = activeToolTab === 'chart' || isChart;
+        chartInspector.classList.toggle('hidden', !shouldShowChartPanel);
+      }
+    }
+
     function deleteSelectedElement() {
       if (!selectedElementId) return;
       const slide = getActiveSlide();
@@ -1172,11 +2031,386 @@
       if (index === -1) return;
       slide.elements.splice(index, 1);
       selectedElementId = null;
+      editingTextElementId = null;
       markDirty();
       render();
     }
 
     const MIN_CHART_DIMENSION = 120;
+    const MIN_IMAGE_DIMENSION = 80;
+    const MIN_TEXT_WIDTH = 120;
+    const MIN_TEXT_HEIGHT = 40;
+
+    function addTextHandles(node, element) {
+      if (!node || !element || element.type !== 'text') return;
+      node.querySelectorAll('.text-resize-handle').forEach(handle => handle.remove());
+      const handle = document.createElement('div');
+      handle.className = 'text-resize-handle';
+      handle.dataset.handle = 'se';
+      handle.setAttribute('contenteditable', 'false');
+      handle.setAttribute('aria-label', 'Resize text box');
+      handle.title = 'Resize text box';
+      handle.addEventListener('pointerdown', (event) => startTextResize(event, 'se', node, element));
+      node.appendChild(handle);
+    }
+
+    function handleTextPointerDown(event, node, element) {
+      if (event.button !== 0) return;
+      if (event.target.closest('.text-resize-handle')) return;
+      const wasSelected = selectedElementId === element.id;
+      if (!wasSelected) {
+        selectedElementId = element.id;
+        editingTextElementId = null;
+        node.classList.add('ring-2', 'ring-[#004c97]', 'rounded');
+        addTextHandles(node, element);
+      } else {
+        editingTextElementId = null;
+      }
+      const pointerId = event.pointerId;
+      if (node.setPointerCapture && pointerId !== undefined) {
+        node.setPointerCapture(pointerId);
+      }
+      const startX = event.clientX;
+      const startY = event.clientY;
+      const startLeft = typeof element.left === 'number' ? element.left : parseFloat(node.style.left) || 0;
+      const startTop = typeof element.top === 'number' ? element.top : parseFloat(node.style.top) || 0;
+      let moved = false;
+
+      const onMove = (moveEvent) => {
+        const dx = moveEvent.clientX - startX;
+        const dy = moveEvent.clientY - startY;
+        if (!moved && (Math.abs(dx) > 2 || Math.abs(dy) > 2)) {
+          moved = true;
+          document.body.style.userSelect = 'none';
+        }
+        if (!moved) return;
+        const canvasRect = canvasContainerEl.getBoundingClientRect();
+        const width = typeof element.width === 'number' ? element.width : node.offsetWidth;
+        const height = typeof element.height === 'number' ? element.height : node.offsetHeight;
+        const maxLeft = Math.max(0, canvasRect.width - width);
+        const maxTop = Math.max(0, canvasRect.height - height);
+        const nextLeft = Math.max(0, Math.min(startLeft + dx, maxLeft));
+        const nextTop = Math.max(0, Math.min(startTop + dy, maxTop));
+        element.left = nextLeft;
+        element.top = nextTop;
+        node.style.left = `${nextLeft}px`;
+        node.style.top = `${nextTop}px`;
+      };
+
+      const onUp = () => {
+        document.removeEventListener('pointermove', onMove);
+        document.removeEventListener('pointerup', onUp);
+        if (node.releasePointerCapture && pointerId !== undefined) {
+          node.releasePointerCapture(pointerId);
+        }
+        document.body.style.userSelect = '';
+        if (moved) {
+          selectedElementId = element.id;
+          markDirty();
+          render();
+        } else if (!wasSelected) {
+          render();
+        }
+      };
+
+      document.addEventListener('pointermove', onMove);
+      document.addEventListener('pointerup', onUp);
+    }
+
+    function focusTextElement(elementId) {
+      requestAnimationFrame(() => {
+        const target = canvasContainerEl.querySelector(`[data-element-id="${elementId}"]`);
+        if (!target) return;
+        target.focus();
+        if (window.getSelection) {
+          const sel = window.getSelection();
+          if (sel) {
+            const range = document.createRange();
+            range.selectNodeContents(target);
+            sel.removeAllRanges();
+            sel.addRange(range);
+          }
+        }
+      });
+    }
+
+    function startTextResize(event, direction, node, element) {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const pointerId = event.pointerId;
+      if (event.target.setPointerCapture && pointerId !== undefined) {
+        event.target.setPointerCapture(pointerId);
+      }
+
+      const startX = event.clientX;
+      const startY = event.clientY;
+      const startWidth = typeof element.width === 'number' ? element.width : node.offsetWidth;
+      const startHeight = typeof element.height === 'number' ? element.height : node.offsetHeight;
+      const startLeft = typeof element.left === 'number' ? element.left : parseFloat(node.style.left) || 0;
+      const startTop = typeof element.top === 'number' ? element.top : parseFloat(node.style.top) || 0;
+      let resized = false;
+
+      document.body.style.userSelect = 'none';
+
+      const onMove = (moveEvent) => {
+        const dx = moveEvent.clientX - startX;
+        const dy = moveEvent.clientY - startY;
+
+        let newWidth = startWidth;
+        let newHeight = startHeight;
+        let newLeft = startLeft;
+        let newTop = startTop;
+
+        if (direction.includes('e')) {
+          newWidth = Math.max(MIN_TEXT_WIDTH, startWidth + dx);
+        }
+        if (direction.includes('s')) {
+          newHeight = Math.max(MIN_TEXT_HEIGHT, startHeight + dy);
+        }
+        if (direction.includes('w')) {
+          newWidth = Math.max(MIN_TEXT_WIDTH, startWidth - dx);
+          newLeft = startLeft + (startWidth - newWidth);
+        }
+        if (direction.includes('n')) {
+          newHeight = Math.max(MIN_TEXT_HEIGHT, startHeight - dy);
+          newTop = startTop + (startHeight - newHeight);
+        }
+
+        const canvasRect = canvasContainerEl.getBoundingClientRect();
+        const maxLeft = Math.max(0, canvasRect.width - newWidth);
+        const maxTop = Math.max(0, canvasRect.height - newHeight);
+        newLeft = Math.max(0, Math.min(newLeft, maxLeft));
+        newTop = Math.max(0, Math.min(newTop, maxTop));
+        const maxWidth = canvasRect.width - newLeft;
+        const maxHeight = canvasRect.height - newTop;
+        newWidth = Math.min(newWidth, maxWidth);
+        newHeight = Math.min(newHeight, maxHeight);
+
+        const prevWidth = typeof element.width === 'number' ? element.width : startWidth;
+        const prevHeight = typeof element.height === 'number' ? element.height : startHeight;
+        const widthChanged = Math.abs(newWidth - prevWidth) > 0.5;
+        const heightChanged = Math.abs(newHeight - prevHeight) > 0.5;
+        const leftChanged = Math.abs(newLeft - startLeft) > 0.5;
+        const topChanged = Math.abs(newTop - startTop) > 0.5;
+
+        if (widthChanged) {
+          element.width = newWidth;
+        }
+        if (heightChanged) {
+          element.height = newHeight;
+        }
+        element.left = newLeft;
+        element.top = newTop;
+
+        node.style.width = `${element.width ?? startWidth}px`;
+        node.style.left = `${element.left}px`;
+        node.style.top = `${element.top}px`;
+        if (typeof element.height === 'number') {
+          node.style.height = `${element.height}px`;
+          node.style.overflow = 'auto';
+        } else {
+          node.style.height = 'auto';
+          node.style.overflow = 'visible';
+        }
+
+        resized = widthChanged || heightChanged || leftChanged || topChanged;
+      };
+
+      const onUp = () => {
+        document.removeEventListener('pointermove', onMove);
+        document.removeEventListener('pointerup', onUp);
+        document.body.style.userSelect = '';
+        if (event.target.releasePointerCapture && pointerId !== undefined) {
+          event.target.releasePointerCapture(pointerId);
+        }
+        if (resized) {
+          selectedElementId = element.id;
+          markDirty();
+          render();
+        }
+      };
+
+      document.addEventListener('pointermove', onMove);
+      document.addEventListener('pointerup', onUp);
+    }
+
+    function addImageHandles(wrapper, element) {
+      if (!wrapper || !element || element.type !== 'image') return;
+      wrapper.querySelectorAll('.image-resize-handle').forEach(handle => handle.remove());
+      const handles = [
+        { handle: 'nw', style: { top: '-8px', left: '-8px' } },
+        { handle: 'ne', style: { top: '-8px', right: '-8px' } },
+        { handle: 'sw', style: { bottom: '-8px', left: '-8px' } },
+        { handle: 'se', style: { bottom: '-8px', right: '-8px' } },
+      ];
+
+      handles.forEach(({ handle, style }) => {
+        const node = document.createElement('div');
+        node.className = 'image-resize-handle';
+        node.dataset.handle = handle;
+        Object.entries(style).forEach(([key, value]) => {
+          node.style[key] = value;
+        });
+        node.addEventListener('pointerdown', (event) => startImageResize(event, handle, wrapper, element));
+        wrapper.appendChild(node);
+      });
+    }
+
+    function startImageDrag(event, wrapper, element) {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const pointerId = event.pointerId;
+      if (wrapper.setPointerCapture && pointerId !== undefined) {
+        wrapper.setPointerCapture(pointerId);
+      }
+
+      const startX = event.clientX;
+      const startY = event.clientY;
+      const startLeft = typeof element.left === 'number' ? element.left : parseFloat(wrapper.style.left) || 0;
+      const startTop = typeof element.top === 'number' ? element.top : parseFloat(wrapper.style.top) || 0;
+      let moved = false;
+
+      document.body.style.userSelect = 'none';
+
+      const onMove = (moveEvent) => {
+        const dx = moveEvent.clientX - startX;
+        const dy = moveEvent.clientY - startY;
+        if (!moved && (Math.abs(dx) > 2 || Math.abs(dy) > 2)) {
+          moved = true;
+        }
+        if (!moved) return;
+
+        const canvasRect = canvasContainerEl.getBoundingClientRect();
+        const width = wrapper.offsetWidth;
+        const height = wrapper.offsetHeight;
+        const maxLeft = Math.max(0, canvasRect.width - width);
+        const maxTop = Math.max(0, canvasRect.height - height);
+        const newLeft = Math.max(0, Math.min(startLeft + dx, maxLeft));
+        const newTop = Math.max(0, Math.min(startTop + dy, maxTop));
+
+        element.left = newLeft;
+        element.top = newTop;
+        wrapper.style.left = `${newLeft}px`;
+        wrapper.style.top = `${newTop}px`;
+      };
+
+      const onUp = () => {
+        document.removeEventListener('pointermove', onMove);
+        document.removeEventListener('pointerup', onUp);
+        document.body.style.userSelect = '';
+        if (wrapper.releasePointerCapture && pointerId !== undefined) {
+          wrapper.releasePointerCapture(pointerId);
+        }
+        if (moved) {
+          markDirty();
+          render();
+        }
+      };
+
+      document.addEventListener('pointermove', onMove);
+      document.addEventListener('pointerup', onUp);
+    }
+
+    function startImageResize(event, direction, wrapper, element) {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const handle = event.target;
+      const pointerId = event.pointerId;
+      if (handle.setPointerCapture && pointerId !== undefined) {
+        handle.setPointerCapture(pointerId);
+      }
+
+      const startX = event.clientX;
+      const startY = event.clientY;
+      const startWidth = typeof element.width === 'number' ? element.width : wrapper.offsetWidth;
+      const startHeight = typeof element.height === 'number' ? element.height : wrapper.offsetHeight;
+      const startLeft = typeof element.left === 'number' ? element.left : parseFloat(wrapper.style.left) || 0;
+      const startTop = typeof element.top === 'number' ? element.top : parseFloat(wrapper.style.top) || 0;
+      let resized = false;
+
+      document.body.style.userSelect = 'none';
+
+      const onMove = (moveEvent) => {
+        const dx = moveEvent.clientX - startX;
+        const dy = moveEvent.clientY - startY;
+
+        let newWidth = startWidth;
+        let newHeight = startHeight;
+        let newLeft = startLeft;
+        let newTop = startTop;
+
+        if (direction.includes('e')) {
+          newWidth = Math.max(MIN_IMAGE_DIMENSION, startWidth + dx);
+        }
+        if (direction.includes('s')) {
+          newHeight = Math.max(MIN_IMAGE_DIMENSION, startHeight + dy);
+        }
+        if (direction.includes('w')) {
+          newWidth = Math.max(MIN_IMAGE_DIMENSION, startWidth - dx);
+          newLeft = startLeft + (startWidth - newWidth);
+        }
+        if (direction.includes('n')) {
+          newHeight = Math.max(MIN_IMAGE_DIMENSION, startHeight - dy);
+          newTop = startTop + (startHeight - newHeight);
+        }
+
+        const canvasRect = canvasContainerEl.getBoundingClientRect();
+        const maxLeft = Math.max(0, canvasRect.width - newWidth);
+        const maxTop = Math.max(0, canvasRect.height - newHeight);
+        newLeft = Math.max(0, Math.min(newLeft, maxLeft));
+        newTop = Math.max(0, Math.min(newTop, maxTop));
+        const maxWidth = canvasRect.width - newLeft;
+        const maxHeight = canvasRect.height - newTop;
+        newWidth = Math.min(newWidth, maxWidth);
+        newHeight = Math.min(newHeight, maxHeight);
+
+        const prevWidth = typeof element.width === 'number' ? element.width : startWidth;
+        const prevHeight = typeof element.height === 'number' ? element.height : startHeight;
+        const widthChanged = Math.abs(newWidth - prevWidth) > 0.5;
+        const heightChanged = Math.abs(newHeight - prevHeight) > 0.5;
+        const leftChanged = Math.abs(newLeft - startLeft) > 0.5;
+        const topChanged = Math.abs(newTop - startTop) > 0.5;
+
+        element.width = newWidth;
+        element.height = newHeight;
+        element.left = newLeft;
+        element.top = newTop;
+        element.aspectRatio = newHeight / newWidth;
+
+        wrapper.style.width = `${element.width}px`;
+        wrapper.style.height = `${element.height}px`;
+        wrapper.style.left = `${element.left}px`;
+        wrapper.style.top = `${element.top}px`;
+
+        const img = wrapper.querySelector('img');
+        if (img) {
+          img.style.width = '100%';
+          img.style.height = '100%';
+        }
+
+        resized = widthChanged || heightChanged || leftChanged || topChanged;
+      };
+
+      const onUp = () => {
+        document.removeEventListener('pointermove', onMove);
+        document.removeEventListener('pointerup', onUp);
+        document.body.style.userSelect = '';
+        if (handle.releasePointerCapture && pointerId !== undefined) {
+          handle.releasePointerCapture(pointerId);
+        }
+        if (resized) {
+          selectedElementId = element.id;
+          markDirty();
+          render();
+        }
+      };
+
+      document.addEventListener('pointermove', onMove);
+      document.addEventListener('pointerup', onUp);
+    }
 
     function ensureChartDataset(element) {
       if (!element) return null;
@@ -1396,6 +2630,7 @@
     // Events: outer click clears selection
     canvasContainerEl.addEventListener('click', () => {
       selectedElementId = null;
+      editingTextElementId = null;
       render();
     });
 
@@ -1404,13 +2639,22 @@
     if (event.key !== 'Delete' && event.key !== 'Backspace') return;
 
     const target = event.target;
-    const isEditableTarget =
-      target &&
-      (target.tagName === 'INPUT' ||
-        target.tagName === 'TEXTAREA' ||
-        target.isContentEditable);
+    const isInputTarget = target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA');
+    const isContentEditableTarget = target && target.isContentEditable;
+    const selectedTextIsBeingEdited = editingTextElementId === selectedElementId;
 
-    if (isEditableTarget) return;
+    if (isInputTarget) {
+      return;
+    }
+
+    if (isContentEditableTarget) {
+      const targetElementId = target instanceof HTMLElement ? target.dataset.elementId : undefined;
+      if (targetElementId === selectedElementId && !selectedTextIsBeingEdited) {
+        event.preventDefault();
+        deleteSelectedElement();
+      }
+      return;
+    }
 
     event.preventDefault();
     deleteSelectedElement();
@@ -1429,6 +2673,7 @@
         slides.splice(activeSlideIndex + 1, 0, newSlide);
         activeSlideIndex = Math.min(activeSlideIndex + 1, slides.length - 1);
         selectedElementId = null;
+        editingTextElementId = null;
         markDirty();
         render();
       });
@@ -1445,6 +2690,7 @@
         slides.splice(activeSlideIndex + 1, 0, clone);
         activeSlideIndex = Math.min(activeSlideIndex + 1, slides.length - 1);
         selectedElementId = null;
+        editingTextElementId = null;
         markDirty();
         render();
       });
@@ -1464,6 +2710,7 @@
           activeSlideIndex = slides.length - 1;
         }
         selectedElementId = null;
+        editingTextElementId = null;
         markDirty();
         render();
       });
@@ -1494,6 +2741,7 @@
         }
         slide.elements = [];
         selectedElementId = null;
+        editingTextElementId = null;
         markDirty();
         render();
       });
@@ -1518,7 +2766,10 @@
           bold: false,
           italic: false,
           underline: false,
-          align: 'left'
+          align: 'left',
+          lineHeight: 1.4,
+          letterSpacing: 0,
+          textTransform: 'none'
         };
         slide.elements.push(element);
         selectedElementId = element.id;
@@ -1636,6 +2887,200 @@
       });
     }
 
+    if (lineHeightSelect) {
+      lineHeightSelect.addEventListener('change', () => {
+        const el = getSelectedElement();
+        if (el && el.type === 'text') {
+          const value = parseFloat(lineHeightSelect.value);
+          el.lineHeight = Number.isFinite(value) ? value : 1.4;
+          markDirty();
+          render();
+        }
+      });
+    }
+
+    if (letterSpacingSelect) {
+      letterSpacingSelect.addEventListener('change', () => {
+        const el = getSelectedElement();
+        if (el && el.type === 'text') {
+          const value = parseFloat(letterSpacingSelect.value);
+          el.letterSpacing = Number.isFinite(value) ? value : 0;
+          markDirty();
+          render();
+        }
+      });
+    }
+
+    if (textTransformSelect) {
+      textTransformSelect.addEventListener('change', () => {
+        const el = getSelectedElement();
+        if (el && el.type === 'text') {
+          el.textTransform = textTransformSelect.value || 'none';
+          markDirty();
+          render();
+        }
+      });
+    }
+
+    if (shapesTabQuickActions) {
+      shapesTabQuickActions.addEventListener('click', (event) => {
+        const root = event.target;
+        const target = root instanceof Element ? root.closest('[data-shape]') : null;
+        if (!target) return;
+        const shapeType = target.dataset.shape;
+        if (!shapeType) return;
+        event.preventDefault();
+        createShapeElement(shapeType);
+      });
+    }
+
+    if (shapeLibrary) {
+      shapeLibrary.addEventListener('click', (event) => {
+        const root = event.target;
+        const target = root instanceof Element ? root.closest('[data-shape]') : null;
+        if (!target) return;
+        const shapeType = target.dataset.shape;
+        if (!shapeType) return;
+        event.preventDefault();
+        createShapeElement(shapeType);
+      });
+    }
+
+    if (shapeFillInput) {
+      shapeFillInput.addEventListener('input', () => {
+        const value = shapeFillInput.value;
+        shapeDefaults.fill = value;
+        const el = getSelectedElement();
+        if (el && el.type === 'shape' && !(getShapePreset(el.shape).strokeOnly)) {
+          el.fill = value;
+          markDirty();
+          render();
+        }
+      });
+    }
+
+    if (shapeStrokeInput) {
+      shapeStrokeInput.addEventListener('input', () => {
+        const value = shapeStrokeInput.value;
+        shapeDefaults.stroke = value;
+        const el = getSelectedElement();
+        if (el && el.type === 'shape') {
+          el.stroke = value;
+          markDirty();
+          render();
+        }
+      });
+    }
+
+    if (shapeStrokeWidthInput) {
+      shapeStrokeWidthInput.addEventListener('input', () => {
+        const value = parseInt(shapeStrokeWidthInput.value, 10) || 0;
+        shapeDefaults.strokeWidth = value;
+        if (shapeStrokeWidthLabel) {
+          shapeStrokeWidthLabel.textContent = `${value} px`;
+        }
+        const el = getSelectedElement();
+        if (el && el.type === 'shape') {
+          el.strokeWidth = value;
+          markDirty();
+          render();
+        }
+      });
+    }
+
+    if (shapeOpacityInput) {
+      shapeOpacityInput.addEventListener('input', () => {
+        let value = parseInt(shapeOpacityInput.value, 10);
+        if (!Number.isFinite(value)) value = 100;
+        value = Math.max(0, Math.min(100, value));
+        if (shapeOpacityLabel) {
+          shapeOpacityLabel.textContent = `${value}%`;
+        }
+        const opacity = value / 100;
+        shapeDefaults.opacity = opacity;
+        const el = getSelectedElement();
+        if (el && el.type === 'shape') {
+          el.opacity = opacity;
+          markDirty();
+          render();
+        }
+      });
+    }
+
+    if (shapeCornerRadiusInput) {
+      shapeCornerRadiusInput.addEventListener('input', () => {
+        let value = parseInt(shapeCornerRadiusInput.value, 10);
+        if (!Number.isFinite(value)) value = 0;
+        value = Math.max(0, value);
+        if (shapeCornerRadiusLabel) {
+          shapeCornerRadiusLabel.textContent = `${value} px`;
+        }
+        const el = getSelectedElement();
+        if (el && el.type === 'shape') {
+          const preset = getShapePreset(el.shape);
+          if (preset.allowCornerRadius !== false) {
+            el.cornerRadius = value;
+            markDirty();
+            render();
+            return;
+          }
+        }
+        shapeDefaults.cornerRadius = value;
+      });
+    }
+
+    if (shapeBringToFrontBtn) {
+      shapeBringToFrontBtn.addEventListener('click', () => reorderSelectedElement('front'));
+    }
+
+    if (shapeSendToBackBtn) {
+      shapeSendToBackBtn.addEventListener('click', () => reorderSelectedElement('back'));
+    }
+
+    function createShapeElement(shapeType) {
+      const slide = getActiveSlide();
+      if (!slide) return;
+      const preset = getShapePreset(shapeType);
+      const fillValue = shapeFillInput && !preset.strokeOnly ? (shapeFillInput.value || shapeDefaults.fill) : shapeDefaults.fill;
+      const strokeValue = shapeStrokeInput ? (shapeStrokeInput.value || shapeDefaults.stroke) : shapeDefaults.stroke;
+      const strokeWidthValue = shapeStrokeWidthInput ? (parseInt(shapeStrokeWidthInput.value, 10) || shapeDefaults.strokeWidth) : shapeDefaults.strokeWidth;
+      const opacityPercent = shapeOpacityInput ? (parseInt(shapeOpacityInput.value, 10) || Math.round(shapeDefaults.opacity * 100)) : Math.round(shapeDefaults.opacity * 100);
+      const opacityValue = Math.max(0, Math.min(100, opacityPercent)) / 100;
+      let cornerRadiusValue = null;
+      if (preset.allowCornerRadius) {
+        if (shapeCornerRadiusInput) {
+          const parsed = parseInt(shapeCornerRadiusInput.value, 10);
+          if (Number.isFinite(parsed)) {
+            cornerRadiusValue = Math.max(0, parsed);
+          }
+        }
+        if (cornerRadiusValue == null) {
+          cornerRadiusValue = typeof preset.defaultCornerRadius === 'number'
+            ? preset.defaultCornerRadius
+            : shapeDefaults.cornerRadius;
+        }
+      }
+      const element = {
+        id: crypto.randomUUID(),
+        type: 'shape',
+        shape: shapeType,
+        left: 160,
+        top: 120,
+        width: preset.width,
+        height: preset.height,
+        fill: preset.strokeOnly ? null : fillValue,
+        stroke: strokeValue,
+        strokeWidth: strokeWidthValue,
+        opacity: opacityValue,
+        cornerRadius: preset.allowCornerRadius ? cornerRadiusValue : null,
+      };
+      slide.elements.push(element);
+      selectedElementId = element.id;
+      markDirty();
+      setActiveTab('shapes');
+      render();
+    }
+
     function createChartElement(chartType) {
       const slide = getActiveSlide();
       const palette = chartPaletteSelect ? chartPaletteSelect.value : 'ocean';
@@ -1675,6 +3120,15 @@
     }
     if (addPieChartBtn) {
       addPieChartBtn.addEventListener('click', () => createChartElement('pie'));
+    }
+    if (addDoughnutChartBtn) {
+      addDoughnutChartBtn.addEventListener('click', () => createChartElement('doughnut'));
+    }
+    if (addRadarChartBtn) {
+      addRadarChartBtn.addEventListener('click', () => createChartElement('radar'));
+    }
+    if (addPolarChartBtn) {
+      addPolarChartBtn.addEventListener('click', () => createChartElement('polarArea'));
     }
 
     if (chartTypeSelect) {
@@ -1861,6 +3315,8 @@
             left: 80,
             top: 80,
             width: 400,
+            height: 300,
+            aspectRatio: 0.75,
             fit: 'contain',
             opacity: 1
           };
@@ -1883,6 +3339,8 @@
         const reader = new FileReader();
         reader.onload = () => {
           el.src = reader.result;
+          el.aspectRatio = null;
+          el.height = null;
           markDirty();
           render();
           replaceImageInput.value = '';
@@ -1901,18 +3359,6 @@
       fillBtn.addEventListener('click', () => {
         const el = getSelectedElement();
         if (el && el.type === 'image') { el.fit = 'cover'; markDirty(); render(); }
-      });
-    }
-
-    if (imageWidthRange) {
-      imageWidthRange.addEventListener('input', () => {
-        const el = getSelectedElement();
-        if (el && el.type === 'image') {
-          el.width = parseInt(imageWidthRange.value, 10) || el.width;
-          if (imageWidthValue) imageWidthValue.textContent = `${el.width}px`;
-          markDirty();
-          render();
-        }
       });
     }
 
