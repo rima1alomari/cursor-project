@@ -142,6 +142,34 @@
       padding: 12px 0;
       background: transparent;
     }
+    .toolbar-icon-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      background: rgba(255, 255, 255, 0.12);
+      color: #ffffff;
+      cursor: pointer;
+      transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .toolbar-icon-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(15, 23, 42, 0.25);
+    }
+    .toolbar-icon-btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    .toolbar-icon-btn span {
+      font-size: 16px;
+      line-height: 1;
+    }
     .slides-sidebar-toggle {
       display: inline-flex;
       align-items: center;
@@ -337,7 +365,13 @@
       <div class="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 md:gap-6 md:px-6 lg:px-8">
         <div class="flex flex-wrap items-center justify-between gap-4">
           <div class="flex items-center gap-3">
-            <span class="sr-only">Editor Branding</span>
+            <input 
+              type="text" 
+              id="presentationNameInput" 
+              placeholder="Untitled Presentation" 
+              class="bg-white/20 border border-white/30 rounded-lg px-4 py-2 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/40 focus:bg-white/30 transition min-w-[200px] max-w-[300px] text-sm font-medium"
+              value="Untitled Presentation"
+            />
           </div>
           <div class="flex flex-wrap items-center gap-3">
             <div class="flex items-center gap-2">
@@ -346,6 +380,14 @@
             </div>
             <div class="rounded-full bg-black/20 px-3 py-1.5 text-sm">Slide <span id="slideIndexLabel" class="font-semibold">1</span>/<span id="slideCountLabel">1</span></div>
             <span id="autosaveStatus" class="text-xs text-white/80">Autosave ready</span>
+            <div class="flex items-center gap-2">
+              <button id="undoBtn" class="toolbar-icon-btn" title="Undo (⌘Z)">
+                <span>⟲</span>
+              </button>
+              <button id="redoBtn" class="toolbar-icon-btn" title="Redo (⌘⇧Z)">
+                <span>⟳</span>
+              </button>
+            </div>
             <button id="shareBtn" class="rounded-full border border-white/30 px-3 py-1.5 text-sm hover:bg-white/10">Share</button>
             <button id="presentBtn" class="rounded-full border border-white/30 px-3 py-1.5 text-sm hover:bg-white/10">Present</button>
             <button id="exportPdfBtn" class="rounded-full bg-white/20 px-3 py-1.5 text-sm shadow-sm transition hover:bg-white/30">Export PDF</button>
@@ -848,6 +890,7 @@
     let savedStatusTimeout = null;
 
     // Attempt to restore autosaved state
+    let savedPresentationName = null;
     try {
       if (typeof window !== 'undefined') {
         const savedStateRaw = localStorage.getItem(AUTOSAVE_KEY);
@@ -858,6 +901,9 @@
           }
           if (typeof savedState?.activeSlideIndex === 'number') {
             activeSlideIndex = Math.min(Math.max(savedState.activeSlideIndex, 0), Math.max(slides.length - 1, 0));
+          }
+          if (savedState?.presentationName) {
+            savedPresentationName = savedState.presentationName;
           }
         }
       }
@@ -877,6 +923,7 @@
     const autosaveStatusEl = document.getElementById('autosaveStatus');
     const presenceAvatarsEl = document.getElementById('presenceAvatars');
     const collaborationStatusEl = document.getElementById('collaborationStatus');
+    const presentationNameInput = document.getElementById('presentationNameInput');
 
     // Tool refs
     const addSlideBtn = document.getElementById('addSlideBtn');
@@ -914,6 +961,8 @@
     const addDoughnutChartBtn = document.getElementById('addDoughnutChartBtn');
     const addRadarChartBtn = document.getElementById('addRadarChartBtn');
     const addPolarChartBtn = document.getElementById('addPolarChartBtn');
+    const undoBtn = document.getElementById('undoBtn');
+    const redoBtn = document.getElementById('redoBtn');
     const chartTypeSelect = document.getElementById('chartTypeSelect');
     const chartPaletteSelect = document.getElementById('chartPaletteSelect');
     const chartRandomizeBtn = document.getElementById('chartRandomizeBtn');
@@ -1345,6 +1394,42 @@
       return `${Math.max(ms, 0)} ms`;
     }
 
+    function cloneSnapshot(snapshot) {
+      return JSON.parse(JSON.stringify(snapshot));
+    }
+
+    function snapshotState() {
+      return cloneSnapshot({ slides, activeSlideIndex });
+    }
+
+    function applySnapshot(snapshot) {
+      if (!snapshot) return;
+      const next = cloneSnapshot(snapshot);
+      const incomingSlides = Array.isArray(next.slides) ? next.slides : [];
+      slides = incomingSlides.length
+        ? incomingSlides
+        : [{ id: crypto.randomUUID(), title: 'Slide 1', backgroundColor: '#ffffff', backgroundImage: null, elements: [], animation: { ...slideAnimationDefaults } }];
+      activeSlideIndex = Math.min(Math.max(next.activeSlideIndex ?? 0, 0), Math.max(slides.length - 1, 0));
+      slides.forEach(slide => {
+        ensureSlideAnimation(slide);
+        if (Array.isArray(slide.elements)) {
+          slide.elements.forEach(ensureElementAnimation);
+        } else {
+          slide.elements = [];
+        }
+      });
+      historyCaptureReady = false;
+    }
+
+    function updateHistoryButtons() {
+      if (undoBtn) {
+        undoBtn.disabled = undoStack.length === 0;
+      }
+      if (redoBtn) {
+        redoBtn.disabled = redoStack.length === 0;
+      }
+    }
+
     function playSlideAnimationPreview(animation, targetNode = canvasContainerEl, options = {}) {
       if (!targetNode) return;
       const track = options.track ?? (targetNode === canvasContainerEl);
@@ -1517,6 +1602,12 @@
     let dragOverSlideId = null;
     let previousActiveSlideId = null;
     let canvasSwitchTimeout = null;
+    const HISTORY_LIMIT = 50;
+    let undoStack = [];
+    let redoStack = [];
+    let lastSnapshot = null;
+    let historyCaptureReady = false;
+    let isApplyingHistory = false;
 
     if (shapeFillInput) {
       shapeFillInput.value = shapeDefaults.fill;
@@ -1592,9 +1683,18 @@
     }
 
     function markDirty() {
+      if (!isApplyingHistory && historyCaptureReady && lastSnapshot) {
+        undoStack.push(cloneSnapshot(lastSnapshot));
+        if (undoStack.length > HISTORY_LIMIT) {
+          undoStack.shift();
+        }
+        redoStack = [];
+        historyCaptureReady = false;
+      }
       needsAutosave = true;
       updateAutosaveStatus('Saving…', 'saving');
       scheduleAutosave();
+      updateHistoryButtons();
     }
 
     function scheduleAutosave() {
@@ -1605,9 +1705,10 @@
     function runAutosave() {
       if (!needsAutosave) return;
       try {
-        const payload = JSON.stringify({ slides, activeSlideIndex });
+        const presentationName = presentationNameInput ? presentationNameInput.value : 'Untitled Presentation';
+        const payload = JSON.stringify({ slides, activeSlideIndex, presentationName });
         localStorage.setItem(AUTOSAVE_KEY, payload);
-        const syncPayload = JSON.stringify({ sessionId: SESSION_ID, timestamp: Date.now(), slides, activeSlideIndex });
+        const syncPayload = JSON.stringify({ sessionId: SESSION_ID, timestamp: Date.now(), slides, activeSlideIndex, presentationName });
         localStorage.setItem(SYNC_KEY, syncPayload);
         needsAutosave = false;
         lastSavedAt = new Date();
@@ -2289,6 +2390,9 @@
       if (presenterOverlay && !presenterOverlay.classList.contains('hidden')) {
         renderPresenterSlide();
       }
+      lastSnapshot = snapshotState();
+      historyCaptureReady = true;
+      updateHistoryButtons();
     }
 
     function renderChartForElement(element, canvas, options = {}) {
@@ -2679,7 +2783,18 @@
 
     function handleTextPointerDown(event, node, element) {
       if (event.button !== 0) return;
-      if (event.target.closest('.text-resize-handle')) return;
+      const target = event.target;
+      if (target instanceof HTMLElement && target.closest('.text-resize-handle')) return;
+      const clickedEditableContent = target instanceof HTMLElement && (target.isContentEditable || target.closest('[contenteditable="true"]') === node);
+      if (clickedEditableContent) {
+        event.stopPropagation();
+        if (selectedElementId !== element.id) {
+          selectedElementId = element.id;
+          node.classList.add('ring-2', 'ring-[#004c97]', 'rounded');
+          addTextHandles(node, element);
+        }
+        editingTextElementId = null;
+      }
       const wasSelected = selectedElementId === element.id;
       if (!wasSelected) {
         selectedElementId = element.id;
@@ -3671,6 +3786,7 @@
 
     if (animationsTabQuickActions) {
       animationsTabQuickActions.addEventListener('click', (event) => {
+        if (activeToolTab !== 'animation') return;
         const root = event.target instanceof Element ? event.target.closest('[data-slide-animation],[data-element-animation]') : null;
         if (!root) return;
         event.preventDefault();
@@ -3704,6 +3820,20 @@
             playElementAnimationPreview(targetNode, selected.animation);
           }
         }
+      });
+    }
+
+    if (undoBtn) {
+      undoBtn.addEventListener('click', (event) => {
+        event.preventDefault();
+        handleUndo();
+      });
+    }
+
+    if (redoBtn) {
+      redoBtn.addEventListener('click', (event) => {
+        event.preventDefault();
+        handleRedo();
       });
     }
 
@@ -4062,6 +4192,42 @@
           render();
         }
       }
+    }
+
+    function handleUndo() {
+      if (!undoStack.length) return;
+      const snapshot = undoStack.pop();
+      const currentSnapshot = snapshotState();
+      redoStack.push(currentSnapshot);
+      if (redoStack.length > HISTORY_LIMIT) {
+        redoStack.shift();
+      }
+      isApplyingHistory = true;
+      applySnapshot(snapshot);
+      selectedElementId = null;
+      editingTextElementId = null;
+      render();
+      markDirty();
+      isApplyingHistory = false;
+      updateHistoryButtons();
+    }
+
+    function handleRedo() {
+      if (!redoStack.length) return;
+      const snapshot = redoStack.pop();
+      const currentSnapshot = snapshotState();
+      undoStack.push(currentSnapshot);
+      if (undoStack.length > HISTORY_LIMIT) {
+        undoStack.shift();
+      }
+      isApplyingHistory = true;
+      applySnapshot(snapshot);
+      selectedElementId = null;
+      editingTextElementId = null;
+      render();
+      markDirty();
+      isApplyingHistory = false;
+      updateHistoryButtons();
     }
 
     if (shareBtn) {
