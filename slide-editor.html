@@ -367,6 +367,7 @@
           <div class="flex items-center gap-3">
             <a 
               href="home.html" 
+              id="homeLink"
               class="flex items-center justify-center w-10 h-10 rounded-lg bg-white/20 border border-white/30 hover:bg-white/30 hover:border-white/40 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white/40 active:scale-95"
               title="Go to Home"
             >
@@ -878,50 +879,169 @@
   </div>
 
   <script>
-    // Simple in-memory slides model
-    let slides = [
-      { id: crypto.randomUUID(), title: 'Slide 1', backgroundColor: '#ffffff', backgroundImage: null, elements: [], animation: { type: 'none', duration: 600, delay: 0 } },
-      { id: crypto.randomUUID(), title: 'Slide 2', backgroundColor: '#ffffff', backgroundImage: null, elements: [], animation: { type: 'none', duration: 600, delay: 0 } },
-    ];
-    let activeSlideIndex = 0;
-    let selectedElementId = null; // currently selected element on canvas
-    let editingTextElementId = null; // track text element being edited
+    function createDefaultSlides() {
+      return [
+        { id: crypto.randomUUID(), title: 'Slide 1', backgroundColor: '#ffffff', backgroundImage: null, elements: [], animation: { type: 'none', duration: 600, delay: 0 } },
+        { id: crypto.randomUUID(), title: 'Slide 2', backgroundColor: '#ffffff', backgroundImage: null, elements: [], animation: { type: 'none', duration: 600, delay: 0 } },
+      ];
+    }
 
+    function buildPresentationPreview(slide) {
+      const fallback = {
+        backgroundColor: '#ffffff',
+        accentColor: '#004c97',
+        title: 'Untitled',
+        snippet: '',
+      };
+      if (!slide || typeof slide !== 'object') {
+        return fallback;
+      }
+      const preview = { ...fallback };
+      if (typeof slide.backgroundColor === 'string' && slide.backgroundColor.trim()) {
+        preview.backgroundColor = slide.backgroundColor.trim();
+      }
+      if (Array.isArray(slide.elements)) {
+        const textElement = slide.elements.find(el => el && el.type === 'text' && typeof el.text === 'string' && el.text.trim());
+        if (textElement) {
+          preview.snippet = textElement.text.trim().slice(0, 80);
+        }
+        const shapeElement = slide.elements.find(el => el && el.type === 'shape' && el.fill);
+        if (shapeElement && typeof shapeElement.fill === 'string') {
+          preview.accentColor = shapeElement.fill;
+        } else {
+          const textColorElement = slide.elements.find(el => el && el.type === 'text' && el.color);
+          if (textColorElement && typeof textColorElement.color === 'string') {
+            preview.accentColor = textColorElement.color;
+          }
+        }
+      }
+      if (typeof slide.title === 'string' && slide.title.trim()) {
+        preview.title = slide.title.trim();
+      }
+      return preview;
+    }
+
+    function normalizePreview(preview) {
+      const base = {
+        backgroundColor: '#ffffff',
+        accentColor: '#004c97',
+        title: 'Untitled',
+        snippet: '',
+      };
+      if (!preview || typeof preview !== 'object') {
+        return base;
+      }
+      return {
+        backgroundColor: typeof preview.backgroundColor === 'string' && preview.backgroundColor.trim() ? preview.backgroundColor.trim() : base.backgroundColor,
+        accentColor: typeof preview.accentColor === 'string' && preview.accentColor.trim() ? preview.accentColor.trim() : base.accentColor,
+        title: typeof preview.title === 'string' && preview.title.trim() ? preview.title.trim() : base.title,
+        snippet: typeof preview.snippet === 'string' ? preview.snippet.trim() : base.snippet,
+      };
+    }
+
+    const DEFAULT_PRESENTATION_NAME = 'Untitled Presentation';
     const AUTOSAVE_KEY = 'slide-editor-autosave-v1';
     const SYNC_KEY = `${AUTOSAVE_KEY}-sync`;
     const AUTOSAVE_DEBOUNCE_MS = 1200;
+    const PRESENTATION_STORAGE_PREFIX = 'lumen-presentation-';
+    const PRESENTATIONS_INDEX_KEY = 'lumen-presentations-index';
+    const MAX_RECENT_PRESENTATIONS = 20;
     const SESSION_ID = (typeof crypto !== 'undefined' && crypto.randomUUID)
       ? crypto.randomUUID()
       : `client-${Math.random().toString(16).slice(2)}`;
+    const urlParams = (typeof window !== 'undefined') ? new URLSearchParams(window.location.search) : null;
+
+    let presentationId = urlParams?.get('id') || null;
+    let presentationCreatedAt = Date.now();
+    let presentationUpdatedAt = presentationCreatedAt;
+    let slides = [];
+    let activeSlideIndex = 0;
+    let selectedElementId = null; // currently selected element on canvas
+    let editingTextElementId = null; // track text element being edited
+    let loadedPresentationName = DEFAULT_PRESENTATION_NAME;
+    let loadedExistingPresentation = false;
     let autosaveTimeout = null;
     let needsAutosave = false;
     let lastSavedAt = null;
     let savedStatusTimeout = null;
+    let presentationStorageKey = null;
+    let presentationPreview = null;
 
-    // Attempt to restore autosaved state
-    let savedPresentationName = null;
-    try {
-      if (typeof window !== 'undefined') {
-        const savedStateRaw = localStorage.getItem(AUTOSAVE_KEY);
-        if (savedStateRaw) {
-          const savedState = JSON.parse(savedStateRaw);
-          if (savedState && Array.isArray(savedState.slides)) {
-            slides = savedState.slides;
+    function generatePresentationId() {
+      if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+      return `presentation-${Math.random().toString(16).slice(2)}`;
+    }
+
+    if (typeof window !== 'undefined') {
+      const hadIdInUrl = !!urlParams?.get('id');
+      if (!presentationId) {
+        presentationId = generatePresentationId();
+        const nextUrl = new URL(window.location.href);
+        nextUrl.searchParams.set('id', presentationId);
+        window.history.replaceState(null, '', nextUrl.toString());
+      }
+      presentationStorageKey = `${PRESENTATION_STORAGE_PREFIX}${presentationId}`;
+      try {
+        const storedRaw = localStorage.getItem(presentationStorageKey);
+        if (storedRaw) {
+          const storedState = JSON.parse(storedRaw);
+          loadedExistingPresentation = true;
+          if (storedState && Array.isArray(storedState.slides)) {
+            slides = storedState.slides;
           }
-          if (typeof savedState?.activeSlideIndex === 'number') {
-            activeSlideIndex = Math.min(Math.max(savedState.activeSlideIndex, 0), Math.max(slides.length - 1, 0));
+          if (typeof storedState?.activeSlideIndex === 'number') {
+            activeSlideIndex = Math.min(Math.max(storedState.activeSlideIndex, 0), Math.max(slides.length - 1, 0));
           }
-          if (savedState?.presentationName) {
-            savedPresentationName = savedState.presentationName;
+          if (typeof storedState?.createdAt === 'number') {
+            presentationCreatedAt = storedState.createdAt;
+          }
+          if (typeof storedState?.updatedAt === 'number') {
+            presentationUpdatedAt = storedState.updatedAt;
+          }
+          if (storedState?.presentationName) {
+            loadedPresentationName = storedState.presentationName;
+          }
+          if (storedState?.preview) {
+            presentationPreview = normalizePreview(storedState.preview);
           }
         }
+      } catch (error) {
+        console.warn('Failed to load presentation state', error);
       }
-    } catch (error) {
-      console.warn('Failed to load autosave state', error);
+      // Only load legacy autosave if:
+      // 1. No existing presentation was found for this ID, AND
+      // 2. The ID was NOT provided in the URL (meaning it was auto-generated, so we might want legacy data)
+      // If an ID was provided in URL but doesn't exist, it's a new presentation - skip legacy
+      if (!loadedExistingPresentation && !hadIdInUrl) {
+        try {
+          const legacyRaw = localStorage.getItem(AUTOSAVE_KEY);
+          if (legacyRaw) {
+            const legacyState = JSON.parse(legacyRaw);
+            if (legacyState && Array.isArray(legacyState.slides)) {
+              slides = legacyState.slides;
+            }
+            if (typeof legacyState?.activeSlideIndex === 'number') {
+              activeSlideIndex = Math.min(Math.max(legacyState.activeSlideIndex, 0), Math.max(slides.length - 1, 0));
+            }
+            if (legacyState?.presentationName) {
+              loadedPresentationName = legacyState.presentationName;
+            }
+            if (legacyState?.preview) {
+              presentationPreview = normalizePreview(legacyState.preview);
+            }
+          }
+        } catch (error) {
+          console.warn('Failed to load legacy autosave state', error);
+        }
+      }
     }
 
     if (!slides.length) {
-      slides.push({ id: crypto.randomUUID(), title: 'Slide 1', backgroundColor: '#ffffff', backgroundImage: null, elements: [] });
+      slides = createDefaultSlides();
+      activeSlideIndex = 0;
+    }
+    if (!presentationPreview) {
+      presentationPreview = normalizePreview(buildPresentationPreview(slides[activeSlideIndex] || slides[0]));
     }
 
     // DOM refs
@@ -933,6 +1053,27 @@
     const presenceAvatarsEl = document.getElementById('presenceAvatars');
     const collaborationStatusEl = document.getElementById('collaborationStatus');
     const presentationNameInput = document.getElementById('presentationNameInput');
+
+    if (presentationNameInput) {
+      presentationNameInput.value = loadedPresentationName || presentationNameInput.value || DEFAULT_PRESENTATION_NAME;
+    }
+    ensureRecentPresentationEntry({
+      name: presentationNameInput ? presentationNameInput.value : loadedPresentationName,
+      createdAt: presentationCreatedAt,
+      updatedAt: presentationUpdatedAt,
+      preview: presentationPreview,
+    });
+    if (!loadedExistingPresentation && presentationId) {
+      needsAutosave = true;
+      runAutosave();
+    }
+    if (presentationNameInput) {
+      presentationNameInput.addEventListener('input', () => {
+        needsAutosave = true;
+        updateAutosaveStatus('Saving…', 'saving');
+        scheduleAutosave();
+      });
+    }
 
     // Tool refs
     const addSlideBtn = document.getElementById('addSlideBtn');
@@ -1714,18 +1855,111 @@
     function runAutosave() {
       if (!needsAutosave) return;
       try {
-        const presentationName = presentationNameInput ? presentationNameInput.value : 'Untitled Presentation';
-        const payload = JSON.stringify({ slides, activeSlideIndex, presentationName });
-        localStorage.setItem(AUTOSAVE_KEY, payload);
-        const syncPayload = JSON.stringify({ sessionId: SESSION_ID, timestamp: Date.now(), slides, activeSlideIndex, presentationName });
+        const rawName = presentationNameInput ? presentationNameInput.value : loadedPresentationName;
+        const presentationName = (typeof rawName === 'string' && rawName.trim().length) ? rawName.trim() : DEFAULT_PRESENTATION_NAME;
+        const now = Date.now();
+        const activeSlide = slides[activeSlideIndex] || slides[0];
+        presentationPreview = normalizePreview(buildPresentationPreview(activeSlide));
+        const presentationState = {
+          slides,
+          activeSlideIndex,
+          presentationName,
+          createdAt: presentationCreatedAt,
+          updatedAt: now,
+          preview: presentationPreview,
+        };
+        localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(presentationState));
+        if (presentationId) {
+          localStorage.setItem(`${PRESENTATION_STORAGE_PREFIX}${presentationId}`, JSON.stringify(presentationState));
+        }
+        const syncPayload = JSON.stringify({
+          sessionId: SESSION_ID,
+          timestamp: now,
+          slides,
+          activeSlideIndex,
+          presentationName,
+          presentationId,
+          createdAt: presentationCreatedAt,
+          updatedAt: now,
+          preview: presentationPreview,
+        });
         localStorage.setItem(SYNC_KEY, syncPayload);
+        presentationUpdatedAt = now;
         needsAutosave = false;
-        lastSavedAt = new Date();
+        lastSavedAt = new Date(now);
         updateAutosaveStatus('Saved just now', 'saved');
+        ensureRecentPresentationEntry({ name: presentationName, createdAt: presentationCreatedAt, updatedAt: presentationUpdatedAt });
         scheduleAutosaveIdleReset();
       } catch (error) {
         console.warn('Autosave failed', error);
         updateAutosaveStatus('Autosave paused (storage blocked)', 'error');
+      }
+    }
+
+    function ensureRecentPresentationEntry(metadata = {}) {
+      if (typeof window === 'undefined' || !presentationId) return;
+      try {
+        const rawIndex = localStorage.getItem(PRESENTATIONS_INDEX_KEY);
+        const parsedIndex = rawIndex ? JSON.parse(rawIndex) : [];
+        const index = Array.isArray(parsedIndex) ? parsedIndex.filter(item => item && typeof item.id === 'string') : [];
+        const existingIdx = index.findIndex((item) => item.id === presentationId);
+        const existing = existingIdx >= 0 ? index[existingIdx] : null;
+
+        const fallbackName = presentationNameInput ? presentationNameInput.value : loadedPresentationName;
+        const metadataNameRaw = typeof metadata.name === 'string' ? metadata.name : '';
+        const resolvedNameRaw = metadataNameRaw || (typeof fallbackName === 'string' ? fallbackName : DEFAULT_PRESENTATION_NAME);
+        const resolvedName = resolvedNameRaw.trim();
+        const defaultNameLower = DEFAULT_PRESENTATION_NAME.toLowerCase();
+        const resolvedNameLower = resolvedName.toLowerCase();
+        const existingName = typeof existing?.name === 'string' ? existing.name.trim() : '';
+        const existingNameLower = existingName.toLowerCase();
+
+        if (!existing && (!resolvedName || resolvedNameLower === defaultNameLower)) {
+          return;
+        }
+
+        const calculatedCreatedAt = typeof metadata.createdAt === 'number'
+          ? metadata.createdAt
+          : (existing?.createdAt ?? presentationCreatedAt);
+        const calculatedUpdatedAt = typeof metadata.updatedAt === 'number'
+          ? metadata.updatedAt
+          : Date.now();
+
+        const normalizedPreview = metadata.preview
+          ? normalizePreview(metadata.preview)
+          : (existing?.preview ? normalizePreview(existing.preview) : normalizePreview(presentationPreview));
+
+        let entryName = resolvedName || existingName;
+        const entryNameLower = entryName.toLowerCase();
+        if (!entryName || entryNameLower === defaultNameLower) {
+          if (!existingName || existingNameLower === defaultNameLower) {
+            return;
+          }
+          entryName = existingName;
+        }
+
+        const entry = {
+          id: presentationId,
+          name: entryName,
+          url: `slide-editor.html?id=${presentationId}`,
+          createdAt: calculatedCreatedAt,
+          updatedAt: calculatedUpdatedAt,
+          preview: normalizedPreview,
+        };
+
+        if (existingIdx >= 0) {
+          index[existingIdx] = entry;
+        } else {
+          index.push(entry);
+        }
+
+        index.sort((a, b) => (b?.updatedAt ?? 0) - (a?.updatedAt ?? 0));
+        if (index.length > MAX_RECENT_PRESENTATIONS) {
+          index.length = MAX_RECENT_PRESENTATIONS;
+        }
+        localStorage.setItem(PRESENTATIONS_INDEX_KEY, JSON.stringify(index));
+      } catch (error) {
+        console.warn('Failed to update recent presentations index', error);
       }
     }
 
@@ -4163,6 +4397,7 @@
         try {
           const payload = JSON.parse(event.newValue);
           if (payload.sessionId === SESSION_ID) return;
+          if (payload.presentationId && payload.presentationId !== presentationId) return;
           if (Array.isArray(payload.slides)) {
             slides = payload.slides;
             activeSlideIndex = Math.min(Math.max(payload.activeSlideIndex ?? 0, 0), slides.length - 1);
@@ -4170,6 +4405,27 @@
             needsAutosave = false;
             updateAutosaveStatus('Live update received', 'synced');
             scheduleAutosaveIdleReset();
+            if (typeof payload.updatedAt === 'number') {
+              presentationUpdatedAt = payload.updatedAt;
+            }
+            if (typeof payload.createdAt === 'number') {
+              presentationCreatedAt = payload.createdAt;
+            }
+            if (payload.preview) {
+              presentationPreview = normalizePreview(payload.preview);
+            }
+            if (payload.presentationName && typeof payload.presentationName === 'string') {
+              loadedPresentationName = payload.presentationName;
+              if (presentationNameInput) {
+                presentationNameInput.value = payload.presentationName;
+              }
+            }
+            ensureRecentPresentationEntry({
+              name: loadedPresentationName,
+              createdAt: presentationCreatedAt,
+              updatedAt: presentationUpdatedAt,
+              preview: presentationPreview,
+            });
             render();
           }
         } catch (error) {
@@ -4407,6 +4663,22 @@
       window.setInterval(simulateCollaborationTick, 8000);
       window.addEventListener('beforeunload', runAutosave);
     })();
+
+    const homeLink = document.getElementById('homeLink');
+    if (homeLink) {
+      homeLink.addEventListener('click', (event) => {
+        const nameValue = presentationNameInput ? presentationNameInput.value.trim() : '';
+        const nameIsDefault = nameValue.toLowerCase() === DEFAULT_PRESENTATION_NAME.toLowerCase();
+        if (!nameValue || nameIsDefault) {
+          event.preventDefault();
+          alert('Please name your presentation before returning home so it can be saved to Recent projects.');
+          if (presentationNameInput) {
+            presentationNameInput.focus();
+            presentationNameInput.select();
+          }
+        }
+      });
+    }
   </script>
 </body>
 </html>

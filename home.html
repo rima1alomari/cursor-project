@@ -33,7 +33,7 @@
         <h1 class="title title--xxl">Create Slides with Confidence</h1>
         <p class="subtitle">LumenSlides pairs smart automation with polished templates so your team can plan, design, and present ideas in minutes.</p>
         <div class="hero-actions">
-          <a href="slide-editor.html" class="btn btn-primary">Create a Slide</a>
+          <a href="slide-editor.html" class="btn btn-primary" id="createSlideLink">Create a Slide</a>
           <a href="templates.html" class="btn btn-outline">Browse Templates</a>
         </div>
         <ul class="hero-bullets">
@@ -46,10 +46,168 @@
       <section class="recent-projects" aria-label="Recently opened projects">
         <h2>Recently Opened Projects</h2>
         <p class="recent-empty">You haven’t opened any projects yet.</p>
+        <div id="recentPresentationsList" class="recent-grid" hidden></div>
       </section>
 
     </main>
 
     <footer class="credits">Made by: Reema Alomari, Abdullah Alqahtani, Yara AlSardi</footer>
+
+    <script>
+      (function () {
+        const INDEX_KEY = 'lumen-presentations-index';
+        const createSlideLink = document.getElementById('createSlideLink');
+        if (createSlideLink) {
+          createSlideLink.addEventListener('click', (event) => {
+            if (event.defaultPrevented) return;
+            if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+              return;
+            }
+            event.preventDefault();
+            const id = (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function')
+              ? crypto.randomUUID()
+              : `presentation-${Math.random().toString(16).slice(2)}`;
+            try {
+              const nextUrl = new URL(createSlideLink.getAttribute('href') || 'slide-editor.html', window.location.href);
+              nextUrl.searchParams.set('id', id);
+              window.location.href = nextUrl.toString();
+            } catch (error) {
+              window.location.href = `slide-editor.html?id=${encodeURIComponent(id)}`;
+            }
+          });
+        }
+        const listEl = document.getElementById('recentPresentationsList');
+        const emptyEl = document.querySelector('.recent-empty');
+        if (!listEl) return;
+
+        function escapeHtml(value) {
+          return String(value).replace(/[&<>"']/g, (char) => {
+            switch (char) {
+              case '&': return '&amp;';
+              case '<': return '&lt;';
+              case '>': return '&gt;';
+              case '"': return '&quot;';
+              case "'": return '&#39;';
+              default: return char;
+            }
+          });
+        }
+
+        function formatTimestamp(timestamp) {
+          if (!timestamp) return 'Just now';
+          try {
+            return new Intl.DateTimeFormat(undefined, {
+              dateStyle: 'medium',
+              timeStyle: 'short',
+            }).format(new Date(timestamp));
+          } catch (error) {
+            return new Date(timestamp).toLocaleString();
+          }
+        }
+
+        try {
+          const raw = localStorage.getItem(INDEX_KEY);
+          const parsed = raw ? JSON.parse(raw) : [];
+          const entries = Array.isArray(parsed)
+            ? parsed
+                .filter((item) => item && item.id && item.name)
+                .sort((a, b) => (b?.updatedAt ?? 0) - (a?.updatedAt ?? 0))
+                .slice(0, 9)
+            : [];
+
+          if (!entries.length) return;
+
+          if (emptyEl) emptyEl.remove();
+          listEl.hidden = false;
+          listEl.innerHTML = '';
+
+          entries.forEach((entry) => {
+            const name = escapeHtml(entry.name || 'Untitled Presentation');
+            const preview = entry.preview || {};
+            const backgroundColor = preview.backgroundColor || '#f8fafc';
+            const accentColor = preview.accentColor || '#004c97';
+            const previewTitleRaw = typeof preview.title === 'string' && preview.title.trim()
+              ? preview.title.trim().slice(0, 60)
+              : (entry.name || 'Untitled Presentation');
+            const previewTitle = escapeHtml(previewTitleRaw);
+            const snippetRaw = typeof preview.snippet === 'string' ? preview.snippet.replace(/\s+/g, ' ').trim() : '';
+            const snippet = snippetRaw ? escapeHtml(snippetRaw.slice(0, 110)) : '';
+            const updatedLabel = formatTimestamp(entry.updatedAt);
+            const href = entry.url || `slide-editor.html?id=${encodeURIComponent(entry.id)}`;
+
+            const card = document.createElement('a');
+            card.className = 'recent-card';
+            card.href = href;
+            card.dataset.presentationId = entry.id;
+            card.style.setProperty('--recent-accent', accentColor);
+            card.style.setProperty('--recent-background', backgroundColor);
+            card.innerHTML = `
+              <button class="recent-card__delete" aria-label="Delete presentation" title="Delete">
+                <svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M15 5L5 15M5 5l10 10"/>
+                </svg>
+              </button>
+              <div class="recent-card__window">
+                <div class="recent-card__window-chrome" aria-hidden="true">
+                  <span></span><span></span><span></span>
+                </div>
+                <div class="recent-card__slide">
+                  <span class="recent-card__slide-title">${previewTitle}</span>
+                  ${snippet ? `<p class="recent-card__slide-snippet">${snippet}</p>` : ''}
+                </div>
+              </div>
+              <div class="recent-card__footer">
+                <div class="recent-card__title-row">
+                  <span class="recent-card__title">${name}</span>
+                  <span class="recent-card__cta" aria-hidden="true">
+                    Open
+                    <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8">
+                      <path d="M7 4h9v9" stroke-linecap="round" stroke-linejoin="round"></path>
+                      <path d="M16 4l-9 9" stroke-linecap="round" stroke-linejoin="round"></path>
+                    </svg>
+                  </span>
+                </div>
+                <span class="recent-card__meta">Updated ${escapeHtml(updatedLabel)}</span>
+              </div>
+            `;
+            
+            // Add delete button functionality
+            const deleteBtn = card.querySelector('.recent-card__delete');
+            if (deleteBtn) {
+              deleteBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (confirm(`Are you sure you want to delete "${name}"?`)) {
+                  try {
+                    const raw = localStorage.getItem(INDEX_KEY);
+                    const parsed = raw ? JSON.parse(raw) : [];
+                    const index = Array.isArray(parsed) ? parsed : [];
+                    const filtered = index.filter(item => item && item.id !== entry.id);
+                    localStorage.setItem(INDEX_KEY, JSON.stringify(filtered));
+                    card.remove();
+                    if (filtered.length === 0) {
+                      listEl.hidden = true;
+                      const recentProjectsSection = document.querySelector('.recent-projects');
+                      if (recentProjectsSection) {
+                        const emptyP = document.createElement('p');
+                        emptyP.className = 'recent-empty';
+                        emptyP.textContent = 'You haven\'t opened any projects yet.';
+                        recentProjectsSection.appendChild(emptyP);
+                      }
+                    }
+                  } catch (error) {
+                    console.warn('Failed to delete presentation', error);
+                  }
+                }
+              });
+            }
+            
+            listEl.appendChild(card);
+          });
+        } catch (error) {
+          console.warn('Failed to load recent presentations', error);
+        }
+      })();
+    </script>
   </body>
 </html>
