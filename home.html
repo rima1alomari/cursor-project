@@ -61,7 +61,7 @@
         <h1 class="title title--xxl animate-fade-in animate-delay-2">Create Slides with Confidence</h1>
         <p class="subtitle animate-fade-in animate-delay-2">LumenSlides pairs smart automation with polished templates so your team can plan, design, and present ideas in minutes.</p>
         <div class="hero-actions animate-fade-in animate-delay-3">
-          <a href="slide-editor.html" class="btn btn-primary" id="createSlideLink">Create a Slide</a>
+          <a href="slide-editor.html" class="btn btn-primary" id="createSlideLink" data-custom-nav="true">Create a Slide</a>
           <a href="templates.html" class="btn btn-outline">Browse Templates</a>
         </div>
         <ul class="hero-bullets animate-fade-in animate-delay-3">
@@ -183,12 +183,17 @@
             
             // Set flag to force a complete reset of presentation data
             localStorage.setItem('forceNewPresentation', 'true');
+            localStorage.setItem('isNewPresentation', 'true');
             
-            // Navigate to editor (ID will be generated fresh in slide-editor.html)
+            const id = (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function')
+              ? crypto.randomUUID()
+              : `presentation-${Math.random().toString(16).slice(2)}`;
+
+            const targetUrl = `slide-editor.html?id=${encodeURIComponent(id)}`;
             if (window.fadeNavigate) {
-              window.fadeNavigate('slide-editor.html');
+              window.fadeNavigate(targetUrl);
             } else {
-              window.location.href = 'slide-editor.html';
+              window.location.href = targetUrl;
             }
           });
         }
@@ -226,9 +231,9 @@
           const parsed = raw ? JSON.parse(raw) : [];
           const entries = Array.isArray(parsed)
             ? parsed
-                .filter((item) => item && item.id && item.name && item.name.trim().toLowerCase() !== 'untitled')
+                .filter((item) => item && item.id && item.name)
                 .sort((a, b) => (b?.updatedAt ?? 0) - (a?.updatedAt ?? 0))
-                .slice(0, 9)
+                .slice(0, 20)
             : [];
 
           if (!entries.length) return;

@@ -16,9 +16,12 @@
   }
   
   // Handle fade-out on navigation
-  function handleNavigation(e) {
-    const target = e.currentTarget;
-    const href = target.href || target.getAttribute('href');
+  function handleNavigation(event) {
+     const link = event.currentTarget;
+    if (link.dataset.customNav === 'true') {
+      return;
+    }
+    const href = link.getAttribute('href');
     
     // Skip if:
     // - No href
@@ -30,12 +33,12 @@
     if (!href || 
         href.startsWith('#') ||
         document.body.classList.contains('fade-out') ||
-        target.hasAttribute('data-no-fade') ||
-        target.closest('.modal-overlay') ||
-        target.id === 'guestButton' ||
-        target.id === 'cancelGuestBtn' ||
-        target.id === 'continueGuestBtn' ||
-        target.classList.contains('dropdown-item')) {
+        link.hasAttribute('data-no-fade') ||
+        link.closest('.modal-overlay') ||
+        link.id === 'guestButton' ||
+        link.id === 'cancelGuestBtn' ||
+        link.id === 'continueGuestBtn' ||
+        link.classList.contains('dropdown-item')) {
       return;
     }
     
@@ -50,7 +53,7 @@
       }
       
       // Internal link - add fade-out
-      e.preventDefault();
+      event.preventDefault();
       document.body.classList.add('fade-out');
       
       setTimeout(() => {
