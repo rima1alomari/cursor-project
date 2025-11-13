@@ -8,25 +8,196 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./styles.css" />
+    <script src="./scripts/global.js"></script>
   </head>
   <body class="bg-white bg-modern bg-corner-dots">
     <header class="site-header">
-      <img class="site-logo site-logo--banner" src="./Screenshot 2025-11-06 at 1.14.39 PM.png" alt="Aramco Digital banner" onerror="this.remove(); var b=document.querySelector('.site-brand'); if(b){ b.textContent='Aramco Digital'; }" />
+      <div class="header-left">
+        <img class="site-logo site-logo--banner" src="Screenshot 2025-11-06 at 1.14.39 PM.png" alt="LumenSlides logo" />
+        <div class="header-auth-buttons" id="headerAuthButtons">
+          <a class="btn btn-login" href="./login.html">Log in</a>
+          <a class="btn btn-signup" href="./signup.html">Sign up</a>
+        </div>
+      </div>
       <span class="site-brand"></span>
-      <img class="site-logo site-logo--mark" src="./logo.png" alt="Aramco Digital logo" onerror="this.remove();" />
+      <div class="header-right">
+        <div class="account-display" id="accountDisplay" style="display: none;">
+          <button class="account-button" id="accountButton" aria-label="Account menu">
+            <span class="account-greeting" id="accountGreeting"></span>
+            <svg class="account-icon" width="32" height="32" viewBox="0 0 32 32" fill="none">
+              <circle cx="16" cy="16" r="14" stroke="currentColor" stroke-width="2"/>
+              <circle cx="16" cy="12" r="5" fill="currentColor"/>
+              <path d="M6 26c0-5.5 4.5-10 10-10s10 4.5 10 10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
+          <div class="account-dropdown" id="accountDropdown" style="display: none;">
+            <button class="dropdown-item dropdown-item--logout" id="logoutButton">
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+              </svg>
+              Logout
+            </button>
+          </div>
+        </div>
+        <img class="site-logo site-logo--mark" src="./logo.png" alt="Aramco Digital logo" onerror="this.remove();" />
+      </div>
     </header>
-    <main class="center-wrapper center-wrapper--top">
-      <section class="hero">
-        <div class="logo-circle" aria-hidden="true">
+    <main class="center-wrapper center-wrapper--top page-fade-in">
+      <section class="hero animate-entrance">
+        <div class="logo-circle animate-fade-in animate-delay-1" aria-hidden="true">
           <span class="logo-dot logo-dot--green"></span>
           <span class="logo-dot logo-dot--blue"></span>
         </div>
-        <h1 class="title title--display">Welcome</h1>
-        <p class="hero-tagline">LumenSlides — Illuminate Your Presentations</p>
-        <a class="btn btn-primary" href="./login.html">Start</a>
+        <h1 class="title title--display animate-fade-in animate-delay-2">Welcome</h1>
+        <p class="hero-tagline animate-fade-in animate-delay-2">LumenSlides — Illuminate Your Presentations</p>
+        <a class="btn btn-primary animate-fade-in animate-delay-3" href="./login.html" id="startButton">Start</a>
+        <a class="btn btn-guest animate-fade-in animate-delay-3" href="#" id="guestButton">Continue as Guest</a>
       </section>
     </main>
+    
+    <!-- Guest Mode Modal -->
+    <div class="modal-overlay" id="guestModal" style="display: none;">
+      <div class="modal-content">
+        <h2 class="modal-title">Continue as Guest?</h2>
+        <p class="modal-message">Your presentations won't be saved unless you have an account. Continue anyway?</p>
+        <div class="modal-actions">
+          <button class="btn btn-outline" id="cancelGuestBtn">Cancel</button>
+          <button class="btn btn-primary" id="continueGuestBtn">Continue</button>
+        </div>
+      </div>
+    </div>
+    
     <footer class="credits">Made by: Reema Alomari, Abdullah Alqahtani, Yara AlSardi</footer>
+    <script src="./scripts/auth.js"></script>
+    <script>
+      (function() {
+        const headerAuthButtons = document.getElementById('headerAuthButtons');
+        const accountDisplay = document.getElementById('accountDisplay');
+        const accountButton = document.getElementById('accountButton');
+        const accountGreeting = document.getElementById('accountGreeting');
+        const accountDropdown = document.getElementById('accountDropdown');
+        const logoutButton = document.getElementById('logoutButton');
+        const startButton = document.getElementById('startButton');
+        const guestButton = document.getElementById('guestButton');
+        
+        // Check if user is logged in
+        const currentUser = getCurrentUser();
+        const isGuest = isGuestMode();
+        
+        if (currentUser) {
+          // Hide login/signup buttons and guest button
+          if (headerAuthButtons) headerAuthButtons.style.display = 'none';
+          if (guestButton) guestButton.style.display = 'none';
+          // Show account display
+          if (accountDisplay && accountGreeting) {
+            accountGreeting.textContent = `Hello, ${currentUser.username}`;
+            accountDisplay.style.display = 'flex';
+            
+            // Toggle dropdown
+            if (accountButton) {
+              accountButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isVisible = accountDropdown.style.display === 'block';
+                accountDropdown.style.display = isVisible ? 'none' : 'block';
+              });
+            }
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+              if (accountDisplay && !accountDisplay.contains(e.target)) {
+                if (accountDropdown) accountDropdown.style.display = 'none';
+              }
+            });
+            
+            // Logout functionality
+            if (logoutButton) {
+              logoutButton.addEventListener('click', () => {
+                logout();
+                if (window.fadeNavigate) {
+                  window.fadeNavigate('./login.html');
+                } else {
+                  window.location.href = './login.html';
+                }
+              });
+            }
+          }
+          // Make Start button go directly to home
+          if (startButton) startButton.href = './home.html';
+        } else {
+          // Show login/signup buttons and guest button
+          if (headerAuthButtons) headerAuthButtons.style.display = 'flex';
+          if (guestButton) guestButton.style.display = 'inline-block';
+          if (accountDisplay) accountDisplay.style.display = 'none';
+          // Make Start button go to login
+          if (startButton) startButton.href = './login.html';
+        }
+        
+        // Handle guest button click
+        const guestModal = document.getElementById('guestModal');
+        const cancelGuestBtn = document.getElementById('cancelGuestBtn');
+        const continueGuestBtn = document.getElementById('continueGuestBtn');
+        
+        if (guestButton) {
+          guestButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (guestModal) {
+              guestModal.style.display = 'flex';
+            }
+          });
+        }
+        
+        // Handle Cancel button
+        if (cancelGuestBtn) {
+          cancelGuestBtn.addEventListener('click', () => {
+            if (guestModal) {
+              guestModal.classList.add('closing');
+              setTimeout(() => {
+                guestModal.style.display = 'none';
+                guestModal.classList.remove('closing');
+              }, 200);
+            }
+          });
+        }
+        
+        // Handle Continue button
+        if (continueGuestBtn) {
+          continueGuestBtn.addEventListener('click', () => {
+            setGuestMode(true);
+            if (window.fadeNavigate) {
+              window.fadeNavigate('./home.html');
+            } else {
+              window.location.href = './home.html';
+            }
+          });
+        }
+        
+        // Close modal when clicking overlay
+        if (guestModal) {
+          guestModal.addEventListener('click', (e) => {
+            if (e.target === guestModal) {
+              guestModal.classList.add('closing');
+              setTimeout(() => {
+                guestModal.style.display = 'none';
+                guestModal.classList.remove('closing');
+              }, 200);
+            }
+          });
+        }
+        
+        // Close modal with Escape key
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape' && guestModal && guestModal.style.display === 'flex') {
+            guestModal.classList.add('closing');
+            setTimeout(() => {
+              guestModal.style.display = 'none';
+              guestModal.classList.remove('closing');
+            }, 200);
+          }
+        });
+      })();
+    </script>
   </body>
   </html>
 

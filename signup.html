@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Log in</title>
+    <title>Sign up</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
@@ -28,28 +28,28 @@
           <span class="logo-dot logo-dot--green"></span>
           <span class="logo-dot logo-dot--blue"></span>
         </div>
-        <h1 class="title animate-fade-in animate-delay-2">Log in</h1>
-        <p class="subtitle animate-fade-in animate-delay-2">Welcome back. Please enter your details.</p>
-        <form class="form animate-fade-in animate-delay-3" id="login-form">
+        <h1 class="title animate-fade-in animate-delay-2">Sign up</h1>
+        <p class="subtitle animate-fade-in animate-delay-2">Create your account to get started.</p>
+        <form class="form animate-fade-in animate-delay-3" id="signup-form">
           <div class="field">
-            <label class="label" for="identifier">Email or Username</label>
-            <input class="input" id="identifier" name="identifier" type="text" placeholder="you@example.com or username" required />
+            <label class="label" for="username">Username</label>
+            <input class="input" id="username" name="username" type="text" placeholder="username" required />
+          </div>
+          <div class="field">
+            <label class="label" for="email">Email</label>
+            <input class="input" id="email" name="email" type="email" placeholder="you@example.com" required />
           </div>
           <div class="field">
             <label class="label" for="password">Password</label>
             <input class="input" id="password" name="password" type="password" placeholder="••••••••" required />
           </div>
-          <label class="remember">
-            <input class="remember__checkbox" id="remember" name="remember" type="checkbox" />
-            <span class="remember__text">Remember me</span>
-          </label>
-          <div id="loginError" class="error-message" style="display: none;"></div>
+          <div id="signupError" class="error-message" style="display: none;"></div>
           <div class="row row--actions">
-            <button class="btn btn-primary" type="submit">Log in</button>
+            <button class="btn btn-primary" type="submit">Create Account</button>
             <a class="btn btn-outline" href="./index.html">Back</a>
           </div>
         </form>
-        <p class="footer-hint">No account yet? <a href="./signup.html" style="color: var(--blue-700); text-decoration: none;">Sign up</a> to create one.</p>
+        <p class="footer-hint">Already have an account? <a href="./login.html" style="color: var(--blue-700); text-decoration: none;">Log in</a></p>
         <div id="alreadyLoggedInNotice" class="notice-banner" style="display: none;">
           <span>You're already signed in as <strong id="loggedInUsername"></strong></span>
           <a href="./home.html">Go to Home</a>
@@ -59,7 +59,6 @@
     </main>
     <footer class="credits">Made by: Reema Alomari, Abdullah Alqahtani, Yara AlSardi</footer>
     <script src="./scripts/auth.js"></script>
-    <script src="./scripts/login.js"></script>
     <script>
       // Edge case: If already logged in, show notice
       (function() {
@@ -72,30 +71,62 @@
             notice.style.display = 'flex';
           }
         }
-        
-        // Check for notice from signup redirect
-        const urlParams = new URLSearchParams(window.location.search);
-        const noticeParam = urlParams.get('notice');
-        if (noticeParam) {
-          const banner = document.createElement('div');
-          banner.className = 'notice-banner';
-          banner.style.position = 'relative';
-          banner.style.top = '0';
-          banner.style.left = '0';
-          banner.style.transform = 'none';
-          banner.style.marginTop = '16px';
-          banner.innerHTML = `
-            <span>${decodeURIComponent(noticeParam)}</span>
-            <button class="notice-banner-close" onclick="this.parentElement.remove()">×</button>
-          `;
-          const card = document.querySelector('.card--auth');
-          if (card) {
-            card.insertBefore(banner, card.firstChild);
-            setTimeout(() => banner.remove(), 5000);
-          }
-        }
       })();
     </script>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const signupForm = document.getElementById("signup-form");
+        if (!signupForm) return;
+
+        const errorDiv = document.getElementById("signupError");
+
+        signupForm.addEventListener("submit", (event) => {
+          event.preventDefault();
+          
+          const username = document.getElementById("username").value.trim();
+          const email = document.getElementById("email").value.trim();
+          const password = document.getElementById("password").value;
+
+          if (!username || !email || !password) {
+            showError("Please fill in all fields.");
+            return;
+          }
+
+          if (password.length < 4) {
+            showError("Password must be at least 4 characters long.");
+            return;
+          }
+
+          const result = registerAccount(username, email, password);
+
+          if (result.success) {
+            // Don't auto-login, redirect to login with notice
+            const notice = encodeURIComponent("Account created. Please log in.");
+            const redirectUrl = `./login.html?notice=${notice}`;
+            if (window.fadeNavigate) {
+              window.fadeNavigate(redirectUrl);
+            } else {
+              window.location.href = redirectUrl;
+            }
+          } else {
+            showError(result.error || "Failed to create account. Please try again.");
+          }
+        });
+
+        function showError(message) {
+          if (errorDiv) {
+            errorDiv.textContent = message;
+            errorDiv.style.display = "block";
+            // Smooth fade-in animation
+            errorDiv.style.opacity = "0";
+            setTimeout(() => {
+              errorDiv.style.transition = "opacity 0.3s ease";
+              errorDiv.style.opacity = "1";
+            }, 10);
+          }
+        }
+      });
+    </script>
   </body>
-  </html>
+</html>
 

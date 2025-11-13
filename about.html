@@ -10,55 +10,158 @@
     <link rel="stylesheet" href="styles.css" />
     <link rel="stylesheet" href="css/home_styles.css" />
     <link rel="stylesheet" href="css/about.css" />
+    <script src="./scripts/global.js"></script>
   </head>
   <body class="bg-white bg-modern bg-corner-dots">
+    <header class="site-header">
+      <div class="header-left">
+        <img class="site-logo site-logo--banner" src="Screenshot 2025-11-06 at 1.14.39 PM.png" alt="LumenSlides logo" />
+        <a href="./index.html" class="home-icon-link" title="Home">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+          </svg>
+        </a>
+      </div>
+      <nav class="site-nav site-nav--centered" aria-label="Primary">
+        <a href="home.html" class="nav-link">Home</a>
+        <a href="templates.html" class="nav-link">Templates</a>
+        <a href="about.html" class="nav-link nav-link--current" aria-current="page">About</a>
+      </nav>
+      <div class="header-right">
+        <div class="account-display" id="accountDisplay">
+          <button class="account-button" id="accountButton" aria-label="Account menu">
+            <span class="account-greeting" id="accountGreeting"></span>
+            <svg class="account-icon" width="32" height="32" viewBox="0 0 32 32" fill="none">
+              <circle cx="16" cy="16" r="14" stroke="currentColor" stroke-width="2"/>
+              <circle cx="16" cy="12" r="5" fill="currentColor"/>
+              <path d="M6 26c0-5.5 4.5-10 10-10s10 4.5 10 10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
+          <div class="account-dropdown" id="accountDropdown" style="display: none;">
+            <button class="dropdown-item dropdown-item--logout" id="logoutButton">
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+              </svg>
+              Logout
+            </button>
+          </div>
+        </div>
+        <img class="site-logo site-logo--mark" src="./logo.png" alt="LumenSlides logo" />
+      </div>
+    </header>
+
     <div class="page page--about">
       <div class="bg-orb bg-orb--left" aria-hidden="true"></div>
       <div class="bg-orb bg-orb--right" aria-hidden="true"></div>
 
-      <header class="site-header">
-        <div class="header-left">
-          <img class="site-logo site-logo--banner" src="./Screenshot 2025-11-06 at 1.14.39 PM.png" alt="Aramco Digital banner" onerror="this.remove(); var b=document.querySelector('.site-brand'); if(b){ b.textContent='Aramco Digital'; }" />
-        </div>
-        <nav class="site-nav site-nav--centered" aria-label="Primary">
-          <a href="home.html" class="nav-link">Home</a>
-          <a href="templates.html" class="nav-link">Templates</a>
-          <a href="about.html" class="nav-link nav-link--current" aria-current="page">About</a>
-        </nav>
-        <div class="header-right">
-          <img class="site-logo site-logo--mark" src="./logo.png" alt="Aramco Digital logo" />
-        </div>
-      </header>
-
-      <main class="about-main">
-        <section class="about-hero">
+      <main class="about-main page-fade-in">
+        <section class="about-hero animate-fade-in animate-delay-2">
           <h1>About Us</h1>
           <p>We are a passionate and creative team dedicated to developing innovative solutions for our company.</p>
         </section>
 
-        <section class="about-mission">
+        <section class="about-mission animate-fade-in animate-delay-3">
           <strong>Our Mission</strong>
           <p>Together, we combine our expertise to create tools that enhance productivity, collaboration, and efficiency within the company.</p>
         </section>
 
-        <section class="team-section" aria-labelledby="team-heading">
+        <section class="team-section animate-fade-in animate-delay-1" aria-labelledby="team-heading">
           <h2 id="team-heading">Meet the Team</h2>
           <div class="team-grid">
-            <article class="team-member">
+            <article class="team-member animate-fade-in animate-delay-2">
               <h3>Reema Alomari</h3>
             </article>
-            <article class="team-member">
+            <article class="team-member animate-fade-in animate-delay-3">
               <h3>Yara Alsardi</h3>
             </article>
-            <article class="team-member">
+            <article class="team-member animate-fade-in animate-delay-1">
               <h3>Abdullah Alqahtani</h3>
             </article>
           </div>
         </section>
 
-        <a class="back-link" href="home.html">← Back to Home</a>
+        <a class="back-link animate-fade-in animate-delay-2" href="home.html">← Back to Home</a>
       </main>
     </div>
+    <script src="./scripts/auth.js"></script>
+    <script>
+      // Account display and logout functionality
+      (function() {
+        const accountDisplay = document.getElementById('accountDisplay');
+        const accountButton = document.getElementById('accountButton');
+        const accountGreeting = document.getElementById('accountGreeting');
+        const accountDropdown = document.getElementById('accountDropdown');
+        const logoutButton = document.getElementById('logoutButton');
+
+        function updateAccountDisplay() {
+          const currentUser = getCurrentUser();
+          const isGuest = isGuestMode();
+
+          if (!accountDisplay) return;
+
+          if (currentUser) {
+            accountGreeting.textContent = `Hello, ${currentUser.username}`;
+            accountDisplay.style.display = 'flex';
+            // Show dropdown for logged-in users
+            if (accountDropdown) accountDropdown.style.display = 'none';
+            
+            // Toggle dropdown for logged-in users only
+            if (accountButton) {
+              accountButton.style.cursor = 'pointer';
+              accountButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isVisible = accountDropdown.style.display === 'block';
+                accountDropdown.style.display = isVisible ? 'none' : 'block';
+              });
+            }
+          } else if (isGuest) {
+            accountGreeting.textContent = 'Hello, Guest!';
+            accountDisplay.style.display = 'flex';
+            // Hide dropdown for guests - never show it
+            if (accountDropdown) accountDropdown.style.display = 'none';
+            // Make button non-clickable for guests
+            if (accountButton) {
+              accountButton.style.cursor = 'default';
+              accountButton.onclick = null;
+            }
+          } else {
+            // Not logged in and not guest - redirect to login
+            if (window.fadeNavigate) {
+              window.fadeNavigate('./login.html');
+            } else {
+              window.location.href = './login.html';
+            }
+            return;
+          }
+
+          // Close dropdown when clicking outside (only for logged-in users)
+          if (currentUser) {
+            document.addEventListener('click', (e) => {
+              if (accountDisplay && !accountDisplay.contains(e.target)) {
+                if (accountDropdown) accountDropdown.style.display = 'none';
+              }
+            });
+          }
+
+          // Logout functionality (only for logged-in users)
+          if (logoutButton && currentUser) {
+            logoutButton.addEventListener('click', () => {
+              logout(); // This clears both currentUser and isGuest
+              if (window.fadeNavigate) {
+                window.fadeNavigate('./login.html');
+              } else {
+                window.location.href = './login.html';
+              }
+            });
+          }
+        }
+
+        updateAccountDisplay();
+      })();
+    </script>
   </body>
 </html>
 

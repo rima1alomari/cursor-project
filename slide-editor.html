@@ -530,9 +530,9 @@
             <input 
               type="text" 
               id="presentationNameInput" 
-              placeholder="Untitled Presentation" 
+              placeholder="Untitled" 
               class="bg-white/20 border border-white/30 rounded-lg px-4 py-2 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/40 focus:bg-white/30 transition text-sm font-medium flex-1 min-w-[240px]"
-              value="Untitled Presentation"
+              value="Untitled"
             />
             <div class="flex items-center gap-2 flex-shrink-0">
               <button id="undoBtn" class="toolbar-icon-btn" title="Undo (⌘Z)">
@@ -1047,6 +1047,19 @@
   </div>
 
   <script>
+    // 🧹 Force reset when creating a new presentation
+    const newSession = typeof window !== 'undefined' && localStorage.getItem('forceNewPresentation') === 'true';
+    if (newSession) {
+      localStorage.removeItem('forceNewPresentation');
+      // Remove ALL local presentation data before init
+      Object.keys(localStorage).forEach((key) => {
+        if (key.includes('presentation') || key.includes('SYNC') || key.includes('slides') || key.includes('autosave') || key.includes('slide-editor')) {
+          localStorage.removeItem(key);
+        }
+      });
+      sessionStorage.clear();
+    }
+
     function createDefaultSlides() {
       return [
         { id: crypto.randomUUID(), title: 'Slide 1', backgroundColor: '#ffffff', backgroundImage: null, elements: [], animation: { type: 'none', duration: 600, delay: 0 } },
@@ -1107,7 +1120,7 @@
       };
     }
 
-    const DEFAULT_PRESENTATION_NAME = 'Untitled Presentation';
+    const DEFAULT_PRESENTATION_NAME = 'Untitled';
     const AUTOSAVE_KEY = 'slide-editor-autosave-v1';
     const SYNC_KEY = `${AUTOSAVE_KEY}-sync`;
     const AUTOSAVE_DEBOUNCE_MS = 1200;
@@ -1134,10 +1147,76 @@
     let savedStatusTimeout = null;
     let presentationStorageKey = null;
     let presentationPreview = null;
+    let isNewPresentation = false;
 
     function generatePresentationId() {
       if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
       return `presentation-${Math.random().toString(16).slice(2)}`;
+    }
+
+    function createEmptySlide() {
+      return {
+        id: crypto.randomUUID(),
+        title: 'Slide 1',
+        backgroundColor: '#ffffff',
+        backgroundImage: null,
+        elements: [],
+        animation: { type: 'none', duration: 600, delay: 0 },
+      };
+    }
+
+    // Immediately reset state if newSession is true (before any data loading)
+    if (newSession) {
+      presentationId = generatePresentationId();
+      slides = [createEmptySlide()];
+      activeSlideIndex = 0;
+      loadedPresentationName = DEFAULT_PRESENTATION_NAME;
+      presentationCreatedAt = Date.now();
+      presentationUpdatedAt = presentationCreatedAt;
+      presentationPreview = null;
+      loadedExistingPresentation = false;
+      isNewPresentation = true;
+      // Update URL with new ID
+      if (typeof window !== 'undefined') {
+        const nextUrl = new URL(window.location.href);
+        nextUrl.searchParams.set('id', presentationId);
+        window.history.replaceState(null, '', nextUrl.toString());
+      }
+    }
+
+    // Check if this is a brand new presentation (set by home.html) - legacy support
+    const isNew = typeof window !== 'undefined' && localStorage.getItem('isNewPresentation') === 'true';
+    if (isNew) {
+      // Clear the flag immediately
+      localStorage.removeItem('isNewPresentation');
+      // Clear all presentation-related data to ensure truly blank start
+      localStorage.removeItem(SYNC_KEY);
+      localStorage.removeItem(AUTOSAVE_KEY);
+      localStorage.removeItem('currentPresentation');
+      localStorage.removeItem('currentSlide');
+      localStorage.removeItem('currentSlideContent');
+      // Generate fresh unique ID
+      presentationId = generatePresentationId();
+      // Update URL with new ID
+      const nextUrl = new URL(window.location.href);
+      nextUrl.searchParams.set('id', presentationId);
+      window.history.replaceState(null, '', nextUrl.toString());
+      // Initialize with truly blank state
+      slides = [{
+        id: crypto.randomUUID(),
+        title: 'Slide 1',
+        backgroundColor: '#ffffff',
+        backgroundImage: null,
+        elements: [],
+        animation: { type: 'none', duration: 600, delay: 0 },
+      }];
+      activeSlideIndex = 0;
+      loadedPresentationName = DEFAULT_PRESENTATION_NAME;
+      presentationCreatedAt = Date.now();
+      presentationUpdatedAt = presentationCreatedAt;
+      presentationPreview = null;
+      loadedExistingPresentation = false;
+      isNewPresentation = true;
     }
 
     if (typeof window !== 'undefined') {
@@ -1149,38 +1228,76 @@
         window.history.replaceState(null, '', nextUrl.toString());
       }
       presentationStorageKey = `${PRESENTATION_STORAGE_PREFIX}${presentationId}`;
+      
+      // Check if this is a fresh new presentation (ID provided but no stored data)
+      // If ID was provided in URL, it means it's intentionally a new presentation
+      if (!isNew) {
+        isNewPresentation = hadIdInUrl;
+      }
+      
       try {
-        const storedRaw = localStorage.getItem(presentationStorageKey);
-        if (storedRaw) {
-          const storedState = JSON.parse(storedRaw);
-          loadedExistingPresentation = true;
-          if (storedState && Array.isArray(storedState.slides)) {
-            slides = storedState.slides;
-          }
-          if (typeof storedState?.activeSlideIndex === 'number') {
-            activeSlideIndex = Math.min(Math.max(storedState.activeSlideIndex, 0), Math.max(slides.length - 1, 0));
-          }
-          if (typeof storedState?.createdAt === 'number') {
-            presentationCreatedAt = storedState.createdAt;
-          }
-          if (typeof storedState?.updatedAt === 'number') {
-            presentationUpdatedAt = storedState.updatedAt;
-          }
-          if (storedState?.presentationName) {
-            loadedPresentationName = storedState.presentationName;
-          }
-          if (storedState?.preview) {
-            presentationPreview = normalizePreview(storedState.preview);
+        // Skip loading stored data if this is a brand new presentation (already initialized above)
+        if (!newSession && !isNew) {
+          const storedRaw = localStorage.getItem(presentationStorageKey);
+          if (storedRaw) {
+            const storedState = JSON.parse(storedRaw);
+            loadedExistingPresentation = true;
+            if (storedState && Array.isArray(storedState.slides)) {
+              slides = storedState.slides;
+            }
+            if (typeof storedState?.activeSlideIndex === 'number') {
+              activeSlideIndex = Math.min(Math.max(storedState.activeSlideIndex, 0), Math.max(slides.length - 1, 0));
+            }
+            if (typeof storedState?.createdAt === 'number') {
+              presentationCreatedAt = storedState.createdAt;
+            }
+            if (typeof storedState?.updatedAt === 'number') {
+              presentationUpdatedAt = storedState.updatedAt;
+            }
+            if (storedState?.presentationName) {
+              loadedPresentationName = storedState.presentationName;
+            }
+            if (storedState?.preview) {
+              presentationPreview = normalizePreview(storedState.preview);
+            }
+          } else if (isNewPresentation) {
+            // New presentation with ID provided - ensure it starts completely fresh
+            // Clear any cached data and reset to defaults
+            slides = [{
+              id: crypto.randomUUID(),
+              title: 'Slide 1',
+              backgroundColor: '#ffffff',
+              backgroundImage: null,
+              elements: [],
+              animation: { type: 'none', duration: 600, delay: 0 },
+            }];
+            activeSlideIndex = 0;
+            loadedPresentationName = DEFAULT_PRESENTATION_NAME;
+            presentationCreatedAt = Date.now();
+            presentationUpdatedAt = presentationCreatedAt;
+            presentationPreview = null;
+            
+            // Clear any legacy autosave data to prevent loading old content
+            try {
+              localStorage.removeItem(AUTOSAVE_KEY);
+              localStorage.removeItem(SYNC_KEY);
+              localStorage.removeItem('currentPresentation');
+              localStorage.removeItem('currentSlide');
+              localStorage.removeItem('currentSlideContent');
+            } catch (e) {
+              // Ignore errors
+            }
           }
         }
       } catch (error) {
         console.warn('Failed to load presentation state', error);
       }
       // Only load legacy autosave if:
-      // 1. No existing presentation was found for this ID, AND
-      // 2. The ID was NOT provided in the URL (meaning it was auto-generated, so we might want legacy data)
+      // 1. This is NOT a brand new presentation (newSession or isNew flag), AND
+      // 2. No existing presentation was found for this ID, AND
+      // 3. The ID was NOT provided in the URL (meaning it was auto-generated, so we might want legacy data)
       // If an ID was provided in URL but doesn't exist, it's a new presentation - skip legacy
-      if (!loadedExistingPresentation && !hadIdInUrl) {
+      if (!newSession && !isNew && !loadedExistingPresentation && !hadIdInUrl && !isNewPresentation) {
         try {
           const legacyRaw = localStorage.getItem(AUTOSAVE_KEY);
           if (legacyRaw) {
@@ -1204,6 +1321,8 @@
       }
     }
 
+    // Create default slides if none exist
+    // For new presentations, ensure they start with default slides
     if (!slides.length) {
       slides = createDefaultSlides();
       activeSlideIndex = 0;
@@ -1289,13 +1408,21 @@
       }
     }
 
+    // Set presentation name input to "Untitled" for new presentations
+    if ((newSession || isNew) && presentationNameInput) {
+      presentationNameInput.value = DEFAULT_PRESENTATION_NAME;
+      loadedPresentationName = DEFAULT_PRESENTATION_NAME;
+    }
+    
     ensureRecentPresentationEntry({
       name: presentationNameInput ? presentationNameInput.value : loadedPresentationName,
       createdAt: presentationCreatedAt,
       updatedAt: presentationUpdatedAt,
       preview: presentationPreview,
     });
-    if (!loadedExistingPresentation && presentationId) {
+    
+    // Don't autosave immediately for brand new presentations to avoid overwriting clean state
+    if (!newSession && !isNew && !loadedExistingPresentation && presentationId) {
       needsAutosave = true;
       runAutosave();
     }
@@ -2147,10 +2274,6 @@
         const existingName = typeof existing?.name === 'string' ? existing.name.trim() : '';
         const existingNameLower = existingName.toLowerCase();
 
-        if (!existing && (!resolvedName || resolvedNameLower === defaultNameLower)) {
-          return;
-        }
-
         const calculatedCreatedAt = typeof metadata.createdAt === 'number'
           ? metadata.createdAt
           : (existing?.createdAt ?? presentationCreatedAt);
@@ -2164,12 +2287,72 @@
 
         let entryName = resolvedName || existingName;
         const entryNameLower = entryName.toLowerCase();
+        
+        // CRITICAL: Never save "Untitled" presentations to the index
+        // If name is "Untitled" and there's no existing entry, don't save it
         if (!entryName || entryNameLower === defaultNameLower) {
-          if (!existingName || existingNameLower === defaultNameLower) {
-            return;
+          // If there's an existing entry, we might want to remove it if it's still "Untitled"
+          // But if user is updating from "Untitled" to a real name, we should save it
+          // So only skip if: no existing entry AND name is "Untitled"
+          if (!existing) {
+            return; // Don't save new untitled presentations
           }
-          entryName = existingName;
+          // If existing entry exists but name is still "Untitled", remove it from index
+          if (existingIdx >= 0 && (!existingName || existingNameLower === defaultNameLower)) {
+            index.splice(existingIdx, 1);
+            localStorage.setItem(PRESENTATIONS_INDEX_KEY, JSON.stringify(index));
+            return; // Remove untitled entry from index
+          }
+          // If existing entry has a real name, use it
+          if (existingName && existingNameLower !== defaultNameLower) {
+            entryName = existingName;
+          } else {
+            return; // Still untitled, don't save
+          }
         }
+
+        // Handle duplicate names: add "Copy [number]" suffix
+        function getUniqueName(baseName, excludeId) {
+          const baseLower = baseName.toLowerCase();
+          let finalName = baseName;
+          let copyNumber = 1;
+          
+          // Check if name already exists (excluding current presentation)
+          const nameExists = index.some(item => 
+            item.id !== excludeId && 
+            item.name && 
+            item.name.toLowerCase() === baseLower
+          );
+          
+          if (nameExists) {
+            // Find the highest copy number
+            const copyPattern = /^(.+?)\s+Copy\s+(\d+)$/i;
+            let maxCopyNum = 0;
+            
+            index.forEach(item => {
+              if (item.id !== excludeId && item.name) {
+                const match = item.name.match(copyPattern);
+                if (match) {
+                  const base = match[1].toLowerCase();
+                  const num = parseInt(match[2], 10);
+                  if (base === baseLower && num > maxCopyNum) {
+                    maxCopyNum = num;
+                  }
+                } else if (item.name.toLowerCase() === baseLower) {
+                  maxCopyNum = Math.max(maxCopyNum, 0);
+                }
+              }
+            });
+            
+            copyNumber = maxCopyNum + 1;
+            finalName = `${baseName} Copy ${copyNumber}`;
+          }
+          
+          return finalName;
+        }
+
+        // Get unique name (handle duplicates)
+        entryName = getUniqueName(entryName, presentationId);
 
         const entry = {
           id: presentationId,
@@ -4923,6 +5106,11 @@
         bgColorInput.value = initialColor;
       }
       updateAutosaveStatus('Autosave ready', 'idle');
+      // Ensure name input is set for new presentations
+      if ((newSession || isNew) && presentationNameInput) {
+        presentationNameInput.value = DEFAULT_PRESENTATION_NAME;
+        loadedPresentationName = DEFAULT_PRESENTATION_NAME;
+      }
       render();
       renderPresenceIndicators();
       updateShareLink();
@@ -4930,22 +5118,6 @@
       window.setInterval(simulateCollaborationTick, 8000);
       window.addEventListener('beforeunload', runAutosave);
     })();
-
-    const homeLink = document.getElementById('homeLink');
-    if (homeLink) {
-      homeLink.addEventListener('click', (event) => {
-        const nameValue = presentationNameInput ? presentationNameInput.value.trim() : '';
-        const nameIsDefault = nameValue.toLowerCase() === DEFAULT_PRESENTATION_NAME.toLowerCase();
-        if (!nameValue || nameIsDefault) {
-          event.preventDefault();
-          alert('Please name your presentation before returning home so it can be saved to Recent projects.');
-          if (presentationNameInput) {
-            presentationNameInput.focus();
-            presentationNameInput.select();
-          }
-        }
-      });
-    }
 
     if (presenterExitBtn) {
        presenterExitBtn.addEventListener('click', closePresenterMode);
@@ -4976,7 +5148,201 @@
     document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
  
     setActiveTab('slides');
+
+    const homeLink = document.getElementById('homeLink');
+    if (homeLink) {
+      homeLink.addEventListener('click', (event) => {
+        const nameValue = presentationNameInput ? presentationNameInput.value.trim() : '';
+        const nameIsDefault = !nameValue || nameValue.toLowerCase() === DEFAULT_PRESENTATION_NAME.toLowerCase();
+        if (nameIsDefault) {
+          event.preventDefault();
+          showNamePrompt();
+        } else {
+          // Save and navigate home
+          runAutosave();
+          setTimeout(() => {
+            if (window.fadeNavigate) {
+              window.fadeNavigate('home.html');
+            } else {
+              window.location.href = 'home.html';
+            }
+          }, 100);
+        }
+      });
+    }
+
+    function showNamePrompt() {
+      const modal = document.getElementById('namePrompt');
+      const input = document.getElementById('presentationNameInputModal');
+      if (modal && input) {
+        modal.style.display = 'flex';
+        input.value = presentationNameInput ? presentationNameInput.value.trim() : '';
+        setTimeout(() => {
+          input.focus();
+          input.select();
+        }, 100);
+      }
+    }
+
+    function savePresentationAndGoHome() {
+      const input = document.getElementById('presentationNameInputModal');
+      const name = input ? input.value.trim() : '';
+      if (!name || name.toLowerCase() === DEFAULT_PRESENTATION_NAME.toLowerCase()) {
+        alert('Please enter a name for your presentation.');
+        if (input) {
+          input.focus();
+          input.select();
+        }
+        return;
+      }
+
+      // Update presentation name
+      if (presentationNameInput) {
+        presentationNameInput.value = name;
+        needsAutosave = true;
+      }
+
+      // Save presentation
+      runAutosave();
+
+      // Close modal
+      const modal = document.getElementById('namePrompt');
+      if (modal) {
+        modal.style.display = 'none';
+      }
+
+      // Navigate home after a short delay to ensure save completes
+      setTimeout(() => {
+        if (window.fadeNavigate) {
+          window.fadeNavigate('home.html');
+        } else {
+          window.location.href = 'home.html';
+        }
+      }, 200);
+    }
+
+    function goBackWithoutSaving() {
+      const modal = document.getElementById('namePrompt');
+      if (modal) {
+        modal.style.display = 'none';
+      }
+    }
+
+    function cancelExit() {
+      const modal = document.getElementById('namePrompt');
+      if (modal) {
+        modal.style.display = 'none';
+      }
+      // Exit without saving
+      setTimeout(() => {
+        if (window.fadeNavigate) {
+          window.fadeNavigate('home.html');
+        } else {
+          window.location.href = 'home.html';
+        }
+      }, 100);
+    }
+
+    // Setup modal event listeners after DOM is ready
+    setTimeout(() => {
+      const applyNameBtn = document.getElementById('applyNameBtn');
+      const goBackBtn = document.getElementById('goBackBtn');
+      const cancelExitBtn = document.getElementById('cancelExitBtn');
+      const namePromptModal = document.getElementById('namePrompt');
+      const nameInputModal = document.getElementById('presentationNameInputModal');
+
+      if (applyNameBtn) {
+        applyNameBtn.addEventListener('click', savePresentationAndGoHome);
+      }
+
+      if (goBackBtn) {
+        goBackBtn.addEventListener('click', goBackWithoutSaving);
+      }
+
+      if (cancelExitBtn) {
+        cancelExitBtn.addEventListener('click', cancelExit);
+      }
+
+      // Close modal on backdrop click
+      if (namePromptModal) {
+        namePromptModal.addEventListener('click', (e) => {
+          if (e.target === namePromptModal) {
+            goBackWithoutSaving();
+          }
+        });
+      }
+
+      // Close modal on Escape key
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && namePromptModal && namePromptModal.style.display === 'flex') {
+          goBackWithoutSaving();
+        }
+      });
+
+      // Allow Enter key to submit in modal input
+      if (nameInputModal) {
+        nameInputModal.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            savePresentationAndGoHome();
+          }
+        });
+      }
+    }, 100);
   </script>
+  
+  <!-- Name Prompt Modal -->
+  <div id="namePrompt" style="display:none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background: #ffffff; border-radius: 16px; padding: 32px; max-width: 480px; width: 90%; box-shadow: 0 20px 40px rgba(15, 23, 42, 0.2); text-align: center;">
+      <h2 style="margin: 0 0 12px; font-size: 24px; font-weight: 600; color: #0f172a;">Name Your Presentation</h2>
+      <p style="margin: 0 0 24px; color: #64748b; font-size: 15px; line-height: 1.5;">Please name your presentation before exiting, or it won't be saved.</p>
+      <input id="presentationNameInputModal" type="text" placeholder="Enter presentation name" style="width: 100%; margin-bottom: 24px; padding: 10px 16px; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 14px; box-sizing: border-box; font-family: 'Inter', sans-serif;">
+      <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+        <button id="cancelExitBtn" class="btn btn-danger" style="padding: 10px 20px; border-radius: 10px; border: none; background: linear-gradient(90deg, #ef4444, #dc2626); color: #ffffff; font-weight: 600; cursor: pointer; min-width: 100px; transition: all 0.25s ease;">Cancel Exit</button>
+        <button id="goBackBtn" class="btn btn-outline" style="padding: 10px 20px; border-radius: 10px; border: 1px solid #e2e8f0; background: #ffffff; color: #0f172a; font-weight: 600; cursor: pointer; min-width: 100px; transition: transform 0.2s ease, box-shadow 0.2s ease;">Go Back</button>
+        <button id="applyNameBtn" class="btn btn-primary" style="padding: 10px 20px; border-radius: 10px; border: none; background: linear-gradient(90deg, #3b82f6, #2563eb); color: #ffffff; font-weight: 600; cursor: pointer; min-width: 100px; transition: transform 0.2s ease, box-shadow 0.2s ease;">Apply</button>
+      </div>
+    </div>
+  </div>
+  
+  <style>
+    #namePrompt {
+      display: flex;
+    }
+    
+    #applyNameBtn:hover {
+      transform: translateY(-2px) scale(1.03);
+      box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+    }
+    
+    #goBackBtn:hover {
+      transform: translateY(-2px) scale(1.03);
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.1);
+    }
+    
+    #cancelExitBtn.btn-danger {
+      background: linear-gradient(90deg, #ef4444, #dc2626);
+      color: #fff;
+      border: none;
+      transition: all 0.25s ease;
+    }
+    
+    #cancelExitBtn.btn-danger:hover {
+      background: linear-gradient(90deg, #dc2626, #b91c1c);
+      transform: translateY(-2px) scale(1.05);
+      box-shadow: 0 8px 18px rgba(239, 68, 68, 0.3);
+    }
+    
+    #cancelExitBtn.btn-danger:active {
+      transform: scale(0.96);
+    }
+    
+    #presentationNameInputModal:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+  </style>
 </body>
 </html>
 

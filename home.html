@@ -8,11 +8,19 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
+    <script src="./scripts/global.js"></script>
   </head>
   <body class="bg-white bg-modern bg-corner-dots">
     <header class="site-header">
       <div class="header-left">
         <img class="site-logo site-logo--banner" src="./Screenshot 2025-11-06 at 1.14.39 PM.png" alt="Aramco Digital banner" onerror="this.remove(); var b=document.querySelector('.site-brand'); if(b){ b.textContent='Aramco Digital'; }" />
+        <a href="./index.html" class="home-icon-link" title="Home">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+          </svg>
+        </a>
+        
       </div>
       <nav class="site-nav site-nav--centered" aria-label="Primary">
         <a href="home.html" class="nav-link nav-link--current" aria-current="page">Home</a>
@@ -20,30 +28,50 @@
         <a href="about.html" class="nav-link">About</a>
       </nav>
       <div class="header-right">
+        <div class="account-display" id="accountDisplay">
+          <button class="account-button" id="accountButton" aria-label="Account menu">
+            <span class="account-greeting" id="accountGreeting"></span>
+            <svg class="account-icon" width="32" height="32" viewBox="0 0 32 32" fill="none">
+              <circle cx="16" cy="16" r="14" stroke="currentColor" stroke-width="2"/>
+              <circle cx="16" cy="12" r="5" fill="currentColor"/>
+              <path d="M6 26c0-5.5 4.5-10 10-10s10 4.5 10 10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
+          <div class="account-dropdown" id="accountDropdown" style="display: none;">
+            <button class="dropdown-item dropdown-item--logout" id="logoutButton">
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+              </svg>
+              Logout
+            </button>
+          </div>
+        </div>
         <img class="site-logo site-logo--mark" src="./logo.png" alt="Aramco Digital logo" />
       </div>
     </header>
 
-    <main class="center-wrapper center-wrapper--top">
-      <section class="hero hero--home">
-        <div class="logo-circle" aria-hidden="true">
+    <main class="center-wrapper center-wrapper--top page-fade-in">
+      <section class="hero hero--home animate-entrance">
+        <div class="logo-circle animate-fade-in animate-delay-1" aria-hidden="true">
           <span class="logo-dot logo-dot--green"></span>
           <span class="logo-dot logo-dot--blue"></span>
         </div>
-        <h1 class="title title--xxl">Create Slides with Confidence</h1>
-        <p class="subtitle">LumenSlides pairs smart automation with polished templates so your team can plan, design, and present ideas in minutes.</p>
-        <div class="hero-actions">
+        <h1 class="title title--xxl animate-fade-in animate-delay-2">Create Slides with Confidence</h1>
+        <p class="subtitle animate-fade-in animate-delay-2">LumenSlides pairs smart automation with polished templates so your team can plan, design, and present ideas in minutes.</p>
+        <div class="hero-actions animate-fade-in animate-delay-3">
           <a href="slide-editor.html" class="btn btn-primary" id="createSlideLink">Create a Slide</a>
           <a href="templates.html" class="btn btn-outline">Browse Templates</a>
         </div>
-        <ul class="hero-bullets">
+        <ul class="hero-bullets animate-fade-in animate-delay-3">
           <li>AI-assisted outlines tailored to your goals</li>
           <li>Brand-safe themes designed for impact</li>
           <li>Seamless handoff from draft to delivery</li>
         </ul>
       </section>
 
-      <section class="recent-projects" aria-label="Recently opened projects">
+      <section class="recent-projects animate-fade-in animate-delay-1" aria-label="Recently opened projects">
         <h2>Recently Opened Projects</h2>
         <p class="recent-empty">You haven’t opened any projects yet.</p>
         <div id="recentPresentationsList" class="recent-grid" hidden></div>
@@ -53,6 +81,94 @@
 
     <footer class="credits">Made by: Reema Alomari, Abdullah Alqahtani, Yara AlSardi</footer>
 
+    <script src="./scripts/auth.js"></script>
+    <script>
+      // Account display and logout functionality
+      (function() {
+        const accountDisplay = document.getElementById('accountDisplay');
+        const accountButton = document.getElementById('accountButton');
+        const accountGreeting = document.getElementById('accountGreeting');
+        const accountDropdown = document.getElementById('accountDropdown');
+        const logoutButton = document.getElementById('logoutButton');
+
+        function updateAccountDisplay() {
+          const currentUser = getCurrentUser();
+          const isGuest = isGuestMode();
+
+          if (!accountDisplay) return;
+
+          if (currentUser) {
+            accountGreeting.textContent = `Hello, ${currentUser.username}`;
+            accountDisplay.style.display = 'flex';
+            // Show dropdown for logged-in users
+            if (accountDropdown) accountDropdown.style.display = 'none';
+            
+            // Toggle dropdown for logged-in users only
+            if (accountButton) {
+              accountButton.style.cursor = 'pointer';
+              accountButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isVisible = accountDropdown.style.display === 'block';
+                accountDropdown.style.display = isVisible ? 'none' : 'block';
+              });
+            }
+          } else if (isGuest) {
+            accountGreeting.textContent = 'Hello, Guest!';
+            accountDisplay.style.display = 'flex';
+            // Hide dropdown for guests - never show it
+            if (accountDropdown) accountDropdown.style.display = 'none';
+            // Make button non-clickable for guests
+            if (accountButton) {
+              accountButton.style.cursor = 'default';
+              accountButton.onclick = null;
+            }
+          } else {
+            // Not logged in and not guest - redirect to login
+            if (window.fadeNavigate) {
+              window.fadeNavigate('./login.html');
+            } else {
+              window.location.href = './login.html';
+            }
+            return;
+          }
+
+          // Close dropdown when clicking outside (only for logged-in users)
+          if (currentUser) {
+            document.addEventListener('click', (e) => {
+              if (accountDisplay && !accountDisplay.contains(e.target)) {
+                if (accountDropdown) accountDropdown.style.display = 'none';
+              }
+            });
+          }
+
+          // Logout functionality (only for logged-in users)
+          if (logoutButton && currentUser) {
+            logoutButton.addEventListener('click', () => {
+              logout(); // This clears both currentUser and isGuest
+              if (window.fadeNavigate) {
+                window.fadeNavigate('./login.html');
+              } else {
+                window.location.href = './login.html';
+              }
+            });
+          }
+
+          // Disable save/export features for guests
+          if (isGuest) {
+            // Disable save/export buttons if they exist
+            const saveButtons = document.querySelectorAll('[data-save], [data-export]');
+            saveButtons.forEach(btn => {
+              btn.disabled = true;
+              btn.title = 'Saving requires an account. Please sign up or log in.';
+              btn.style.opacity = '0.6';
+              btn.style.cursor = 'not-allowed';
+            });
+          }
+        }
+
+        updateAccountDisplay();
+      })();
+    </script>
     <script>
       (function () {
         const INDEX_KEY = 'lumen-presentations-index';
@@ -64,15 +180,15 @@
               return;
             }
             event.preventDefault();
-            const id = (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function')
-              ? crypto.randomUUID()
-              : `presentation-${Math.random().toString(16).slice(2)}`;
-            try {
-              const nextUrl = new URL(createSlideLink.getAttribute('href') || 'slide-editor.html', window.location.href);
-              nextUrl.searchParams.set('id', id);
-              window.location.href = nextUrl.toString();
-            } catch (error) {
-              window.location.href = `slide-editor.html?id=${encodeURIComponent(id)}`;
+            
+            // Set flag to force a complete reset of presentation data
+            localStorage.setItem('forceNewPresentation', 'true');
+            
+            // Navigate to editor (ID will be generated fresh in slide-editor.html)
+            if (window.fadeNavigate) {
+              window.fadeNavigate('slide-editor.html');
+            } else {
+              window.location.href = 'slide-editor.html';
             }
           });
         }
@@ -110,7 +226,7 @@
           const parsed = raw ? JSON.parse(raw) : [];
           const entries = Array.isArray(parsed)
             ? parsed
-                .filter((item) => item && item.id && item.name)
+                .filter((item) => item && item.id && item.name && item.name.trim().toLowerCase() !== 'untitled')
                 .sort((a, b) => (b?.updatedAt ?? 0) - (a?.updatedAt ?? 0))
                 .slice(0, 9)
             : [];
@@ -135,18 +251,28 @@
             const updatedLabel = formatTimestamp(entry.updatedAt);
             const href = entry.url || `slide-editor.html?id=${encodeURIComponent(entry.id)}`;
 
-            const card = document.createElement('a');
+            // Create card as div (not <a>) to properly control click events
+            const card = document.createElement('div');
             card.className = 'recent-card';
-            card.href = href;
+            card.dataset.id = entry.id;
             card.dataset.presentationId = entry.id;
             card.style.setProperty('--recent-accent', accentColor);
             card.style.setProperty('--recent-background', backgroundColor);
+            card.style.cursor = 'pointer'; // Make it look clickable
+            
+            // Create delete button separately to handle clicks properly
+            const deleteBtn = document.createElement('button');
+            deleteBtn.type = 'button';
+            deleteBtn.className = 'recent-card__delete';
+            deleteBtn.setAttribute('aria-label', 'Delete presentation');
+            deleteBtn.setAttribute('title', 'Delete');
+            deleteBtn.innerHTML = `
+              <svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15 5L5 15M5 5l10 10"/>
+              </svg>
+            `;
+            
             card.innerHTML = `
-              <button class="recent-card__delete" aria-label="Delete presentation" title="Delete">
-                <svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M15 5L5 15M5 5l10 10"/>
-                </svg>
-              </button>
               <div class="recent-card__window">
                 <div class="recent-card__window-chrome" aria-hidden="true">
                   <span></span><span></span><span></span>
@@ -171,36 +297,27 @@
               </div>
             `;
             
-            // Add delete button functionality
-            const deleteBtn = card.querySelector('.recent-card__delete');
-            if (deleteBtn) {
-              deleteBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                if (confirm(`Are you sure you want to delete "${name}"?`)) {
-                  try {
-                    const raw = localStorage.getItem(INDEX_KEY);
-                    const parsed = raw ? JSON.parse(raw) : [];
-                    const index = Array.isArray(parsed) ? parsed : [];
-                    const filtered = index.filter(item => item && item.id !== entry.id);
-                    localStorage.setItem(INDEX_KEY, JSON.stringify(filtered));
-                    card.remove();
-                    if (filtered.length === 0) {
-                      listEl.hidden = true;
-                      const recentProjectsSection = document.querySelector('.recent-projects');
-                      if (recentProjectsSection) {
-                        const emptyP = document.createElement('p');
-                        emptyP.className = 'recent-empty';
-                        emptyP.textContent = 'You haven\'t opened any projects yet.';
-                        recentProjectsSection.appendChild(emptyP);
-                      }
-                    }
-                  } catch (error) {
-                    console.warn('Failed to delete presentation', error);
-                  }
+            // Append delete button to card
+            card.appendChild(deleteBtn);
+            
+            // Handle card click to open presentation (ignore delete button clicks)
+            card.addEventListener('click', (event) => {
+              // Ignore clicks on the delete button or its children
+              if (event.target.closest('.recent-card__delete')) {
+                return;
+              }
+              
+              // Navigate to presentation
+              try {
+                if (window.fadeNavigate) {
+                  window.fadeNavigate(href);
+                } else {
+                  window.location.href = href;
                 }
-              });
-            }
+              } catch (error) {
+                window.location.href = href;
+              }
+            });
             
             listEl.appendChild(card);
           });
@@ -209,5 +326,114 @@
         }
       })();
     </script>
+    <script>
+      // Green dot scroll-following effect with bottom limit
+      window.addEventListener("scroll", () => {
+        // Calculate maximum scroll to stop dots ~120px above footer
+        const maxScroll = Math.max(0, document.body.scrollHeight - window.innerHeight - 120);
+        const scrollY = Math.min(window.scrollY, maxScroll);
+        document.documentElement.style.setProperty("--scrollY", `${scrollY * 0.2}px`);
+      }, { passive: true });
+
+      // Global delete button handler - prevents card navigation
+      document.addEventListener("click", (event) => {
+        const deleteBtn = event.target.closest(".recent-card__delete");
+        if (!deleteBtn) return;
+
+        event.stopPropagation(); // Prevent the card from opening
+        event.preventDefault();
+
+        const card = deleteBtn.closest(".recent-card");
+        const id = card?.dataset?.id;
+        if (!id) return;
+
+        const cardName = card.querySelector('.recent-card__title')?.textContent || 'this presentation';
+        
+        // Show custom delete confirmation modal
+        const modal = document.getElementById('deleteConfirmModal');
+        const modalMessage = document.getElementById('deleteModalMessage');
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+        const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+        
+        if (modal && modalMessage) {
+          modalMessage.textContent = `Are you sure you want to delete "${cardName}"?`;
+          modal.style.display = 'flex';
+          
+          // Handle confirm delete
+          const handleConfirm = () => {
+            modal.style.display = 'none';
+            
+            // Fade-out animation
+            card.style.transition = "opacity 0.3s ease, transform 0.3s ease";
+            card.style.opacity = "0";
+            card.style.transform = "scale(0.95)";
+
+            setTimeout(() => {
+              try {
+                // Remove from storage
+                const INDEX_KEY = 'lumen-presentations-index';
+                const raw = localStorage.getItem(INDEX_KEY);
+                const parsed = raw ? JSON.parse(raw) : [];
+                const index = Array.isArray(parsed) ? parsed : [];
+                const filtered = index.filter(item => item && item.id !== id);
+                localStorage.setItem(INDEX_KEY, JSON.stringify(filtered));
+
+                // Remove card from DOM
+                card.remove();
+
+                // Show empty message if no more presentations
+                const listEl = document.getElementById('recentPresentationsList');
+                if (listEl && filtered.length === 0) {
+                  listEl.hidden = true;
+                  const recentProjectsSection = document.querySelector('.recent-projects');
+                  if (recentProjectsSection) {
+                    const emptyP = document.createElement('p');
+                    emptyP.className = 'recent-empty';
+                    emptyP.textContent = 'You haven\'t opened any projects yet.';
+                    recentProjectsSection.appendChild(emptyP);
+                  }
+                }
+              } catch (error) {
+                console.warn('Failed to delete presentation', error);
+              }
+            }, 300);
+            
+            // Remove event listeners
+            confirmDeleteBtn?.removeEventListener('click', handleConfirm);
+            cancelDeleteBtn?.removeEventListener('click', handleCancel);
+          };
+          
+          // Handle cancel
+          const handleCancel = () => {
+            modal.style.display = 'none';
+            confirmDeleteBtn?.removeEventListener('click', handleConfirm);
+            cancelDeleteBtn?.removeEventListener('click', handleCancel);
+          };
+          
+          // Add event listeners
+          confirmDeleteBtn?.addEventListener('click', handleConfirm);
+          cancelDeleteBtn?.addEventListener('click', handleCancel);
+          
+          // Close on backdrop click
+          modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+              handleCancel();
+            }
+          });
+        }
+      }, true); // Use capture phase to catch before card navigation
+    </script>
+    
+    <!-- Delete Confirmation Modal -->
+    <div class="modal-overlay" id="deleteConfirmModal" style="display: none;">
+      <div class="modal-content modal-content--delete">
+        <h3 class="modal-title">Delete Presentation</h3>
+        <p class="modal-message" id="deleteModalMessage">Are you sure you want to delete this presentation?</p>
+        <div class="modal-actions">
+          <button class="btn btn-outline" id="cancelDeleteBtn">Cancel</button>
+          <button class="btn btn-primary btn-danger" id="confirmDeleteBtn">Yes, Delete</button>
+        </div>
+      </div>
+    </div>
   </body>
 </html>
