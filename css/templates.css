@@ -25,14 +25,18 @@ body {
 .templates-shell {
   max-width: 1040px;
   margin: 0 auto;
-  padding: clamp(120px, 18vh, 160px) clamp(24px, 6vw, 60px) 80px;
+  padding: clamp(60px, 10vh, 100px) clamp(24px, 6vw, 60px) 80px;
   display: grid;
-  gap: 60px;
+  gap: 32px;
+}
+
+main.templates-shell {
+  padding-top: 0;
 }
 
 .templates-header {
   text-align: center;
-  padding: 70px 24px 40px;
+  padding: 40px 24px 0;
 }
 
 .templates-header h1 {

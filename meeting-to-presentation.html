@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Meeting to Presentation - AI Assistant · LumenSlides</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+      .meeting-container {
+        max-width: 800px;
+        width: 100%;
+        margin: 0 auto;
+      }
+
+      .upload-card {
+        background: #ffffff;
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 40px;
+        box-shadow: var(--shadow);
+        margin-bottom: 24px;
+      }
+
+      .upload-card h2 {
+        margin: 0 0 24px 0;
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--text);
+      }
+
+      .file-input-wrapper {
+        margin-bottom: 24px;
+      }
+
+      .file-input-label {
+        display: block;
+        font-size: 0.95rem;
+        font-weight: 500;
+        color: var(--muted);
+        margin-bottom: 8px;
+      }
+
+      .file-input {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        font-size: 0.95rem;
+        color: var(--text);
+        background: #ffffff;
+        cursor: pointer;
+        transition: border-color 0.2s ease;
+      }
+
+      .file-input:hover {
+        border-color: var(--blue);
+      }
+
+      .file-input:focus {
+        outline: none;
+        border-color: var(--blue);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      }
+
+      .file-name {
+        margin-top: 8px;
+        font-size: 0.9rem;
+        color: var(--muted);
+        display: none;
+      }
+
+      .file-name.show {
+        display: block;
+      }
+
+      .generate-btn {
+        width: 100%;
+        padding: 14px 24px;
+        background: linear-gradient(90deg, var(--green), var(--blue));
+        color: #ffffff;
+        border: none;
+        border-radius: 10px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 120ms ease, opacity 120ms ease;
+      }
+
+      .generate-btn:hover:not(:disabled) {
+        transform: translateY(-1px);
+      }
+
+      .generate-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .results-card {
+        background: #ffffff;
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 40px;
+        box-shadow: var(--shadow);
+        display: none;
+        animation: fadeIn 0.3s ease;
+      }
+
+      .results-card.show {
+        display: block;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .results-card h2 {
+        margin: 0 0 24px 0;
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--text);
+      }
+
+      .slide-section {
+        margin-bottom: 32px;
+      }
+
+      .slide-section:last-child {
+        margin-bottom: 0;
+      }
+
+      .slide-section h3 {
+        margin: 0 0 12px 0;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text);
+      }
+
+      .slide-section ul {
+        margin: 0;
+        padding-left: 24px;
+        list-style: disc;
+        color: var(--muted);
+        line-height: 1.8;
+      }
+
+      .slide-section li {
+        margin-bottom: 6px;
+      }
+    </style>
+  </head>
+  <body class="bg-white bg-modern bg-corner-dots">
+    <header class="site-header">
+      <div class="header-left">
+        <img class="site-logo site-logo--banner" src="./Screenshot 2025-11-06 at 1.14.39 PM.png" alt="Aramco Digital banner" onerror="this.remove(); var b=document.querySelector('.site-brand'); if(b){ b.textContent='Aramco Digital'; }" />
+      </div>
+      <nav class="site-nav site-nav--centered" aria-label="Primary">
+        <a href="home.html" class="nav-link">Home</a>
+        <a href="templates.html" class="nav-link">Templates</a>
+        <a href="about.html" class="nav-link">About</a>
+        <a href="meeting-to-presentation.html" class="nav-link nav-link--current" aria-current="page">Meeting to Presentation</a>
+      </nav>
+      <div class="header-right">
+        <img class="site-logo site-logo--mark" src="./logo.png" alt="Aramco Digital logo" />
+      </div>
+    </header>
+
+    <main class="center-wrapper center-wrapper--top">
+      <div class="meeting-container">
+        <h1 class="title title--xxl" style="text-align: center; margin-bottom: 32px;">
+          Meeting to Presentation - AI Assistant
+        </h1>
+
+        <!-- Upload Card -->
+        <div class="upload-card">
+          <h2>Upload your meeting recording</h2>
+          
+          <div class="file-input-wrapper">
+            <label class="file-input-label" for="audioFile">Select audio file</label>
+            <input
+              type="file"
+              id="audioFile"
+              class="file-input"
+              accept=".mp3,.wav,.m4a"
+            />
+            <p class="file-name" id="fileName"></p>
+          </div>
+
+          <button class="generate-btn" id="generateBtn" disabled>
+            Generate Presentation Points
+          </button>
+        </div>
+
+        <!-- Results Card -->
+        <div class="results-card" id="resultsCard">
+          <h2>AI Generated Presentation Summary</h2>
+
+          <div class="slide-section">
+            <h3>Slide 1: Meeting Overview</h3>
+            <ul>
+              <li>Purpose of the meeting</li>
+              <li>Team members present</li>
+            </ul>
+          </div>
+
+          <div class="slide-section">
+            <h3>Slide 2: Key Discussions</h3>
+            <ul>
+              <li>Main topic points summarized</li>
+            </ul>
+          </div>
+
+          <div class="slide-section">
+            <h3>Slide 3: Decisions Made</h3>
+            <ul>
+              <li>Final conclusions or agreements</li>
+            </ul>
+          </div>
+
+          <div class="slide-section">
+            <h3>Slide 4: Action Items</h3>
+            <ul>
+              <li>Who is responsible</li>
+              <li>Deadlines</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="credits">Made by: Reema Alomari, Abdullah Alqahtani, Yara AlSardi</footer>
+
+    <script>
+      const audioFileInput = document.getElementById('audioFile');
+      const fileName = document.getElementById('fileName');
+      const generateBtn = document.getElementById('generateBtn');
+      const resultsCard = document.getElementById('resultsCard');
+
+      // Handle file selection
+      audioFileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+          fileName.textContent = 'Selected: ' + file.name;
+          fileName.classList.add('show');
+          generateBtn.disabled = false;
+        } else {
+          fileName.classList.remove('show');
+          generateBtn.disabled = true;
+        }
+      });
+
+      // Handle generate button click
+      generateBtn.addEventListener('click', function() {
+        // Show results
+        resultsCard.classList.add('show');
+        
+        // Scroll to results
+        resultsCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      });
+    </script>
+  </body>
+</html>
+
