@@ -4,10 +4,40 @@ document.addEventListener("DOMContentLoaded", () => {
 
   templateCards.forEach((card) => {
     const button = card.querySelector(".template-button");
-    const name = card.dataset.template;
+    if (!button) return;
+
+    const name = (card.dataset.template || "").trim();
+    const normalized = name.toLowerCase();
+
     button.addEventListener("click", (event) => {
       event.stopPropagation();
-      console.log(name);
+
+      const launchTemplate = (templateKey) => {
+        try {
+          localStorage.setItem("forceNewPresentation", "true");
+          if (templateKey) {
+            localStorage.setItem("selectedTemplate", templateKey);
+          } else {
+            localStorage.removeItem("selectedTemplate");
+          }
+        } catch (error) {
+          console.warn("Unable to persist selected template", error);
+        }
+
+        window.location.href = "slide-editor.html";
+      };
+
+      if (normalized === "blank template") {
+        launchTemplate("blank");
+        return;
+      }
+
+      if (normalized === "business template") {
+        launchTemplate("business");
+        return;
+      }
+
+      launchTemplate(null);
     });
   });
 
