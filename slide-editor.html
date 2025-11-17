@@ -10,7 +10,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Lato:wght@300;400;700&family=Montserrat:wght@400;600;700&family=Merriweather:wght@400;700&family=Poppins:wght@400;600&family=Playfair+Display:wght@400;700&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <style>
     body { font-family: 'Inter', sans-serif; }
     .draggable-placeholder { cursor: move; }
@@ -552,7 +555,7 @@
             </div>
             <button id="shareBtn" class="rounded-full border border-white/30 px-3 py-1.5 text-sm hover:bg-white/10 whitespace-nowrap">Share</button>
             <button id="presentBtn" class="rounded-full border border-white/30 px-3 py-1.5 text-sm hover:bg-white/10 whitespace-nowrap">Present</button>
-            <button id="exportPdfBtn" class="rounded-full bg-white/20 px-3 py-1.5 text-sm shadow-sm transition hover:bg-white/30 whitespace-nowrap">Export PDF</button>
+            <button id="exportBtn" class="rounded-full bg-white/20 px-3 py-1.5 text-sm shadow-sm transition hover:bg-white/30 whitespace-nowrap">Export</button>
           </div>
         </div>
         <div class="flex flex-wrap items-center justify-between gap-3">
@@ -757,12 +760,12 @@
         <main class="flex h-full flex-col items-center overflow-auto">
           <div class="w-full p-4 md:p-6 lg:p-8">
             <div class="flex flex-col gap-4">
-              <div class="canvas-area flex w-full justify-center">
+            <div class="canvas-area flex w-full justify-center">
                 <div id="canvasViewport" class="canvas-viewport">
-                  <div class="relative w-full max-w-5xl aspect-video bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden" id="canvasContainer">
-                    <!-- Active slide content injected here -->
-                  </div>
-                </div>
+              <div class="relative w-full max-w-5xl aspect-video bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden" id="canvasContainer">
+                <!-- Active slide content injected here -->
+              </div>
+            </div>
               </div>
             </div>
           </div>
@@ -1023,6 +1026,127 @@
     </div>
   </div>
 
+  <!-- Export Modal -->
+  <div id="exportModal" class="fixed inset-0 z-40 hidden items-center justify-center bg-slate-900/60 px-4 py-6 backdrop-blur-sm">
+    <div class="w-full max-w-4xl rounded-2xl bg-white shadow-2xl">
+      <div class="flex items-start justify-between border-b border-slate-200 p-6">
+        <div>
+          <h2 class="text-xl font-semibold text-slate-900">Export Presentation</h2>
+          <p class="mt-1 text-sm text-slate-500">Select slides and choose your export format</p>
+        </div>
+        <button id="exportCloseBtn" class="rounded-full border border-slate-200 px-2 py-1 text-sm text-slate-500 hover:bg-slate-100">Close</button>
+      </div>
+      <div class="p-6">
+        <!-- Slide Selection -->
+        <div class="mb-6">
+          <div class="mb-3 flex items-center justify-between">
+            <label class="text-sm font-semibold text-slate-700">Select Slides</label>
+            <div class="flex gap-2">
+              <button id="exportSelectAllBtn" class="text-xs text-[#004c97] hover:underline">Select All</button>
+              <span class="text-xs text-slate-400">|</span>
+              <button id="exportSelectNoneBtn" class="text-xs text-[#004c97] hover:underline">Select None</button>
+            </div>
+          </div>
+          <div id="exportSlidePreviews" class="grid max-h-64 grid-cols-4 gap-3 overflow-y-auto rounded-lg border border-slate-200 p-3">
+            <!-- Slide previews will be injected here -->
+          </div>
+        </div>
+        <!-- Export Format Selection -->
+        <div class="mb-6">
+          <label class="mb-3 block text-sm font-semibold text-slate-700">Export Format</label>
+          <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <label class="export-format-option flex cursor-pointer items-center gap-3 rounded-lg border-2 border-slate-200 p-3 transition hover:border-[#004c97] hover:bg-slate-50">
+              <input type="radio" name="exportFormat" value="pdf" class="h-4 w-4 accent-[#004c97]" checked />
+              <div class="flex-1">
+                <div class="flex items-center gap-2">
+                  <svg class="h-5 w-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                  </svg>
+                  <span class="font-semibold text-slate-900">PDF</span>
+                </div>
+                <p class="mt-1 text-xs text-slate-500">Portable Document Format</p>
+              </div>
+            </label>
+            <label class="export-format-option flex cursor-pointer items-center gap-3 rounded-lg border-2 border-slate-200 p-3 transition hover:border-[#004c97] hover:bg-slate-50">
+              <input type="radio" name="exportFormat" value="png" class="h-4 w-4 accent-[#004c97]" />
+              <div class="flex-1">
+                <div class="flex items-center gap-2">
+                  <svg class="h-5 w-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <span class="font-semibold text-slate-900">PNG</span>
+                </div>
+                <p class="mt-1 text-xs text-slate-500">High-quality images</p>
+              </div>
+            </label>
+            <label class="export-format-option flex cursor-pointer items-center gap-3 rounded-lg border-2 border-slate-200 p-3 transition hover:border-[#004c97] hover:bg-slate-50">
+              <input type="radio" name="exportFormat" value="jpg" class="h-4 w-4 accent-[#004c97]" />
+              <div class="flex-1">
+                <div class="flex items-center gap-2">
+                  <svg class="h-5 w-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <span class="font-semibold text-slate-900">JPG</span>
+                </div>
+                <p class="mt-1 text-xs text-slate-500">Compressed images</p>
+              </div>
+            </label>
+            <label class="export-format-option flex cursor-pointer items-center gap-3 rounded-lg border-2 border-slate-200 p-3 transition hover:border-[#004c97] hover:bg-slate-50">
+              <input type="radio" name="exportFormat" value="json" class="h-4 w-4 accent-[#004c97]" />
+              <div class="flex-1">
+                <div class="flex items-center gap-2">
+                  <svg class="h-5 w-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                  </svg>
+                  <span class="font-semibold text-slate-900">JSON</span>
+                </div>
+                <p class="mt-1 text-xs text-slate-500">Data backup</p>
+              </div>
+            </label>
+            <label class="export-format-option flex cursor-pointer items-center gap-3 rounded-lg border-2 border-slate-200 p-3 transition hover:border-[#004c97] hover:bg-slate-50">
+              <input type="radio" name="exportFormat" value="html" class="h-4 w-4 accent-[#004c97]" />
+              <div class="flex-1">
+                <div class="flex items-center gap-2">
+                  <svg class="h-5 w-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                  </svg>
+                  <span class="font-semibold text-slate-900">HTML</span>
+                </div>
+                <p class="mt-1 text-xs text-slate-500">Web page</p>
+              </div>
+            </label>
+            <label class="export-format-option flex cursor-pointer items-center gap-3 rounded-lg border-2 border-slate-200 p-3 transition hover:border-[#004c97] hover:bg-slate-50">
+              <input type="radio" name="exportFormat" value="zip" class="h-4 w-4 accent-[#004c97]" />
+              <div class="flex-1">
+                <div class="flex items-center gap-2">
+                  <svg class="h-5 w-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                  </svg>
+                  <span class="font-semibold text-slate-900">ZIP</span>
+                </div>
+                <p class="mt-1 text-xs text-slate-500">All formats</p>
+              </div>
+            </label>
+          </div>
+        </div>
+        <!-- Export Options -->
+        <div class="mb-6 flex items-center gap-4">
+          <label class="flex items-center gap-2">
+            <input type="checkbox" id="exportCombineFiles" class="h-4 w-4 accent-[#004c97]" />
+            <span class="text-sm text-slate-700">Combine into single file (PDF/ZIP only)</span>
+          </label>
+        </div>
+        <!-- Action Buttons -->
+        <div class="flex items-center justify-end gap-3">
+          <button id="exportCancelBtn" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Cancel</button>
+          <button id="exportConfirmBtn" class="rounded-lg bg-[#004c97] px-6 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#003d78] disabled:opacity-50 disabled:cursor-not-allowed">
+            <span id="exportConfirmText">Export Selected</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Presenter Mode Overlay -->
   <div id="presenterOverlay" class="fixed inset-0 z-50 hidden flex flex-col bg-slate-900/95 text-white">
     <div class="presenter-header flex items-center justify-between px-8 py-6">
@@ -1177,7 +1301,7 @@
       loadedExistingPresentation = false;
       isNewPresentation = true;
       // Update URL with new ID
-      if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined') {
         const nextUrl = new URL(window.location.href);
         nextUrl.searchParams.set('id', presentationId);
         window.history.replaceState(null, '', nextUrl.toString());
@@ -1238,27 +1362,27 @@
       try {
         // Skip loading stored data if this is a brand new presentation (already initialized above)
         if (!newSession && !isNew) {
-          const storedRaw = localStorage.getItem(presentationStorageKey);
-          if (storedRaw) {
-            const storedState = JSON.parse(storedRaw);
-            loadedExistingPresentation = true;
-            if (storedState && Array.isArray(storedState.slides)) {
-              slides = storedState.slides;
-            }
-            if (typeof storedState?.activeSlideIndex === 'number') {
-              activeSlideIndex = Math.min(Math.max(storedState.activeSlideIndex, 0), Math.max(slides.length - 1, 0));
-            }
-            if (typeof storedState?.createdAt === 'number') {
-              presentationCreatedAt = storedState.createdAt;
-            }
-            if (typeof storedState?.updatedAt === 'number') {
-              presentationUpdatedAt = storedState.updatedAt;
-            }
-            if (storedState?.presentationName) {
-              loadedPresentationName = storedState.presentationName;
-            }
-            if (storedState?.preview) {
-              presentationPreview = normalizePreview(storedState.preview);
+        const storedRaw = localStorage.getItem(presentationStorageKey);
+        if (storedRaw) {
+          const storedState = JSON.parse(storedRaw);
+          loadedExistingPresentation = true;
+          if (storedState && Array.isArray(storedState.slides)) {
+            slides = storedState.slides;
+          }
+          if (typeof storedState?.activeSlideIndex === 'number') {
+            activeSlideIndex = Math.min(Math.max(storedState.activeSlideIndex, 0), Math.max(slides.length - 1, 0));
+          }
+          if (typeof storedState?.createdAt === 'number') {
+            presentationCreatedAt = storedState.createdAt;
+          }
+          if (typeof storedState?.updatedAt === 'number') {
+            presentationUpdatedAt = storedState.updatedAt;
+          }
+          if (storedState?.presentationName) {
+            loadedPresentationName = storedState.presentationName;
+          }
+          if (storedState?.preview) {
+            presentationPreview = normalizePreview(storedState.preview);
             }
           } else if (isNewPresentation) {
             // New presentation with ID provided - ensure it starts completely fresh
@@ -1522,7 +1646,16 @@
     const toggleSlidesSidebarBtn = document.getElementById('toggleSlidesSidebar');
 
     const shareBtn = document.getElementById('shareBtn');
-    const exportPdfBtn = document.getElementById('exportPdfBtn');
+    const exportBtn = document.getElementById('exportBtn');
+    const exportModal = document.getElementById('exportModal');
+    const exportCloseBtn = document.getElementById('exportCloseBtn');
+    const exportCancelBtn = document.getElementById('exportCancelBtn');
+    const exportConfirmBtn = document.getElementById('exportConfirmBtn');
+    const exportSlidePreviews = document.getElementById('exportSlidePreviews');
+    const exportSelectAllBtn = document.getElementById('exportSelectAllBtn');
+    const exportSelectNoneBtn = document.getElementById('exportSelectNoneBtn');
+    const exportCombineFiles = document.getElementById('exportCombineFiles');
+    const exportConfirmText = document.getElementById('exportConfirmText');
     const presentBtn = document.getElementById('presentBtn');
     const shareModal = document.getElementById('shareModal');
     const shareCloseBtn = document.getElementById('shareCloseBtn');
@@ -2598,49 +2731,778 @@
       if (presenterProgressEl) presenterProgressEl.textContent = `${presenterIndex + 1} / ${slides.length}`;
     }
 
-    function exportActiveSlideToPdf() {
-      if (!canvasContainerEl || typeof html2pdf === 'undefined') {
-        alert('Export requires html2pdf library. Please check your connection.');
-        return;
-      }
-      if (exportPdfBtn) {
-        exportPdfBtn.disabled = true;
-        exportPdfBtn.textContent = 'Exporting…';
+    async function prepareSlideForExport(slideIndex) {
+      if (!canvasContainerEl) return null;
+      const originalIndex = activeSlideIndex;
+      if (slideIndex !== activeSlideIndex) {
+        activeSlideIndex = slideIndex;
+        render();
+        // Wait for DOM to update
+        await new Promise(resolve => setTimeout(resolve, 50));
       }
       const clone = canvasContainerEl.cloneNode(true);
       clone.querySelectorAll('.ring-2').forEach(node => node.classList.remove('ring-2', 'ring-[#004c97]'));
       clone.style.width = '1280px';
       clone.style.height = '720px';
       clone.style.maxWidth = 'none';
+      
+      // Re-render charts in the clone and convert to images for better export compatibility
+      const slide = slides[slideIndex];
+      if (slide && Array.isArray(slide.elements)) {
+        const chartElements = slide.elements.filter(el => el.type === 'chart');
+        for (const chartEl of chartElements) {
+          const chartWrapper = clone.querySelector(`[data-element-id="${chartEl.id}"]`);
+          if (chartWrapper) {
+            let canvas = chartWrapper.querySelector('canvas');
+            if (canvas) {
+              // Get dimensions from element
+              const width = chartEl.width || 420;
+              const height = chartEl.height || 280;
+              
+              // Set canvas dimensions to match element
+              canvas.width = width;
+              canvas.height = height;
+              canvas.style.width = width + 'px';
+              canvas.style.height = height + 'px';
+              
+              // Clear and re-render the chart
+              const ctx = canvas.getContext('2d');
+              ctx.clearRect(0, 0, width, height);
+              renderChartForElement(chartEl, canvas, { registerInstance: false });
+              
+              // Wait for chart to render
+              await new Promise(resolve => setTimeout(resolve, 250));
+              
+              // Convert canvas to high-resolution image for better export quality
+              // Create a 2x canvas for high DPI
+              const exportCanvas = document.createElement('canvas');
+              exportCanvas.width = width * 2;
+              exportCanvas.height = height * 2;
+              const exportCtx = exportCanvas.getContext('2d');
+              
+              // Draw the original canvas scaled up
+              exportCtx.drawImage(canvas, 0, 0, width * 2, height * 2);
+              
+              // Convert to image
+              const img = document.createElement('img');
+              img.src = exportCanvas.toDataURL('image/png', 1.0);
+              img.style.width = width + 'px';
+              img.style.height = height + 'px';
+              img.style.display = 'block';
+              
+              // Replace the original canvas with the image
+              if (canvas.parentNode) {
+                canvas.parentNode.replaceChild(img, canvas);
+              }
+            }
+          }
+        }
+      }
+      
+      if (slideIndex !== originalIndex) {
+        activeSlideIndex = originalIndex;
+        render();
+      }
+      return clone;
+    }
+
+    async function exportSlideToPdf(slideIndex = activeSlideIndex) {
+      if (!canvasContainerEl || typeof html2pdf === 'undefined') {
+        alert('Export requires html2pdf library. Please check your connection.');
+        return;
+      }
+      const clone = await prepareSlideForExport(slideIndex);
+      if (!clone) return;
       const wrapper = document.createElement('div');
       wrapper.style.position = 'fixed';
       wrapper.style.top = '-10000px';
       wrapper.style.left = '-10000px';
       wrapper.style.width = '1280px';
+      wrapper.style.height = '720px';
       wrapper.appendChild(clone);
       document.body.appendChild(wrapper);
-      const filename = `${slides[activeSlideIndex]?.title || 'slide'}.pdf`;
-      html2pdf()
+      
+      // Wait for images to load
+      await new Promise(resolve => {
+        const images = clone.querySelectorAll('img');
+        if (images.length === 0) {
+          resolve();
+          return;
+        }
+        let loaded = 0;
+        const checkComplete = () => {
+          loaded++;
+          if (loaded === images.length) {
+            resolve();
+          }
+        };
+        images.forEach(img => {
+          if (img.complete) {
+            checkComplete();
+          } else {
+            img.onload = checkComplete;
+            img.onerror = checkComplete;
+          }
+        });
+        // Timeout after 2 seconds
+        setTimeout(resolve, 2000);
+      });
+      
+      // Additional delay to ensure everything is ready
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      const slideTitle = slides[slideIndex]?.title || `slide-${slideIndex + 1}`;
+      const filename = `${slideTitle}.pdf`;
+      
+      try {
+        await html2pdf()
         .set({
           margin: 0,
           filename,
           image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { scale: 2 },
-          jsPDF: { unit: 'px', format: [1280, 720] },
+            html2canvas: { 
+              scale: 2,
+              useCORS: true,
+              logging: false,
+              allowTaint: true
+            },
+          jsPDF: { orientation: 'landscape', unit: 'px', format: [1280, 720] },
         })
         .from(clone)
-        .save()
-        .catch(err => {
-          console.warn('Export failed', err);
-          alert('Unable to export right now. Please try again.');
-        })
-        .finally(() => {
+          .save();
+      } catch (err) {
+        console.error('PDF export failed', err);
+        alert('Unable to export PDF. The slide may contain elements that cannot be exported. Error: ' + (err.message || 'Unknown error'));
+      } finally {
+        if (document.body.contains(wrapper)) {
           document.body.removeChild(wrapper);
-          if (exportPdfBtn) {
-            exportPdfBtn.disabled = false;
-            exportPdfBtn.textContent = 'Export PDF';
+        }
+      }
+    }
+
+    async function exportAllSlidesToPdf() {
+      if (!canvasContainerEl || typeof html2canvas === 'undefined') {
+        alert('Export requires html2canvas library. Please check your connection.');
+        return;
+      }
+      if (slides.length === 0) {
+        alert('No slides to export.');
+        return;
+      }
+      
+      // Check if jsPDF is available
+      let jsPDF = null;
+      if (window.jspdf && window.jspdf.jsPDF) {
+        jsPDF = window.jspdf.jsPDF;
+      } else if (window.jsPDF) {
+        jsPDF = window.jsPDF;
+      }
+      
+      if (!jsPDF) {
+        alert('PDF export requires jsPDF library. Please refresh the page and try again.');
+        return;
+      }
+      
+      const presentationName = loadedPresentationName || 'presentation';
+      const originalIndex = activeSlideIndex;
+      
+      // Create a new PDF document in landscape orientation
+      const pdf = new jsPDF({ 
+        orientation: 'landscape',
+        unit: 'px', 
+        format: [1280, 720] 
+      });
+      
+      try {
+        for (let i = 0; i < slides.length; i++) {
+          const clone = await prepareSlideForExport(i);
+          if (!clone) continue;
+          
+          const wrapper = document.createElement('div');
+          wrapper.style.position = 'fixed';
+          wrapper.style.top = '-10000px';
+          wrapper.style.left = '-10000px';
+          wrapper.style.width = '1280px';
+          wrapper.style.height = '720px';
+          wrapper.appendChild(clone);
+          document.body.appendChild(wrapper);
+          
+          // Wait for images to load
+          await new Promise(resolve => {
+            const images = clone.querySelectorAll('img');
+            if (images.length === 0) {
+              resolve();
+              return;
+            }
+            let loaded = 0;
+            const checkComplete = () => {
+              loaded++;
+              if (loaded === images.length) {
+                resolve();
+              }
+            };
+            images.forEach(img => {
+              if (img.complete) {
+                checkComplete();
+              } else {
+                img.onload = checkComplete;
+                img.onerror = checkComplete;
+              }
+            });
+            setTimeout(resolve, 2000);
+          });
+          
+          // Additional delay to ensure everything is ready
+          await new Promise(resolve => setTimeout(resolve, 150));
+          
+          // Convert slide to image using html2canvas
+          const canvas = await html2canvas(clone, {
+            scale: 2,
+            backgroundColor: '#ffffff',
+            useCORS: true,
+            logging: false,
+            allowTaint: true
+          });
+          
+          // Convert canvas to image data
+          const imgData = canvas.toDataURL('image/jpeg', 0.98);
+          
+          // Add new page for each slide (except the first one)
+          // Pages will maintain landscape orientation from initial document setup
+          if (i > 0) {
+            pdf.addPage();
+          }
+          
+          // Add image to PDF (fit to page size: 1280x720)
+          pdf.addImage(imgData, 'JPEG', 0, 0, 1280, 720);
+          
+          // Clean up
+          document.body.removeChild(wrapper);
+        }
+        
+        // Save the combined PDF
+        pdf.save(`${presentationName}.pdf`);
+      } catch (err) {
+        console.error('PDF export failed', err);
+        alert('Unable to export PDF. Error: ' + (err.message || 'Unknown error'));
+      } finally {
+        activeSlideIndex = originalIndex;
+        render();
+      }
+    }
+
+    async function exportSlideToPng(slideIndex = activeSlideIndex) {
+      if (!canvasContainerEl) {
+        alert('Export requires canvas container.');
+        return;
+      }
+      const clone = await prepareSlideForExport(slideIndex);
+      if (!clone) return;
+      const wrapper = document.createElement('div');
+      wrapper.style.position = 'fixed';
+      wrapper.style.top = '-10000px';
+      wrapper.style.left = '-10000px';
+      wrapper.style.width = '1280px';
+      wrapper.style.height = '720px';
+      wrapper.appendChild(clone);
+      document.body.appendChild(wrapper);
+      
+      // Wait for images to load
+      await new Promise(resolve => {
+        const images = clone.querySelectorAll('img');
+        if (images.length === 0) {
+          resolve();
+          return;
+        }
+        let loaded = 0;
+        const checkComplete = () => {
+          loaded++;
+          if (loaded === images.length) {
+            resolve();
+          }
+        };
+        images.forEach(img => {
+          if (img.complete) {
+            checkComplete();
+          } else {
+            img.onload = checkComplete;
+            img.onerror = checkComplete;
           }
         });
+        // Timeout after 2 seconds
+        setTimeout(resolve, 2000);
+      });
+      
+      // Additional delay to ensure everything is ready
+      await new Promise(resolve => setTimeout(resolve, 150));
+      
+      if (typeof html2canvas !== 'undefined') {
+        try {
+          const canvas = await html2canvas(clone, { 
+            scale: 2, 
+            backgroundColor: '#ffffff',
+            useCORS: true,
+            logging: false,
+            allowTaint: true
+          });
+          canvas.toBlob(blob => {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const slideTitle = slides[slideIndex]?.title || `slide-${slideIndex + 1}`;
+            a.download = `${slideTitle}.png`;
+            a.click();
+            URL.revokeObjectURL(url);
+            if (document.body.contains(wrapper)) {
+              document.body.removeChild(wrapper);
+            }
+          }, 'image/png');
+        } catch (err) {
+          console.error('PNG export failed', err);
+          alert('Unable to export as PNG. Please try again.');
+          if (document.body.contains(wrapper)) {
+            document.body.removeChild(wrapper);
+          }
+        }
+      } else {
+        alert('PNG export requires html2canvas library. Please check your connection.');
+        if (document.body.contains(wrapper)) {
+          document.body.removeChild(wrapper);
+        }
+      }
+    }
+
+    async function exportAllSlidesToPng() {
+      if (!canvasContainerEl) {
+        alert('Export requires canvas container.');
+        return;
+      }
+      if (slides.length === 0) {
+        alert('No slides to export.');
+        return;
+      }
+      if (typeof html2canvas === 'undefined') {
+        alert('PNG export requires html2canvas library. Please check your connection.');
+        return;
+      }
+      const presentationName = loadedPresentationName || 'presentation';
+      const originalIndex = activeSlideIndex;
+      try {
+        for (let i = 0; i < slides.length; i++) {
+          const clone = await prepareSlideForExport(i);
+          if (!clone) continue;
+          const wrapper = document.createElement('div');
+          wrapper.style.position = 'fixed';
+          wrapper.style.top = '-10000px';
+          wrapper.style.left = '-10000px';
+          wrapper.style.width = '1280px';
+          wrapper.style.height = '720px';
+          wrapper.appendChild(clone);
+          document.body.appendChild(wrapper);
+          await new Promise((resolve) => setTimeout(resolve, 150));
+          const canvas = await html2canvas(clone, { scale: 2, backgroundColor: '#ffffff' });
+          canvas.toBlob(blob => {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const slideTitle = slides[i]?.title || `slide-${i + 1}`;
+            a.download = `${presentationName}-${slideTitle}.png`;
+            a.click();
+            URL.revokeObjectURL(url);
+          }, 'image/png');
+          document.body.removeChild(wrapper);
+        }
+      } finally {
+        activeSlideIndex = originalIndex;
+        render();
+      }
+    }
+
+    function exportToJson() {
+      const presentationData = {
+        id: presentationId,
+        name: loadedPresentationName || DEFAULT_PRESENTATION_NAME,
+        createdAt: presentationCreatedAt,
+        updatedAt: presentationUpdatedAt,
+        slides: slides.map(slide => ({
+          id: slide.id,
+          title: slide.title,
+          backgroundColor: slide.backgroundColor,
+          backgroundImage: slide.backgroundImage,
+          elements: slide.elements,
+          animation: slide.animation
+        }))
+      };
+      const jsonStr = JSON.stringify(presentationData, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const filename = `${loadedPresentationName || 'presentation'}.json`;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    async function exportSlideToJpg(slideIndex = activeSlideIndex) {
+      if (!canvasContainerEl) {
+        alert('Export requires canvas container.');
+        return;
+      }
+      const clone = await prepareSlideForExport(slideIndex);
+      if (!clone) return;
+      const wrapper = document.createElement('div');
+      wrapper.style.position = 'fixed';
+      wrapper.style.top = '-10000px';
+      wrapper.style.left = '-10000px';
+      wrapper.style.width = '1280px';
+      wrapper.style.height = '720px';
+      wrapper.appendChild(clone);
+      document.body.appendChild(wrapper);
+      setTimeout(() => {
+        if (typeof html2canvas !== 'undefined') {
+          html2canvas(clone, { scale: 2, backgroundColor: '#ffffff' }).then(canvas => {
+            canvas.toBlob(blob => {
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              const slideTitle = slides[slideIndex]?.title || `slide-${slideIndex + 1}`;
+              a.download = `${slideTitle}.jpg`;
+              a.click();
+              URL.revokeObjectURL(url);
+              document.body.removeChild(wrapper);
+            }, 'image/jpeg', 0.9);
+          }).catch(err => {
+            console.warn('JPG export failed', err);
+            alert('Unable to export as JPG. Please try again.');
+            document.body.removeChild(wrapper);
+          });
+        } else {
+          alert('JPG export requires html2canvas library. Please check your connection.');
+          document.body.removeChild(wrapper);
+        }
+      }, 100);
+    }
+
+    async function exportToHtml(selectedIndices) {
+      const presentationName = loadedPresentationName || 'presentation';
+      const selectedSlides = selectedIndices.map(i => slides[i]).filter(Boolean);
+      
+      let htmlContent = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${presentationName}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: #1e293b; }
+    .slide-container { width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; }
+    .slide { width: min(90vw, 1280px); height: min(calc(90vw * 9 / 16), 720px); max-height: 90vh; background: white; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); position: relative; overflow: hidden; }
+    .slide-content { width: 100%; height: 100%; position: relative; }
+    .slide.hidden { display: none; }
+    .controls { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 100; display: flex; gap: 10px; }
+    .controls button { padding: 10px 20px; background: rgba(255,255,255,0.9); border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
+    .controls button:hover { background: white; }
+    .slide-counter { position: fixed; top: 20px; right: 20px; z-index: 100; background: rgba(0,0,0,0.7); color: white; padding: 10px 20px; border-radius: 8px; }
+  </style>
+</head>
+<body>
+  <div class="slide-counter"><span id="slideNum">1</span> / <span id="totalSlides">${selectedSlides.length}</span></div>
+  <div class="controls">
+    <button onclick="previousSlide()">Previous</button>
+    <button onclick="nextSlide()">Next</button>
+  </div>`;
+      
+      selectedSlides.forEach((slide, idx) => {
+        const slideClass = idx === 0 ? '' : 'hidden';
+        const bgColor = slide.backgroundColor || '#ffffff';
+        const elementsHtml = slide.elements.map(el => {
+          if (el.type === 'text') {
+            const text = (el.text || '').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            return '<div style="position: absolute; left: ' + el.left + 'px; top: ' + el.top + 'px; width: ' + el.width + 'px; font-size: ' + (el.fontSize || 16) + 'px; color: ' + (el.color || '#000') + '; font-weight: ' + (el.fontWeight || 'normal') + '; font-family: ' + (el.fontFamily || 'Inter') + ', sans-serif;">' + text + '</div>';
+          } else if (el.type === 'image' && el.src) {
+            return '<img src="' + el.src + '" style="position: absolute; left: ' + el.left + 'px; top: ' + el.top + 'px; width: ' + el.width + 'px; height: ' + el.height + 'px; object-fit: ' + (el.fit || 'contain') + ';" />';
+          }
+          return '';
+        }).join('');
+        htmlContent += '\n  <div class="slide-container ' + slideClass + '" id="slide-' + idx + '">\n    <div class="slide" style="background: ' + bgColor + ';">\n      <div class="slide-content">\n        ' + elementsHtml + '\n      </div>\n    </div>\n  </div>';
+      });
+      
+      const scriptContent = [
+        "  <script>",
+        "    let currentSlide = 0;",
+        "    const totalSlides = " + selectedSlides.length + ";",
+        "    function showSlide(n) {",
+        "      document.querySelectorAll('.slide-container').forEach((el, i) => {",
+        "        el.classList.toggle('hidden', i !== n);",
+        "      });",
+        "      document.getElementById('slideNum').textContent = n + 1;",
+        "    }",
+        "    function nextSlide() {",
+        "      if (currentSlide < totalSlides - 1) {",
+        "        currentSlide++;",
+        "        showSlide(currentSlide);",
+        "      }",
+        "    }",
+        "    function previousSlide() {",
+        "      if (currentSlide > 0) {",
+        "        currentSlide--;",
+        "        showSlide(currentSlide);",
+        "      }",
+        "    }",
+        "    document.addEventListener('keydown', (e) => {",
+        "      if (e.key === 'ArrowRight') nextSlide();",
+        "      if (e.key === 'ArrowLeft') previousSlide();",
+        "    });",
+        "  <" + "/script>",
+        "</body>",
+        "</html>"
+      ].join("\n");
+      htmlContent += "\n" + scriptContent;
+      
+      const blob = new Blob([htmlContent], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${presentationName}.html`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    async function exportSelectedSlides(selectedIndices, format, combine) {
+      const presentationName = loadedPresentationName || 'presentation';
+      const originalIndex = activeSlideIndex;
+      
+      try {
+        if (format === 'json') {
+          const selectedSlides = selectedIndices.map(i => slides[i]).filter(Boolean);
+          const presentationData = {
+            id: presentationId,
+            name: loadedPresentationName || DEFAULT_PRESENTATION_NAME,
+            createdAt: presentationCreatedAt,
+            updatedAt: presentationUpdatedAt,
+            slides: selectedSlides.map(slide => ({
+              id: slide.id,
+              title: slide.title,
+              backgroundColor: slide.backgroundColor,
+              backgroundImage: slide.backgroundImage,
+              elements: slide.elements,
+              animation: slide.animation
+            }))
+          };
+          const jsonStr = JSON.stringify(presentationData, null, 2);
+          const blob = new Blob([jsonStr], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `${presentationName}.json`;
+          a.click();
+          URL.revokeObjectURL(url);
+          return;
+        }
+        
+        if (format === 'html') {
+          await exportToHtml(selectedIndices);
+          return;
+        }
+        
+        if (format === 'zip' && typeof JSZip !== 'undefined') {
+          const zip = new JSZip();
+          
+          for (const idx of selectedIndices) {
+            const slide = slides[idx];
+            const slideTitle = slide?.title || `slide-${idx + 1}`;
+            
+            // Export as PDF
+            const pdfClone = await prepareSlideForExport(idx);
+            if (pdfClone) {
+              const pdfWrapper = document.createElement('div');
+              pdfWrapper.style.position = 'fixed';
+              pdfWrapper.style.top = '-10000px';
+              pdfWrapper.style.left = '-10000px';
+              pdfWrapper.style.width = '1280px';
+              pdfWrapper.appendChild(pdfClone);
+              document.body.appendChild(pdfWrapper);
+              
+              await new Promise((resolve) => {
+                html2pdf()
+                  .set({
+                    margin: 0,
+                    filename: `${slideTitle}.pdf`,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 2 },
+                    jsPDF: { orientation: 'landscape', unit: 'px', format: [1280, 720] },
+                  })
+                  .from(pdfClone)
+                  .output('blob')
+                  .then(blob => {
+                    zip.file(`${slideTitle}.pdf`, blob);
+                    document.body.removeChild(pdfWrapper);
+                    resolve();
+                  });
+              });
+            }
+            
+            // Export as PNG
+            const pngClone = await prepareSlideForExport(idx);
+            if (pngClone && typeof html2canvas !== 'undefined') {
+              const pngWrapper = document.createElement('div');
+              pngWrapper.style.position = 'fixed';
+              pngWrapper.style.top = '-10000px';
+              pngWrapper.style.left = '-10000px';
+              pngWrapper.style.width = '1280px';
+              pngWrapper.style.height = '720px';
+              pngWrapper.appendChild(pngClone);
+              document.body.appendChild(pngWrapper);
+              
+              await new Promise((resolve) => {
+                setTimeout(async () => {
+                  try {
+                    const canvas = await html2canvas(pngClone, { scale: 2, backgroundColor: '#ffffff' });
+                    canvas.toBlob(blob => {
+                      zip.file(`${slideTitle}.png`, blob);
+                      document.body.removeChild(pngWrapper);
+                      resolve();
+                    }, 'image/png');
+                  } catch (err) {
+                    document.body.removeChild(pngWrapper);
+                    resolve();
+                  }
+                }, 150);
+              });
+            }
+          }
+          
+          const zipBlob = await zip.generateAsync({ type: 'blob' });
+          const url = URL.createObjectURL(zipBlob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `${presentationName}.zip`;
+          a.click();
+          URL.revokeObjectURL(url);
+          return;
+        }
+        
+        // PDF, PNG, or JPG exports
+        // Always combine PDFs when all slides are selected, or if combine checkbox is checked
+        const allSlidesSelected = selectedIndices.length === slides.length && selectedIndices.length > 0;
+        const shouldCombine = format === 'pdf' && (combine || allSlidesSelected);
+        
+        if (shouldCombine && typeof html2canvas !== 'undefined') {
+          // Combine all selected slides into one PDF using jsPDF
+          // html2pdf.js bundles jsPDF, try to access it
+          let jsPDF = null;
+          
+          // Access jsPDF (loaded as UMD module)
+          if (window.jspdf && window.jspdf.jsPDF) {
+            jsPDF = window.jspdf.jsPDF;
+          } else if (window.jsPDF) {
+            jsPDF = window.jsPDF;
+          }
+          
+          if (!jsPDF) {
+            console.error('jsPDF not found. Available:', {
+              jspdf: window.jspdf,
+              jsPDF: window.jsPDF
+            });
+            alert('Combined PDF export requires jsPDF library. Please refresh the page and try again.');
+            return; // Don't fall through to individual exports if user wants combined
+          }
+          
+          const pdf = new jsPDF({ 
+            orientation: 'landscape',
+            unit: 'px', 
+            format: [1280, 720] 
+          });
+          
+          for (let i = 0; i < selectedIndices.length; i++) {
+            const idx = selectedIndices[i];
+            const clone = await prepareSlideForExport(idx);
+            if (!clone) continue;
+            
+            const wrapper = document.createElement('div');
+            wrapper.style.position = 'fixed';
+            wrapper.style.top = '-10000px';
+            wrapper.style.left = '-10000px';
+            wrapper.style.width = '1280px';
+            wrapper.style.height = '720px';
+            wrapper.appendChild(clone);
+            document.body.appendChild(wrapper);
+            
+            // Wait for images to load
+            await new Promise(resolve => {
+              const images = clone.querySelectorAll('img');
+              if (images.length === 0) {
+                resolve();
+                return;
+              }
+              let loaded = 0;
+              const checkComplete = () => {
+                loaded++;
+                if (loaded === images.length) {
+                  resolve();
+                }
+              };
+              images.forEach(img => {
+                if (img.complete) {
+                  checkComplete();
+                } else {
+                  img.onload = checkComplete;
+                  img.onerror = checkComplete;
+                }
+              });
+              setTimeout(resolve, 2000);
+            });
+            
+            // Additional delay to ensure everything is ready
+            await new Promise(resolve => setTimeout(resolve, 150));
+            
+            try {
+              const canvas = await html2canvas(clone, {
+                scale: 2,
+                backgroundColor: '#ffffff',
+                useCORS: true,
+                logging: false,
+                allowTaint: true
+              });
+              const imgData = canvas.toDataURL('image/jpeg', 0.98);
+              // Add new page maintaining landscape orientation
+              if (i > 0) pdf.addPage();
+              pdf.addImage(imgData, 'JPEG', 0, 0, 1280, 720);
+            } catch (err) {
+              console.error('Failed to convert slide to image', err);
+            }
+            
+            if (document.body.contains(wrapper)) {
+              document.body.removeChild(wrapper);
+            }
+          }
+          
+          pdf.save(`${presentationName}.pdf`);
+          return; // Important: return here to prevent individual export
+        }
+        
+        // Export individual files
+        for (const idx of selectedIndices) {
+          const slide = slides[idx];
+          const slideTitle = slide?.title || `slide-${idx + 1}`;
+          
+          if (format === 'pdf') {
+            await exportSlideToPdf(idx);
+            await new Promise(resolve => setTimeout(resolve, 300));
+          } else if (format === 'png') {
+            await exportSlideToPng(idx);
+            await new Promise(resolve => setTimeout(resolve, 300));
+          } else if (format === 'jpg') {
+            await exportSlideToJpg(idx);
+            await new Promise(resolve => setTimeout(resolve, 300));
+          }
+        }
+      } finally {
+        activeSlideIndex = originalIndex;
+        render();
+      }
     }
 
     function render() {
@@ -3395,7 +4257,7 @@
        // Initialize button state
        setToggleState(slidesSidebar.classList.contains('slides-sidebar--collapsed'));
  
-       toggleSlidesSidebarBtn.addEventListener('click', () => {
+      toggleSlidesSidebarBtn.addEventListener('click', () => {
          const isCollapsed = slidesSidebar.classList.contains('slides-sidebar--collapsed');
          setToggleState(!isCollapsed);
        });
@@ -4988,8 +5850,183 @@
       presenterNextBtn.addEventListener('click', () => navigatePresenter(1));
     }
 
-    if (exportPdfBtn) {
-      exportPdfBtn.addEventListener('click', exportActiveSlideToPdf);
+    // Export modal functionality
+    function openExportModal() {
+      if (!exportModal) return;
+      renderExportSlidePreviews();
+      exportModal.classList.remove('hidden');
+      document.body.classList.add('overflow-hidden');
+    }
+
+    function closeExportModal() {
+      if (!exportModal) return;
+      exportModal.classList.add('hidden');
+      document.body.classList.remove('overflow-hidden');
+    }
+
+    async function renderExportSlidePreviews() {
+      if (!exportSlidePreviews) return;
+      exportSlidePreviews.innerHTML = '';
+      const originalIndex = activeSlideIndex;
+      
+      for (let index = 0; index < slides.length; index++) {
+        const slide = slides[index];
+        const preview = document.createElement('div');
+        preview.className = 'relative cursor-pointer rounded-lg border-2 border-slate-200 bg-slate-50 p-2 transition hover:border-[#004c97]';
+        preview.dataset.slideIndex = index;
+        
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.className = 'absolute top-2 right-2 z-10 h-4 w-4 accent-[#004c97]';
+        checkbox.checked = true;
+        checkbox.dataset.slideIndex = index;
+        checkbox.addEventListener('change', updateExportButton);
+        
+        const thumbnail = document.createElement('div');
+        thumbnail.className = 'aspect-video w-full rounded bg-white overflow-hidden relative';
+        thumbnail.style.backgroundColor = slide.backgroundColor || '#ffffff';
+        
+        // Create a simple preview with slide title
+        const previewContent = document.createElement('div');
+        previewContent.className = 'flex h-full items-center justify-center p-2 text-xs text-slate-500 font-medium';
+        previewContent.textContent = slide.title || `Slide ${index + 1}`;
+        thumbnail.appendChild(previewContent);
+        
+        // Try to create a canvas preview if html2canvas is available
+        if (typeof html2canvas !== 'undefined' && canvasContainerEl) {
+          const tempIndex = activeSlideIndex;
+          activeSlideIndex = index;
+          render();
+          await new Promise(resolve => setTimeout(resolve, 50));
+          
+          try {
+            const clone = canvasContainerEl.cloneNode(true);
+            clone.style.width = '320px';
+            clone.style.height = '180px';
+            clone.style.transform = 'scale(0.25)';
+            clone.style.transformOrigin = 'top left';
+            clone.querySelectorAll('.ring-2').forEach(node => node.classList.remove('ring-2', 'ring-[#004c97]'));
+            
+            const tempWrapper = document.createElement('div');
+            tempWrapper.style.position = 'fixed';
+            tempWrapper.style.top = '-10000px';
+            tempWrapper.style.left = '-10000px';
+            tempWrapper.style.width = '1280px';
+            tempWrapper.style.height = '720px';
+            tempWrapper.appendChild(clone);
+            document.body.appendChild(tempWrapper);
+            
+            setTimeout(async () => {
+              try {
+                const canvas = await html2canvas(clone, { scale: 0.25, backgroundColor: slide.backgroundColor || '#ffffff', logging: false });
+                const img = document.createElement('img');
+                img.src = canvas.toDataURL();
+                img.className = 'w-full h-full object-cover';
+                thumbnail.innerHTML = '';
+                thumbnail.appendChild(img);
+                document.body.removeChild(tempWrapper);
+              } catch (err) {
+                document.body.removeChild(tempWrapper);
+              }
+            }, 100);
+          } catch (err) {
+            // Keep the text preview if canvas fails
+          }
+          
+          activeSlideIndex = tempIndex;
+        }
+        
+        preview.appendChild(checkbox);
+        preview.appendChild(thumbnail);
+        exportSlidePreviews.appendChild(preview);
+        
+        preview.addEventListener('click', (e) => {
+          if (e.target !== checkbox && e.target !== checkbox.parentElement) {
+            checkbox.checked = !checkbox.checked;
+            updateExportButton();
+          }
+        });
+      }
+      
+      activeSlideIndex = originalIndex;
+      render();
+      updateExportButton();
+    }
+
+    function getSelectedSlideIndices() {
+      if (!exportSlidePreviews) return [];
+      const checkboxes = exportSlidePreviews.querySelectorAll('input[type="checkbox"]');
+      return Array.from(checkboxes)
+        .filter(cb => cb.checked)
+        .map(cb => parseInt(cb.dataset.slideIndex, 10));
+    }
+
+    function updateExportButton() {
+      if (!exportConfirmBtn || !exportConfirmText) return;
+      const selected = getSelectedSlideIndices();
+      const count = selected.length;
+      if (count === 0) {
+        exportConfirmBtn.disabled = true;
+        exportConfirmText.textContent = 'Select slides to export';
+      } else {
+        exportConfirmBtn.disabled = false;
+        exportConfirmText.textContent = `Export ${count} ${count === 1 ? 'slide' : 'slides'}`;
+      }
+    }
+
+    if (exportBtn) {
+      exportBtn.addEventListener('click', openExportModal);
+    }
+    if (exportCloseBtn) {
+      exportCloseBtn.addEventListener('click', closeExportModal);
+    }
+    if (exportCancelBtn) {
+      exportCancelBtn.addEventListener('click', closeExportModal);
+    }
+    if (exportModal) {
+      exportModal.addEventListener('click', (e) => {
+        if (e.target === exportModal) {
+          closeExportModal();
+        }
+      });
+    }
+    if (exportSelectAllBtn) {
+      exportSelectAllBtn.addEventListener('click', () => {
+        const checkboxes = exportSlidePreviews?.querySelectorAll('input[type="checkbox"]');
+        checkboxes?.forEach(cb => { cb.checked = true; });
+        updateExportButton();
+      });
+    }
+    if (exportSelectNoneBtn) {
+      exportSelectNoneBtn.addEventListener('click', () => {
+        const checkboxes = exportSlidePreviews?.querySelectorAll('input[type="checkbox"]');
+        checkboxes?.forEach(cb => { cb.checked = false; });
+        updateExportButton();
+      });
+    }
+    if (exportConfirmBtn) {
+      exportConfirmBtn.addEventListener('click', async () => {
+        const selectedIndices = getSelectedSlideIndices();
+        if (selectedIndices.length === 0) return;
+        
+        const formatInput = document.querySelector('input[name="exportFormat"]:checked');
+        const format = formatInput ? formatInput.value : 'pdf';
+        const combine = exportCombineFiles?.checked || false;
+        
+        exportConfirmBtn.disabled = true;
+        exportConfirmText.textContent = 'Exporting…';
+        
+        try {
+          await exportSelectedSlides(selectedIndices, format, combine);
+          closeExportModal();
+        } catch (err) {
+          console.error('Export failed:', err);
+          alert('Export failed. Please try again.');
+        } finally {
+          exportConfirmBtn.disabled = false;
+          updateExportButton();
+        }
+      });
     }
 
     // Image tools
