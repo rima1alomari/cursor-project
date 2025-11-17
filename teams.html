@@ -300,7 +300,7 @@
 
     <main class="center-wrapper center-wrapper--top page-fade-in">
       <!-- Teams Dashboard -->
-      <div id="teamsDashboard" class="teams-container">
+      <div id="teamsDashboard" class="teams-container" style="display: block;">
         <div class="teams-header">
           <h1 class="title title--xl">Teams</h1>
           <button class="btn-create-team" id="createTeamBtn">+ Create Team</button>
@@ -422,12 +422,6 @@
     <script src="./scripts/teams.js"></script>
     <script src="./scripts/account-display.js"></script>
     <script>
-      // Teams page specific functionality
-      (function() {
-
-        updateAccountDisplay();
-      })();
-
       // Teams functionality
       let currentTeamId = null;
 
@@ -829,7 +823,22 @@
       }
 
       // Initialize
-      renderTeams();
+      // Ensure dashboard is visible on load
+      function initializeTeamsPage() {
+        const teamsDashboard = document.getElementById('teamsDashboard');
+        const teamWorkspace = document.getElementById('teamWorkspace');
+        if (teamsDashboard) teamsDashboard.style.display = 'block';
+        if (teamWorkspace) teamWorkspace.classList.remove('active');
+        renderTeams();
+      }
+      
+      // Call when DOM is ready
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializeTeamsPage);
+      } else {
+        // DOM is already loaded
+        initializeTeamsPage();
+      }
     </script>
   </body>
 </html>
