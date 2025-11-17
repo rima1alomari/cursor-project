@@ -390,6 +390,12 @@
       background: rgba(255, 255, 255, 0.92);
       box-shadow: 0 10px 30px rgba(15, 23, 42, 0.15);
       backdrop-filter: blur(12px);
+      cursor: move;
+      user-select: none;
+    }
+    .canvas-zoom-controls.dragging {
+      cursor: grabbing;
+      opacity: 0.9;
     }
     .canvas-zoom-icon {
       display: flex;
@@ -409,6 +415,12 @@
       width: 120px;
       height: 0.3rem;
       accent-color: #004c97;
+      cursor: pointer;
+    }
+    .canvas-zoom-controls button,
+    .canvas-zoom-controls input,
+    .canvas-zoom-controls span {
+      pointer-events: auto;
     }
     .canvas-zoom-label {
       font-size: 0.85rem;
@@ -430,6 +442,73 @@
     .canvas-zoom-reset:hover {
       background: rgba(226, 232, 240, 0.9);
       border-color: rgba(148, 163, 184, 0.9);
+    }
+    .canvas-zoom-minimize {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.75rem;
+      height: 1.75rem;
+      padding: 0;
+      border: none;
+      background: transparent;
+      color: #64748b;
+      cursor: pointer;
+      border-radius: 0.375rem;
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+    .canvas-zoom-minimize:hover {
+      background: rgba(148, 163, 184, 0.15);
+      color: #334155;
+    }
+    .canvas-zoom-minimize svg {
+      width: 1rem;
+      height: 1rem;
+    }
+    .canvas-zoom-controls.minimized {
+      display: none;
+    }
+    .canvas-zoom-restore {
+      position: fixed;
+      right: 1.5rem;
+      bottom: 1.5rem;
+      z-index: 50;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      background: rgba(255, 255, 255, 0.92);
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.15);
+      backdrop-filter: blur(12px);
+      cursor: move;
+      user-select: none;
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+    .canvas-zoom-restore.dragging {
+      cursor: grabbing;
+      opacity: 0.9;
+    }
+    .canvas-zoom-restore:hover:not(.dragging) {
+      background: rgba(255, 255, 255, 1);
+      transform: translateY(-2px);
+      box-shadow: 0 12px 35px rgba(15, 23, 42, 0.2);
+    }
+    .canvas-zoom-restore svg {
+      width: 1.25rem;
+      height: 1.25rem;
+      color: #334155;
+    }
+    .canvas-zoom-restore-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #1f2937;
+      min-width: 3ch;
+    }
+    .canvas-zoom-restore.hidden {
+      display: none;
     }
     @media (max-width: 768px) {
       .canvas-zoom-controls {
@@ -511,6 +590,114 @@
         height: 100vh;
       }
     }
+    /* Comment icon styles */
+    .comment-icon {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      width: 20px;
+      height: 20px;
+      background: #ef4444;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 20;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .comment-icon:hover {
+      transform: scale(1.15);
+      box-shadow: 0 4px 10px rgba(239, 68, 68, 0.4);
+    }
+    .comment-icon svg {
+      width: 12px;
+      height: 12px;
+      color: white;
+    }
+    .comment-icon.has-comments {
+      background: #ef4444;
+    }
+    .comment-badge {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      min-width: 16px;
+      height: 16px;
+      padding: 0 4px;
+      background: #ef4444;
+      color: white;
+      border-radius: 8px;
+      font-size: 10px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid white;
+    }
+    /* Comment item styles */
+    .comment-item {
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 1rem;
+      margin-bottom: 1rem;
+    }
+    .comment-item:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+    .comment-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+    }
+    .comment-author {
+      font-weight: 600;
+      font-size: 0.875rem;
+      color: #1e293b;
+    }
+    .comment-time {
+      font-size: 0.75rem;
+      color: #64748b;
+    }
+    .comment-content {
+      font-size: 0.875rem;
+      color: #475569;
+      line-height: 1.5;
+      margin-bottom: 0.5rem;
+    }
+    .comment-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+    .comment-action-btn {
+      font-size: 0.75rem;
+      color: #64748b;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.25rem;
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+    .comment-action-btn:hover {
+      background: #f1f5f9;
+      color: #1e293b;
+    }
+    .comment-reply {
+      margin-left: 1.5rem;
+      margin-top: 0.75rem;
+      padding-left: 1rem;
+      border-left: 2px solid #e2e8f0;
+    }
+    .comment-reply-form {
+      margin-top: 0.75rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid #e2e8f0;
+    }
   </style>
 </head>
 <body class="min-h-screen bg-[#f5f7fa] text-slate-800">
@@ -555,6 +742,13 @@
             </div>
             <button id="shareBtn" class="rounded-full border border-white/30 px-3 py-1.5 text-sm hover:bg-white/10 whitespace-nowrap">Share</button>
             <button id="presentBtn" class="rounded-full border border-white/30 px-3 py-1.5 text-sm hover:bg-white/10 whitespace-nowrap">Present</button>
+            <button id="commentsBtn" class="rounded-full border border-white/30 px-3 py-1.5 text-sm hover:bg-white/10 whitespace-nowrap flex items-center gap-1.5 relative">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+              Comments
+              <span id="commentsBadge" class="hidden absolute -top-1 -right-1 h-5 w-5 rounded-full bg-red-500 text-xs font-semibold text-white flex items-center justify-center"></span>
+            </button>
             <button id="exportBtn" class="rounded-full bg-white/20 px-3 py-1.5 text-sm shadow-sm transition hover:bg-white/30 whitespace-nowrap">Export</button>
           </div>
         </div>
@@ -769,7 +963,7 @@
               </div>
             </div>
           </div>
-          <div class="canvas-zoom-controls" role="group" aria-label="Canvas zoom controls">
+          <div class="canvas-zoom-controls" id="canvasZoomControls" role="group" aria-label="Canvas zoom controls">
             <span class="canvas-zoom-icon" aria-hidden="true">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="11" cy="11" r="6"></circle>
@@ -779,7 +973,19 @@
             <input id="canvasZoomRange" type="range" min="50" max="200" value="100" step="5" class="canvas-zoom-range" aria-label="Canvas zoom" />
             <span id="canvasZoomLabel" class="canvas-zoom-label">100%</span>
             <button id="canvasZoomResetBtn" type="button" class="canvas-zoom-reset">Reset</button>
+            <button id="canvasZoomMinimizeBtn" type="button" class="canvas-zoom-minimize" title="Minimize zoom controls" aria-label="Minimize zoom controls">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+            </button>
           </div>
+          <button id="canvasZoomRestoreBtn" type="button" class="canvas-zoom-restore hidden" title="Show zoom controls" aria-label="Show zoom controls">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="6"></circle>
+              <line x1="16.65" y1="16.65" x2="21" y2="21"></line>
+            </svg>
+            <span id="canvasZoomRestoreLabel" class="canvas-zoom-restore-label">100%</span>
+          </button>
         </main>
       </div>
       <aside id="animationInspector" class="hidden w-96 max-w-md border-l border-slate-200 bg-white/95 backdrop-blur-sm px-5 py-6 shadow-inner">
@@ -995,6 +1201,39 @@
             </div>
           </div>
           <p class="text-xs text-slate-400">Tip: drag the chart on the canvas to move it, or use the corner handles to resize.</p>
+        </div>
+      </aside>
+      <aside id="commentsPanel" class="hidden w-96 max-w-md border-l border-slate-200 bg-white/95 backdrop-blur-sm shadow-inner flex flex-col">
+        <div class="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+          <div>
+            <h2 class="text-lg font-semibold text-slate-900">Comments</h2>
+            <p id="commentsPanelSubtitle" class="text-xs text-slate-500 mt-0.5">Slide <span id="commentsSlideNumber">1</span></p>
+          </div>
+          <button id="commentsCloseBtn" class="rounded-full border border-slate-200 px-2 py-1 text-sm text-slate-500 hover:bg-slate-100 transition">Close</button>
+        </div>
+        <div class="flex-1 overflow-y-auto px-5 py-4">
+          <div id="commentsList" class="space-y-4">
+            <!-- Comments will be injected here -->
+          </div>
+          <div id="commentsEmptyState" class="flex flex-col items-center justify-center py-12 text-center">
+            <svg class="w-12 h-12 text-slate-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+            <p class="text-sm text-slate-500">No comments yet</p>
+            <p class="text-xs text-slate-400 mt-1">Add a comment to start the conversation</p>
+          </div>
+        </div>
+        <div class="border-t border-slate-200 px-5 py-4 bg-slate-50/50">
+          <div id="addCommentForm" class="space-y-3">
+            <textarea id="commentInput" placeholder="Add a comment..." rows="3" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-[#004c97] focus:outline-none focus:ring-2 focus:ring-[#004c97]/30 resize-none"></textarea>
+            <div class="flex items-center justify-between gap-2">
+              <label class="flex items-center gap-2 text-xs text-slate-600">
+                <input type="checkbox" id="attachToElementCheckbox" class="h-3 w-3 accent-[#004c97]">
+                <span>Attach to selected element</span>
+              </label>
+              <button id="commentSubmitBtn" class="rounded-lg bg-[#004c97] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#003d78] transition disabled:opacity-50 disabled:cursor-not-allowed">Post</button>
+            </div>
+          </div>
         </div>
       </aside>
     </div>
@@ -1621,9 +1860,17 @@
     const PRESENTATION_STORAGE_PREFIX = 'lumen-presentation-';
     const PRESENTATIONS_INDEX_KEY = 'lumen-presentations-index';
     const MAX_RECENT_PRESENTATIONS = 20;
+    const COMMENTS_STORAGE_PREFIX = 'lumen-comments-';
     const SESSION_ID = (typeof crypto !== 'undefined' && crypto.randomUUID)
       ? crypto.randomUUID()
       : `client-${Math.random().toString(16).slice(2)}`;
+    
+    // Current user for comments (in a real app, this would come from auth)
+    const CURRENT_USER = {
+      id: SESSION_ID,
+      name: 'You',
+      avatar: null
+    };
     const urlParams = (typeof window !== 'undefined') ? new URLSearchParams(window.location.search) : null;
 
     let presentationId = urlParams?.get('id') || null;
@@ -1848,9 +2095,13 @@
     const canvasContainerEl = document.getElementById('canvasContainer');
     const canvasWrapperEl = document.querySelector('.canvas-wrapper');
     const canvasViewportEl = document.getElementById('canvasViewport');
+    const canvasZoomControls = document.getElementById('canvasZoomControls');
     const canvasZoomRange = document.getElementById('canvasZoomRange');
     const canvasZoomLabel = document.getElementById('canvasZoomLabel');
     const canvasZoomResetBtn = document.getElementById('canvasZoomResetBtn');
+    const canvasZoomMinimizeBtn = document.getElementById('canvasZoomMinimizeBtn');
+    const canvasZoomRestoreBtn = document.getElementById('canvasZoomRestoreBtn');
+    const canvasZoomRestoreLabel = document.getElementById('canvasZoomRestoreLabel');
     const slideIndexLabelEl = document.getElementById('slideIndexLabel');
     const slideCountLabelEl = document.getElementById('slideCountLabel');
     const autosaveStatusEl = document.getElementById('autosaveStatus');
@@ -1876,6 +2127,10 @@
       }
       if (canvasZoomRange && Number(canvasZoomRange.value) !== clamped) {
         canvasZoomRange.value = String(clamped);
+      }
+      // Update restore label if it exists
+      if (canvasZoomRestoreLabel) {
+        canvasZoomRestoreLabel.textContent = `${clamped}%`;
       }
     }
 
@@ -2034,6 +2289,16 @@
     const toggleSlidesSidebarBtn = document.getElementById('toggleSlidesSidebar');
 
     const shareBtn = document.getElementById('shareBtn');
+    const commentsBtn = document.getElementById('commentsBtn');
+    const commentsBadge = document.getElementById('commentsBadge');
+    const commentsPanel = document.getElementById('commentsPanel');
+    const commentsCloseBtn = document.getElementById('commentsCloseBtn');
+    const commentsList = document.getElementById('commentsList');
+    const commentsEmptyState = document.getElementById('commentsEmptyState');
+    const commentsSlideNumber = document.getElementById('commentsSlideNumber');
+    const commentInput = document.getElementById('commentInput');
+    const commentSubmitBtn = document.getElementById('commentSubmitBtn');
+    const attachToElementCheckbox = document.getElementById('attachToElementCheckbox');
     const exportBtn = document.getElementById('exportBtn');
     const exportModal = document.getElementById('exportModal');
     const exportCloseBtn = document.getElementById('exportCloseBtn');
@@ -3893,6 +4158,393 @@
       }
     }
 
+    // ==================== COMMENT SYSTEM ====================
+    
+    function getCommentsStorageKey(slideId) {
+      if (!presentationId || !slideId) return null;
+      return `${COMMENTS_STORAGE_PREFIX}${presentationId}-${slideId}`;
+    }
+    
+    function loadCommentsForSlide(slideId) {
+      const key = getCommentsStorageKey(slideId);
+      if (!key) return [];
+      try {
+        const stored = localStorage.getItem(key);
+        if (!stored) return [];
+        const parsed = JSON.parse(stored);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (err) {
+        console.warn('Failed to load comments', err);
+        return [];
+      }
+    }
+    
+    function saveCommentsForSlide(slideId, comments) {
+      const key = getCommentsStorageKey(slideId);
+      if (!key) return;
+      try {
+        localStorage.setItem(key, JSON.stringify(comments));
+      } catch (err) {
+        console.error('Failed to save comments', err);
+      }
+    }
+    
+    function addComment(slideId, content, elementId = null) {
+      const comments = loadCommentsForSlide(slideId);
+      const newComment = {
+        id: crypto.randomUUID(),
+        slideId,
+        elementId,
+        author: CURRENT_USER.name,
+        authorId: CURRENT_USER.id,
+        content: content.trim(),
+        timestamp: Date.now(),
+        replies: []
+      };
+      comments.push(newComment);
+      saveCommentsForSlide(slideId, comments);
+      return newComment;
+    }
+    
+    function editComment(slideId, commentId, newContent) {
+      const comments = loadCommentsForSlide(slideId);
+      const comment = comments.find(c => c.id === commentId);
+      if (!comment || comment.authorId !== CURRENT_USER.id) return null;
+      comment.content = newContent.trim();
+      comment.editedAt = Date.now();
+      saveCommentsForSlide(slideId, comments);
+      return comment;
+    }
+    
+    function deleteComment(slideId, commentId) {
+      const comments = loadCommentsForSlide(slideId);
+      const index = comments.findIndex(c => c.id === commentId);
+      if (index === -1) return false;
+      const comment = comments[index];
+      if (comment.authorId !== CURRENT_USER.id) return false;
+      comments.splice(index, 1);
+      saveCommentsForSlide(slideId, comments);
+      return true;
+    }
+    
+    function addReply(slideId, commentId, content) {
+      const comments = loadCommentsForSlide(slideId);
+      const comment = comments.find(c => c.id === commentId);
+      if (!comment) return null;
+      const reply = {
+        id: crypto.randomUUID(),
+        author: CURRENT_USER.name,
+        authorId: CURRENT_USER.id,
+        content: content.trim(),
+        timestamp: Date.now()
+      };
+      if (!comment.replies) comment.replies = [];
+      comment.replies.push(reply);
+      saveCommentsForSlide(slideId, comments);
+      return reply;
+    }
+    
+    function deleteReply(slideId, commentId, replyId) {
+      const comments = loadCommentsForSlide(slideId);
+      const comment = comments.find(c => c.id === commentId);
+      if (!comment || !comment.replies) return false;
+      const index = comment.replies.findIndex(r => r.id === replyId);
+      if (index === -1) return false;
+      const reply = comment.replies[index];
+      if (reply.authorId !== CURRENT_USER.id) return false;
+      comment.replies.splice(index, 1);
+      saveCommentsForSlide(slideId, comments);
+      return true;
+    }
+    
+    function formatTimestamp(timestamp) {
+      const date = new Date(timestamp);
+      const now = new Date();
+      const diffMs = now - date;
+      const diffMins = Math.floor(diffMs / 60000);
+      const diffHours = Math.floor(diffMs / 3600000);
+      const diffDays = Math.floor(diffMs / 86400000);
+      
+      if (diffMins < 1) return 'Just now';
+      if (diffMins < 60) return `${diffMins}m ago`;
+      if (diffHours < 24) return `${diffHours}h ago`;
+      if (diffDays < 7) return `${diffDays}d ago`;
+      return date.toLocaleDateString();
+    }
+    
+    function renderComments() {
+      if (!commentsList || !commentsPanel) return;
+      
+      const currentSlide = slides[activeSlideIndex];
+      if (!currentSlide) {
+        commentsList.innerHTML = '';
+        if (commentsEmptyState) commentsEmptyState.style.display = 'flex';
+        return;
+      }
+      
+      const slideComments = loadCommentsForSlide(currentSlide.id);
+      
+      if (commentsSlideNumber) {
+        commentsSlideNumber.textContent = activeSlideIndex + 1;
+      }
+      
+      if (slideComments.length === 0) {
+        commentsList.innerHTML = '';
+        if (commentsEmptyState) commentsEmptyState.style.display = 'flex';
+        updateCommentsBadge();
+        return;
+      }
+      
+      if (commentsEmptyState) commentsEmptyState.style.display = 'none';
+      
+      commentsList.innerHTML = slideComments.map(comment => {
+        const isOwner = comment.authorId === CURRENT_USER.id;
+        const timeStr = formatTimestamp(comment.timestamp);
+        const editedStr = comment.editedAt ? ` (edited ${formatTimestamp(comment.editedAt)})` : '';
+        const elementInfo = comment.elementId ? `<span class="text-xs text-slate-400">• Attached to element</span>` : '';
+        
+        const repliesHtml = (comment.replies || []).map(reply => {
+          const isReplyOwner = reply.authorId === CURRENT_USER.id;
+          const replyTimeStr = formatTimestamp(reply.timestamp);
+          return `
+            <div class="comment-reply">
+              <div class="comment-header">
+                <span class="comment-author">${reply.author}</span>
+                <span class="comment-time">${replyTimeStr}</span>
+              </div>
+              <div class="comment-content">${escapeHtml(reply.content)}</div>
+              ${isReplyOwner ? `
+                <div class="comment-actions">
+                  <button class="comment-action-btn delete-reply-btn" data-slide-id="${currentSlide.id}" data-comment-id="${comment.id}" data-reply-id="${reply.id}">Delete</button>
+                </div>
+              ` : ''}
+            </div>
+          `;
+        }).join('');
+        
+        return `
+          <div class="comment-item" data-comment-id="${comment.id}">
+            <div class="comment-header">
+              <div class="flex items-center gap-2">
+                <span class="comment-author">${escapeHtml(comment.author)}</span>
+                ${elementInfo}
+              </div>
+              <span class="comment-time">${timeStr}${editedStr}</span>
+            </div>
+            <div class="comment-content">${escapeHtml(comment.content)}</div>
+            ${repliesHtml}
+            <div class="comment-actions">
+              <button class="comment-action-btn reply-btn" data-comment-id="${comment.id}">Reply</button>
+              ${isOwner ? `
+                <button class="comment-action-btn edit-comment-btn" data-slide-id="${currentSlide.id}" data-comment-id="${comment.id}">Edit</button>
+                <button class="comment-action-btn delete-comment-btn" data-slide-id="${currentSlide.id}" data-comment-id="${comment.id}">Delete</button>
+              ` : ''}
+            </div>
+            <div class="comment-reply-form hidden" id="reply-form-${comment.id}">
+              <textarea class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-[#004c97] focus:outline-none focus:ring-2 focus:ring-[#004c97]/30 resize-none" rows="2" placeholder="Write a reply..."></textarea>
+              <div class="flex gap-2 mt-2">
+                <button class="reply-submit-btn rounded-lg bg-[#004c97] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#003d78] transition" data-comment-id="${comment.id}">Post Reply</button>
+                <button class="reply-cancel-btn rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 transition" data-comment-id="${comment.id}">Cancel</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+      
+      // Attach event listeners
+      attachCommentEventListeners();
+      updateCommentsBadge();
+    }
+    
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+    
+    function attachCommentEventListeners() {
+      // Delete comment
+      commentsList?.querySelectorAll('.delete-comment-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const slideId = btn.dataset.slideId;
+          const commentId = btn.dataset.commentId;
+          if (confirm('Delete this comment?')) {
+            if (deleteComment(slideId, commentId)) {
+              renderComments();
+              renderCommentIcons();
+            }
+          }
+        });
+      });
+      
+      // Edit comment
+      commentsList?.querySelectorAll('.edit-comment-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const slideId = btn.dataset.slideId;
+          const commentId = btn.dataset.commentId;
+          const commentItem = btn.closest('.comment-item');
+          const contentDiv = commentItem?.querySelector('.comment-content');
+          if (!contentDiv) return;
+          
+          const currentText = contentDiv.textContent;
+          const newText = prompt('Edit comment:', currentText);
+          if (newText !== null && newText.trim() !== currentText) {
+            if (editComment(slideId, commentId, newText)) {
+              renderComments();
+            }
+          }
+        });
+      });
+      
+      // Reply button
+      commentsList?.querySelectorAll('.reply-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const commentId = btn.dataset.commentId;
+          const replyForm = document.getElementById(`reply-form-${commentId}`);
+          if (replyForm) {
+            replyForm.classList.remove('hidden');
+            const textarea = replyForm.querySelector('textarea');
+            if (textarea) textarea.focus();
+          }
+        });
+      });
+      
+      // Submit reply
+      commentsList?.querySelectorAll('.reply-submit-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const commentId = btn.dataset.commentId;
+          const replyForm = document.getElementById(`reply-form-${commentId}`);
+          const textarea = replyForm?.querySelector('textarea');
+          if (!textarea || !textarea.value.trim()) return;
+          
+          const currentSlide = slides[activeSlideIndex];
+          if (currentSlide && addReply(currentSlide.id, commentId, textarea.value)) {
+            renderComments();
+          }
+        });
+      });
+      
+      // Cancel reply
+      commentsList?.querySelectorAll('.reply-cancel-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const commentId = btn.dataset.commentId;
+          const replyForm = document.getElementById(`reply-form-${commentId}`);
+          if (replyForm) {
+            replyForm.classList.add('hidden');
+            const textarea = replyForm.querySelector('textarea');
+            if (textarea) textarea.value = '';
+          }
+        });
+      });
+      
+      // Delete reply
+      commentsList?.querySelectorAll('.delete-reply-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const slideId = btn.dataset.slideId;
+          const commentId = btn.dataset.commentId;
+          const replyId = btn.dataset.replyId;
+          if (confirm('Delete this reply?')) {
+            if (deleteReply(slideId, commentId, replyId)) {
+              renderComments();
+            }
+          }
+        });
+      });
+    }
+    
+    function renderCommentIcons() {
+      if (!canvasContainerEl) return;
+      
+      // Remove existing comment icons
+      canvasContainerEl.querySelectorAll('.comment-icon').forEach(icon => icon.remove());
+      
+      const currentSlide = slides[activeSlideIndex];
+      if (!currentSlide) return;
+      
+      const slideComments = loadCommentsForSlide(currentSlide.id);
+      const commentsByElement = {};
+      
+      slideComments.forEach(comment => {
+        if (comment.elementId) {
+          if (!commentsByElement[comment.elementId]) {
+            commentsByElement[comment.elementId] = [];
+          }
+          commentsByElement[comment.elementId].push(comment);
+        }
+      });
+      
+      // Add comment icons to elements
+      Object.keys(commentsByElement).forEach(elementId => {
+        const elementWrapper = canvasContainerEl.querySelector(`[data-element-id="${elementId}"]`);
+        if (!elementWrapper) return;
+        
+        const commentIcon = document.createElement('div');
+        commentIcon.className = 'comment-icon has-comments';
+        commentIcon.dataset.elementId = elementId;
+        const count = commentsByElement[elementId].length;
+        commentIcon.innerHTML = `
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+          </svg>
+          ${count > 1 ? `<span class="comment-badge">${count}</span>` : ''}
+        `;
+        commentIcon.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (!commentsPanel) return;
+          commentsPanel.classList.remove('hidden');
+          renderComments();
+          // Filter to show only comments for this element
+          const allComments = commentsList.querySelectorAll('.comment-item');
+          allComments.forEach(item => {
+            const commentId = item.dataset.commentId;
+            const comment = slideComments.find(c => c.id === commentId);
+            if (comment && comment.elementId === elementId) {
+              item.style.display = 'block';
+            } else {
+              item.style.display = 'none';
+            }
+          });
+        });
+        elementWrapper.style.position = 'relative';
+        elementWrapper.appendChild(commentIcon);
+      });
+    }
+    
+    function updateCommentsBadge() {
+      if (!commentsBadge) return;
+      const currentSlide = slides[activeSlideIndex];
+      if (!currentSlide) {
+        commentsBadge.classList.add('hidden');
+        return;
+      }
+      
+      const slideComments = loadCommentsForSlide(currentSlide.id);
+      const totalComments = slideComments.length + slideComments.reduce((sum, c) => sum + (c.replies?.length || 0), 0);
+      
+      if (totalComments > 0) {
+        commentsBadge.textContent = totalComments > 99 ? '99+' : String(totalComments);
+        commentsBadge.classList.remove('hidden');
+      } else {
+        commentsBadge.classList.add('hidden');
+      }
+    }
+    
+    function openCommentsPanel() {
+      if (!commentsPanel) return;
+      // Hide other inspectors
+      if (animationInspector) animationInspector.classList.add('hidden');
+      if (shapeInspector) shapeInspector.classList.add('hidden');
+      if (chartInspector) chartInspector.classList.add('hidden');
+      
+      commentsPanel.classList.remove('hidden');
+      renderComments();
+    }
+    
+    function closeCommentsPanel() {
+      if (!commentsPanel) return;
+      commentsPanel.classList.add('hidden');
+    }
+
     function render() {
       // Counters
       slideIndexLabelEl.textContent = String(activeSlideIndex + 1);
@@ -4606,6 +5258,15 @@
         chartRandomizeBtn.disabled = !isChart;
       }
       updateInspectorVisibility();
+      
+      // Render comment icons and update badge
+      renderCommentIcons();
+      updateCommentsBadge();
+      
+      // Update comments panel if it's open
+      if (commentsPanel && !commentsPanel.classList.contains('hidden')) {
+        renderComments();
+      }
     }
 
     function setActiveTab(name) {
@@ -4662,6 +5323,238 @@
         setCanvasZoomPercent(100);
       });
     }
+
+    // Minimize/Restore zoom controls
+    const ZOOM_CONTROLS_MINIMIZED_KEY = 'canvas-zoom-controls-minimized';
+    
+    function isZoomControlsMinimized() {
+      try {
+        return localStorage.getItem(ZOOM_CONTROLS_MINIMIZED_KEY) === 'true';
+      } catch {
+        return false;
+      }
+    }
+    
+    function setZoomControlsMinimized(minimized) {
+      try {
+        if (minimized) {
+          localStorage.setItem(ZOOM_CONTROLS_MINIMIZED_KEY, 'true');
+        } else {
+          localStorage.removeItem(ZOOM_CONTROLS_MINIMIZED_KEY);
+        }
+      } catch {
+        // Ignore localStorage errors
+      }
+    }
+    
+    function minimizeZoomControls() {
+      if (canvasZoomControls) {
+        canvasZoomControls.classList.add('minimized');
+      }
+      if (canvasZoomRestoreBtn) {
+        canvasZoomRestoreBtn.classList.remove('hidden');
+      }
+      setZoomControlsMinimized(true);
+    }
+    
+    function restoreZoomControls() {
+      if (canvasZoomControls) {
+        canvasZoomControls.classList.remove('minimized');
+      }
+      if (canvasZoomRestoreBtn) {
+        canvasZoomRestoreBtn.classList.add('hidden');
+      }
+      setZoomControlsMinimized(false);
+    }
+    
+    function updateZoomRestoreLabel() {
+      if (canvasZoomRestoreLabel && canvasZoomLabel) {
+        canvasZoomRestoreLabel.textContent = canvasZoomLabel.textContent;
+      }
+    }
+    
+    if (canvasZoomMinimizeBtn) {
+      canvasZoomMinimizeBtn.addEventListener('click', () => {
+        minimizeZoomControls();
+        updateZoomRestoreLabel();
+      });
+    }
+    
+    if (canvasZoomRestoreBtn) {
+      let restoreClickTimeout = null;
+      canvasZoomRestoreBtn.addEventListener('mousedown', () => {
+        // Clear any pending restore
+        if (restoreClickTimeout) {
+          clearTimeout(restoreClickTimeout);
+          restoreClickTimeout = null;
+        }
+      });
+      canvasZoomRestoreBtn.addEventListener('click', (e) => {
+        // Only restore if we didn't just drag
+        restoreClickTimeout = setTimeout(() => {
+          if (!hasMoved && !isDragging) {
+            restoreZoomControls();
+          }
+          restoreClickTimeout = null;
+        }, 100);
+      });
+    }
+    
+    // Restore minimized state on load
+    if (isZoomControlsMinimized()) {
+      minimizeZoomControls();
+      updateZoomRestoreLabel();
+    }
+
+    // Drag functionality for zoom controls
+    const ZOOM_CONTROLS_POSITION_KEY = 'canvas-zoom-controls-position';
+    let isDragging = false;
+    let hasMoved = false;
+    let dragStartX = 0;
+    let dragStartY = 0;
+    let dragStartLeft = 0;
+    let dragStartTop = 0;
+    let currentDraggingElement = null;
+    
+    function getZoomControlsPosition() {
+      try {
+        const stored = localStorage.getItem(ZOOM_CONTROLS_POSITION_KEY);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed && typeof parsed.left === 'number' && typeof parsed.top === 'number') {
+            return { left: parsed.left, top: parsed.top };
+          }
+        }
+      } catch {
+        // Ignore errors
+      }
+      return null;
+    }
+    
+    function saveZoomControlsPosition(left, top) {
+      try {
+        localStorage.setItem(ZOOM_CONTROLS_POSITION_KEY, JSON.stringify({ left, top }));
+      } catch {
+        // Ignore errors
+      }
+    }
+    
+    function setElementPosition(element, left, top) {
+      if (!element) return;
+      // Convert to percentage or pixels based on viewport
+      const maxLeft = window.innerWidth - element.offsetWidth;
+      const maxTop = window.innerHeight - element.offsetHeight;
+      
+      // Clamp values
+      const clampedLeft = Math.max(0, Math.min(left, maxLeft));
+      const clampedTop = Math.max(0, Math.min(top, maxTop));
+      
+      element.style.left = `${clampedLeft}px`;
+      element.style.top = `${clampedTop}px`;
+      element.style.right = 'auto';
+      element.style.bottom = 'auto';
+    }
+    
+    function loadZoomControlsPosition() {
+      const position = getZoomControlsPosition();
+      if (position) {
+        setElementPosition(canvasZoomControls, position.left, position.top);
+        setElementPosition(canvasZoomRestoreBtn, position.left, position.top);
+      }
+    }
+    
+    function handleDragStart(e) {
+      // Don't start drag if clicking on interactive elements
+      const target = e.target;
+      if (target.tagName === 'BUTTON' || target.tagName === 'INPUT' || target.closest('button') || target.closest('input')) {
+        return;
+      }
+      
+      isDragging = true;
+      hasMoved = false;
+      currentDraggingElement = e.currentTarget;
+      currentDraggingElement.classList.add('dragging');
+      
+      const rect = currentDraggingElement.getBoundingClientRect();
+      const clientX = e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+      const clientY = e.clientY !== undefined ? e.clientY : (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
+      
+      dragStartX = clientX;
+      dragStartY = clientY;
+      dragStartLeft = rect.left;
+      dragStartTop = rect.top;
+      
+      e.preventDefault();
+    }
+    
+    function handleDragMove(e) {
+      if (!isDragging || !currentDraggingElement) return;
+      
+      const clientX = e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0] ? e.touches[0].clientX : dragStartX);
+      const clientY = e.clientY !== undefined ? e.clientY : (e.touches && e.touches[0] ? e.touches[0].clientY : dragStartY);
+      
+      const deltaX = clientX - dragStartX;
+      const deltaY = clientY - dragStartY;
+      
+      // Check if we've moved enough to consider it a drag (not just a click)
+      if (Math.abs(deltaX) > 3 || Math.abs(deltaY) > 3) {
+        hasMoved = true;
+      }
+      
+      const newLeft = dragStartLeft + deltaX;
+      const newTop = dragStartTop + deltaY;
+      
+      setElementPosition(currentDraggingElement, newLeft, newTop);
+      
+      // Also update the other element (controls or restore button) to same position
+      if (currentDraggingElement === canvasZoomControls && canvasZoomRestoreBtn) {
+        setElementPosition(canvasZoomRestoreBtn, newLeft, newTop);
+      } else if (currentDraggingElement === canvasZoomRestoreBtn && canvasZoomControls) {
+        setElementPosition(canvasZoomControls, newLeft, newTop);
+      }
+      
+      // Save position
+      const rect = currentDraggingElement.getBoundingClientRect();
+      saveZoomControlsPosition(rect.left, rect.top);
+      
+      e.preventDefault();
+    }
+    
+    function handleDragEnd() {
+      if (!isDragging) return;
+      
+      isDragging = false;
+      if (currentDraggingElement) {
+        currentDraggingElement.classList.remove('dragging');
+        currentDraggingElement = null;
+      }
+      hasMoved = false;
+    }
+    
+    // Add drag listeners to both controls and restore button
+    if (canvasZoomControls) {
+      canvasZoomControls.addEventListener('mousedown', handleDragStart);
+      loadZoomControlsPosition();
+    }
+    
+    if (canvasZoomRestoreBtn) {
+      canvasZoomRestoreBtn.addEventListener('mousedown', handleDragStart);
+    }
+    
+    document.addEventListener('mousemove', handleDragMove);
+    document.addEventListener('mouseup', handleDragEnd);
+    
+    // Also handle touch events for mobile
+    if (canvasZoomControls) {
+      canvasZoomControls.addEventListener('touchstart', handleDragStart, { passive: false });
+    }
+    
+    if (canvasZoomRestoreBtn) {
+      canvasZoomRestoreBtn.addEventListener('touchstart', handleDragStart, { passive: false });
+    }
+    
+    document.addEventListener('touchmove', handleDragMove, { passive: false });
+    document.addEventListener('touchend', handleDragEnd);
 
     setCanvasZoomPercent(currentCanvasZoomPercent);
 
@@ -6413,6 +7306,39 @@
         } finally {
           exportConfirmBtn.disabled = false;
           updateExportButton();
+        }
+      });
+    }
+
+    // Comments
+    if (commentsBtn) {
+      commentsBtn.addEventListener('click', openCommentsPanel);
+    }
+    if (commentsCloseBtn) {
+      commentsCloseBtn.addEventListener('click', closeCommentsPanel);
+    }
+    if (commentSubmitBtn) {
+      commentSubmitBtn.addEventListener('click', () => {
+        const content = commentInput?.value.trim();
+        if (!content) return;
+        
+        const currentSlide = slides[activeSlideIndex];
+        if (!currentSlide) return;
+        
+        const elementId = attachToElementCheckbox?.checked && selectedElementId ? selectedElementId : null;
+        if (addComment(currentSlide.id, content, elementId)) {
+          commentInput.value = '';
+          if (attachToElementCheckbox) attachToElementCheckbox.checked = false;
+          renderComments();
+          renderCommentIcons();
+        }
+      });
+    }
+    if (commentInput) {
+      commentInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+          e.preventDefault();
+          commentSubmitBtn?.click();
         }
       });
     }
