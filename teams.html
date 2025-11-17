@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LumenSlides · Teams</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="./scripts/global.js"></script>
+    <style>
+      .teams-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem;
+      }
+      .teams-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+      }
+      .teams-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+      }
+      .team-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s, box-shadow 0.2s;
+        cursor: pointer;
+      }
+      .team-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+      .team-card-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+      }
+      .team-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: white;
+      }
+      .team-name {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #1e293b;
+      }
+      .team-meta {
+        font-size: 0.875rem;
+        color: #64748b;
+        margin-top: 0.5rem;
+      }
+      .btn-create-team {
+        background: #004c97;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        border: none;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+      .btn-create-team:hover {
+        background: #003d78;
+      }
+      .modal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+      }
+      .modal.active {
+        display: flex;
+      }
+      .modal-content {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        max-width: 500px;
+        width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+      }
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+      }
+      .modal-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #1e293b;
+      }
+      .form-group {
+        margin-bottom: 1.5rem;
+      }
+      .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        color: #334155;
+      }
+      .form-input {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        font-size: 1rem;
+      }
+      .form-input:focus {
+        outline: none;
+        border-color: #004c97;
+        box-shadow: 0 0 0 3px rgba(0, 76, 151, 0.1);
+      }
+      .team-workspace {
+        display: none;
+      }
+      .team-workspace.active {
+        display: block;
+      }
+      .workspace-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #e2e8f0;
+      }
+      .workspace-tabs {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        border-bottom: 1px solid #e2e8f0;
+      }
+      .workspace-tab {
+        padding: 0.75rem 1.5rem;
+        background: none;
+        border: none;
+        border-bottom: 2px solid transparent;
+        cursor: pointer;
+        font-weight: 500;
+        color: #64748b;
+        transition: all 0.2s;
+      }
+      .workspace-tab.active {
+        color: #004c97;
+        border-bottom-color: #004c97;
+      }
+      .workspace-tab-content {
+        display: none;
+      }
+      .workspace-tab-content.active {
+        display: block;
+      }
+      .members-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      .member-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem;
+        background: #f8fafc;
+        border-radius: 8px;
+      }
+      .member-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+      }
+      .member-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #004c97;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+      }
+      .member-name {
+        font-weight: 500;
+        color: #1e293b;
+      }
+      .member-role {
+        font-size: 0.875rem;
+        color: #64748b;
+        padding: 0.25rem 0.75rem;
+        background: white;
+        border-radius: 12px;
+      }
+      .activity-item {
+        padding: 1rem;
+        border-left: 3px solid #004c97;
+        background: #f8fafc;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+      }
+      .activity-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        object-fit: cover;
+        flex-shrink: 0;
+      }
+      .activity-avatar-placeholder {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 600;
+        color: white;
+        flex-shrink: 0;
+      }
+      .activity-content {
+        flex: 1;
+      }
+      .activity-time {
+        font-size: 0.75rem;
+        color: #94a3b8;
+        margin-top: 0.5rem;
+      }
+      .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #64748b;
+      }
+    </style>
+  </head>
+  <body class="bg-white bg-modern bg-corner-dots">
+    <header class="site-header">
+      <div class="header-left">
+        <img class="site-logo site-logo--banner" src="./Screenshot 2025-11-06 at 1.14.39 PM.png" alt="Aramco Digital banner" onerror="this.remove(); var b=document.querySelector('.site-brand'); if(b){ b.textContent='Aramco Digital'; }" />
+        <a href="./index.html" class="home-icon-link" title="Home">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+          </svg>
+        </a>
+      </div>
+      <nav class="site-nav site-nav--centered" aria-label="Primary">
+        <a href="home.html" class="nav-link">Home</a>
+        <a href="teams.html" class="nav-link nav-link--current" aria-current="page">Teams</a>
+        <a href="templates.html" class="nav-link">Templates</a>
+        <a href="about.html" class="nav-link">About</a>
+      </nav>
+      <div class="header-right">
+        <div class="account-display" id="accountDisplay">
+          <button class="account-button" id="accountButton" aria-label="Account menu">
+            <span class="account-greeting" id="accountGreeting"></span>
+            <svg class="account-icon" width="32" height="32" viewBox="0 0 32 32" fill="none">
+              <circle cx="16" cy="16" r="14" stroke="currentColor" stroke-width="2"/>
+              <circle cx="16" cy="12" r="5" fill="currentColor"/>
+              <path d="M6 26c0-5.5 4.5-10 10-10s10 4.5 10 10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
+          <div class="account-dropdown" id="accountDropdown" style="display: none;">
+            <button class="dropdown-item dropdown-item--logout" id="logoutButton">
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+              </svg>
+              Logout
+            </button>
+          </div>
+        </div>
+        <img class="site-logo site-logo--mark" src="./logo.png" alt="Aramco Digital logo" />
+      </div>
+    </header>
+
+    <main class="center-wrapper center-wrapper--top page-fade-in">
+      <!-- Teams Dashboard -->
+      <div id="teamsDashboard" class="teams-container">
+        <div class="teams-header">
+          <h1 class="title title--xl">Teams</h1>
+          <button class="btn-create-team" id="createTeamBtn">+ Create Team</button>
+        </div>
+        <div id="teamsGrid" class="teams-grid"></div>
+        <div id="teamsEmptyState" class="empty-state" style="display: none;">
+          <p>You're not part of any teams yet.</p>
+          <p>Create a team to start collaborating!</p>
+        </div>
+      </div>
+
+      <!-- Team Workspace -->
+      <div id="teamWorkspace" class="team-workspace teams-container">
+        <div class="workspace-header">
+          <div>
+            <h1 id="workspaceTeamName" class="title title--xl"></h1>
+            <p id="workspaceTeamMeta" class="team-meta"></p>
+          </div>
+          <button id="backToTeamsBtn" class="btn btn-outline">← Back to Teams</button>
+        </div>
+        <div class="workspace-tabs">
+          <button class="workspace-tab active" data-tab="projects">Projects</button>
+          <button class="workspace-tab" data-tab="members">Members</button>
+          <button class="workspace-tab" data-tab="activity">Activity</button>
+        </div>
+        <div id="projectsTab" class="workspace-tab-content active">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h3 style="font-size: 1.125rem; font-weight: 600; color: #1e293b;">Team Projects</h3>
+            <button id="linkProjectBtn" class="btn-create-team" style="font-size: 0.875rem; padding: 0.5rem 1rem;">+ Link Project</button>
+          </div>
+          <div id="teamProjectsList" class="recent-grid"></div>
+          <div id="teamProjectsEmpty" class="empty-state" style="display: none;">
+            <p>No projects in this team yet.</p>
+            <p style="font-size: 0.875rem; margin-top: 0.5rem;">Link a project via the Share button in the slide editor, or click "Link Project" above.</p>
+          </div>
+        </div>
+        <div id="membersTab" class="workspace-tab-content">
+          <div class="members-list" id="membersList"></div>
+          <button id="inviteMemberBtn" class="btn-create-team" style="margin-top: 1rem;">+ Invite Member</button>
+        </div>
+        <div id="activityTab" class="workspace-tab-content">
+          <div id="activityList"></div>
+          <div id="activityEmpty" class="empty-state" style="display: none;">
+            <p>No activity yet.</p>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Create Team Modal -->
+    <div id="createTeamModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title">Create New Team</h2>
+          <button id="closeCreateTeamModal" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">×</button>
+        </div>
+        <form id="createTeamForm">
+          <div class="form-group">
+            <label class="form-label" for="teamNameInput">Team Name</label>
+            <input type="text" id="teamNameInput" class="form-input" required placeholder="Enter team name" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="teamColorInput">Team Color (optional)</label>
+            <input type="color" id="teamColorInput" class="form-input" value="#004c97" />
+          </div>
+          <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+            <button type="button" id="cancelCreateTeam" class="btn btn-outline">Cancel</button>
+            <button type="submit" class="btn-create-team">Create Team</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Invite Member Modal -->
+    <div id="inviteMemberModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title">Invite Member</h2>
+          <button id="closeInviteModal" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">×</button>
+        </div>
+        <form id="inviteMemberForm">
+          <div class="form-group">
+            <label class="form-label" for="inviteEmailInput">Email Address</label>
+            <input type="email" id="inviteEmailInput" class="form-input" required placeholder="user@example.com" />
+            <p style="font-size: 0.875rem; color: #64748b; margin-top: 0.5rem;">User must be registered to be added to the team.</p>
+          </div>
+          <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+            <button type="button" id="cancelInvite" class="btn btn-outline">Cancel</button>
+            <button type="submit" class="btn-create-team">Invite</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Link Project Modal -->
+    <div id="linkProjectModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title">Link Project to Team</h2>
+          <button id="closeLinkProjectModal" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">×</button>
+        </div>
+        <div style="max-height: 400px; overflow-y: auto;">
+          <div id="availableProjectsList" class="space-y-2"></div>
+          <div id="noProjectsMessage" class="empty-state" style="display: none; padding: 2rem;">
+            <p>No projects available to link.</p>
+            <p style="font-size: 0.875rem; margin-top: 0.5rem;">Create a project first, then come back to link it.</p>
+          </div>
+        </div>
+        <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1rem;">
+          <button type="button" id="cancelLinkProject" class="btn btn-outline">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <footer class="credits">Made by: Reema Alomari, Abdullah Alqahtani, Yara AlSardi</footer>
+
+    <script src="./scripts/auth.js"></script>
+    <script src="./scripts/profile.js"></script>
+    <script src="./scripts/teams.js"></script>
+    <script src="./scripts/account-display.js"></script>
+    <script>
+      // Teams page specific functionality
+      (function() {
+
+        updateAccountDisplay();
+      })();
+
+      // Teams functionality
+      let currentTeamId = null;
+
+      function renderTeams() {
+        const currentUser = getCurrentUser();
+        if (!currentUser) {
+          window.location.href = './index.html';
+          return;
+        }
+
+        const teams = getUserTeams(currentUser.id);
+        const teamsGrid = document.getElementById('teamsGrid');
+        const emptyState = document.getElementById('teamsEmptyState');
+
+        if (teams.length === 0) {
+          teamsGrid.innerHTML = '';
+          emptyState.style.display = 'block';
+          return;
+        }
+
+        emptyState.style.display = 'none';
+        teamsGrid.innerHTML = teams.map(team => {
+          const members = getTeamMembersList(team.teamId);
+          const projects = getTeamProjectsList(team.teamId);
+          const icon = team.icon || (team.name ? team.name.charAt(0).toUpperCase() : 'T');
+          const color = team.color || '#004c97';
+
+          return `
+            <div class="team-card" data-team-id="${team.teamId}">
+              <div class="team-card-header">
+                <div class="team-icon" style="background: ${color}">${icon}</div>
+                <div>
+                  <div class="team-name">${escapeHtml(team.name)}</div>
+                  <div class="team-meta">${members.length} member${members.length !== 1 ? 's' : ''} · ${projects.length} project${projects.length !== 1 ? 's' : ''}</div>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        // Add click handlers
+        teamsGrid.querySelectorAll('.team-card').forEach(card => {
+          card.addEventListener('click', () => {
+            const teamId = card.dataset.teamId;
+            openTeamWorkspace(teamId);
+          });
+        });
+      }
+
+      function openTeamWorkspace(teamId) {
+        currentTeamId = teamId;
+        const teams = getTeams();
+        const team = teams.find(t => t.teamId === teamId);
+        if (!team) return;
+
+        document.getElementById('teamsDashboard').style.display = 'none';
+        document.getElementById('teamWorkspace').classList.add('active');
+
+        document.getElementById('workspaceTeamName').textContent = team.name;
+        const members = getTeamMembersList(teamId);
+        const projects = getTeamProjectsList(teamId);
+        document.getElementById('workspaceTeamMeta').textContent = `${members.length} members · ${projects.length} projects`;
+
+        renderTeamProjects(teamId);
+        renderTeamMembers(teamId);
+        renderTeamActivity(teamId);
+      }
+
+      function renderTeamProjects(teamId) {
+        const teamProjectLinks = getTeamProjectsList(teamId);
+        const projectIds = teamProjectLinks.map(p => p.projectId).filter(Boolean);
+        const projectsList = document.getElementById('teamProjectsList');
+        const emptyState = document.getElementById('teamProjectsEmpty');
+
+        // Load presentations index
+        const PRESENTATIONS_INDEX_KEY = 'lumen-presentations-index';
+        let index = [];
+        try {
+          const indexRaw = localStorage.getItem(PRESENTATIONS_INDEX_KEY);
+          if (indexRaw) {
+            index = JSON.parse(indexRaw);
+            if (!Array.isArray(index)) {
+              index = [];
+            }
+          }
+        } catch (err) {
+          console.warn('Failed to load presentations index', err);
+          index = [];
+        }
+
+        // Only show projects that are explicitly linked to this team
+        const teamProjects = index.filter(p => {
+          if (!p || !p.id) return false;
+          return projectIds.includes(p.id);
+        });
+
+        if (teamProjects.length === 0) {
+          projectsList.innerHTML = '';
+          emptyState.style.display = 'block';
+          return;
+        }
+
+        emptyState.style.display = 'none';
+        
+        // Sort by updatedAt (most recent first)
+        teamProjects.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+        
+        projectsList.innerHTML = teamProjects.map(project => {
+          return `
+            <div class="recent-card" data-project-id="${project.id}">
+              <div class="recent-card__content">
+                <h3 class="recent-card__title">${escapeHtml(project.name || 'Untitled')}</h3>
+                <p class="recent-card__meta">${formatDate(project.updatedAt)}</p>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        projectsList.querySelectorAll('.recent-card').forEach(card => {
+          card.addEventListener('click', () => {
+            const projectId = card.dataset.projectId;
+            window.location.href = `slide-editor.html?id=${encodeURIComponent(projectId)}`;
+          });
+        });
+      }
+
+      function renderTeamMembers(teamId) {
+        const members = getTeamMembersList(teamId);
+        const membersList = document.getElementById('membersList');
+        const currentUser = getCurrentUser();
+        const isOwner = isTeamOwner(teamId, currentUser.id);
+
+        membersList.innerHTML = members.map(member => {
+          const user = getUserById(member.userId);
+          if (!user) return '';
+          
+          // Get profile data
+          const userProfile = getUserWithProfile(member.userId);
+          const profilePicture = getUserProfilePicture(member.userId);
+          const name = userProfile.fullName || user.username || user.email;
+          const role = member.role;
+          const initials = userProfile.initials;
+          const avatarColor = userProfile.avatarColor;
+
+          return `
+            <div class="member-item">
+              <div class="member-info">
+                ${profilePicture ? 
+                  `<img src="${escapeHtml(profilePicture)}" class="member-avatar" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; background: ${avatarColor};" alt="${escapeHtml(name)}" />` :
+                  `<div class="member-avatar" style="background: ${avatarColor};">${escapeHtml(initials)}</div>`
+                }
+                <div>
+                  <div class="member-name">${escapeHtml(name)}</div>
+                  <div class="member-role">${role}</div>
+                </div>
+              </div>
+              ${isOwner && member.userId !== currentUser.id ? `
+                <button class="btn btn-outline" data-remove-member="${member.userId}" style="font-size: 0.875rem;">Remove</button>
+              ` : ''}
+            </div>
+          `;
+        }).join('');
+
+        membersList.querySelectorAll('[data-remove-member]').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const userId = btn.dataset.removeMember;
+            if (confirm('Remove this member from the team?')) {
+              removeTeamMember(teamId, userId);
+              renderTeamMembers(teamId);
+            }
+          });
+        });
+      }
+
+      function renderTeamActivity(teamId) {
+        const activities = getTeamActivities(teamId, 50);
+        const activityList = document.getElementById('activityList');
+        const emptyState = document.getElementById('activityEmpty');
+
+        if (activities.length === 0) {
+          activityList.innerHTML = '';
+          emptyState.style.display = 'block';
+          return;
+        }
+
+        emptyState.style.display = 'none';
+        activityList.innerHTML = activities.map(activity => {
+          const time = new Date(activity.timestamp);
+          const timeStr = formatTimestamp(time);
+          
+          // Get profile data for activity user
+          const userProfile = getUserWithProfile(activity.userId);
+          const userName = userProfile ? (userProfile.fullName || 'User') : 'User';
+          const userAvatar = userProfile ? getUserProfilePicture(activity.userId) : null;
+          const userInitials = userProfile ? userProfile.initials : 'U';
+          const userColor = userProfile ? userProfile.avatarColor : '#94a3b8';
+
+          return `
+            <div class="activity-item">
+              ${userAvatar ? 
+                `<img src="${escapeHtml(userAvatar)}" class="activity-avatar" alt="${escapeHtml(userName)}" />` :
+                `<div class="activity-avatar-placeholder" style="background: ${userColor};">${escapeHtml(userInitials)}</div>`
+              }
+              <div class="activity-content">
+                <div>${escapeHtml(formatActivityMessage(activity))}</div>
+                <div class="activity-time">${timeStr}</div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      // Modal handlers
+      document.getElementById('createTeamBtn')?.addEventListener('click', () => {
+        document.getElementById('createTeamModal').classList.add('active');
+      });
+
+      document.getElementById('closeCreateTeamModal')?.addEventListener('click', () => {
+        document.getElementById('createTeamModal').classList.remove('active');
+      });
+
+      document.getElementById('cancelCreateTeam')?.addEventListener('click', () => {
+        document.getElementById('createTeamModal').classList.remove('active');
+      });
+
+      document.getElementById('createTeamForm')?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const name = document.getElementById('teamNameInput').value.trim();
+        const color = document.getElementById('teamColorInput').value;
+
+        if (!name) {
+          alert('Please enter a team name');
+          return;
+        }
+
+        const result = createTeam(name, null, color);
+        if (result.success) {
+          document.getElementById('createTeamModal').classList.remove('active');
+          document.getElementById('createTeamForm').reset();
+          renderTeams();
+        } else {
+          alert(result.error || 'Failed to create team');
+        }
+      });
+
+      document.getElementById('backToTeamsBtn')?.addEventListener('click', () => {
+        document.getElementById('teamWorkspace').classList.remove('active');
+        document.getElementById('teamsDashboard').style.display = 'block';
+        currentTeamId = null;
+      });
+
+      // Tab switching
+      document.querySelectorAll('.workspace-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          const tabName = tab.dataset.tab;
+          document.querySelectorAll('.workspace-tab').forEach(t => t.classList.remove('active'));
+          document.querySelectorAll('.workspace-tab-content').forEach(c => c.classList.remove('active'));
+          tab.classList.add('active');
+          document.getElementById(`${tabName}Tab`).classList.add('active');
+        });
+      });
+
+      // Invite member
+      document.getElementById('inviteMemberBtn')?.addEventListener('click', () => {
+        document.getElementById('inviteMemberModal').classList.add('active');
+      });
+
+      document.getElementById('closeInviteModal')?.addEventListener('click', () => {
+        document.getElementById('inviteMemberModal').classList.remove('active');
+      });
+
+      document.getElementById('cancelInvite')?.addEventListener('click', () => {
+        document.getElementById('inviteMemberModal').classList.remove('active');
+      });
+
+      document.getElementById('inviteMemberForm')?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const email = document.getElementById('inviteEmailInput').value.trim();
+
+        if (!email) {
+          alert('Please enter an email address');
+          return;
+        }
+
+        const result = inviteUserToTeam(currentTeamId, email);
+        if (result.success) {
+          document.getElementById('inviteMemberModal').classList.remove('active');
+          document.getElementById('inviteMemberForm').reset();
+          renderTeamMembers(currentTeamId);
+          renderTeamActivity(currentTeamId);
+          alert('User added to team successfully!');
+        } else {
+          alert(result.error || 'Failed to invite user');
+        }
+      });
+
+      // Link Project handlers
+      function openLinkProjectModal() {
+        const modal = document.getElementById('linkProjectModal');
+        const projectsList = document.getElementById('availableProjectsList');
+        const noProjectsMsg = document.getElementById('noProjectsMessage');
+        
+        // Load all available projects
+        const PRESENTATIONS_INDEX_KEY = 'lumen-presentations-index';
+        let allProjects = [];
+        try {
+          const indexRaw = localStorage.getItem(PRESENTATIONS_INDEX_KEY);
+          if (indexRaw) {
+            allProjects = JSON.parse(indexRaw);
+            if (!Array.isArray(allProjects)) {
+              allProjects = [];
+            }
+          }
+        } catch (err) {
+          console.warn('Failed to load projects', err);
+        }
+        
+        // Get already linked projects
+        const linkedProjects = getTeamProjectsList(currentTeamId).map(p => p.projectId);
+        const availableProjects = allProjects.filter(p => p && p.id && !linkedProjects.includes(p.id));
+        
+        if (availableProjects.length === 0) {
+          projectsList.innerHTML = '';
+          noProjectsMsg.style.display = 'block';
+        } else {
+          noProjectsMsg.style.display = 'none';
+          projectsList.innerHTML = availableProjects.map(project => {
+            return `
+              <div class="member-item" style="cursor: pointer;" data-project-id="${project.id}">
+                <div class="member-info">
+                  <div class="member-avatar" style="background: #004c97;">${(project.name || 'P').charAt(0).toUpperCase()}</div>
+                  <div>
+                    <div class="member-name">${escapeHtml(project.name || 'Untitled')}</div>
+                    <div class="member-role" style="font-size: 0.75rem;">${formatDate(project.updatedAt)}</div>
+                  </div>
+                </div>
+                <button class="btn btn-outline" style="font-size: 0.875rem;" data-link-project="${project.id}">Link</button>
+              </div>
+            `;
+          }).join('');
+          
+          // Add click handlers
+          projectsList.querySelectorAll('[data-link-project]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              const projectId = btn.dataset.linkProject;
+              linkProjectToTeam(projectId, currentTeamId);
+              modal.classList.remove('active');
+              renderTeamProjects(currentTeamId);
+              renderTeamActivity(currentTeamId);
+              alert('Project linked to team successfully!');
+            });
+          });
+        }
+        
+        modal.classList.add('active');
+      }
+      
+      document.getElementById('linkProjectBtn')?.addEventListener('click', () => {
+        if (currentTeamId) {
+          openLinkProjectModal();
+        }
+      });
+
+      document.getElementById('closeLinkProjectModal')?.addEventListener('click', () => {
+        document.getElementById('linkProjectModal').classList.remove('active');
+      });
+
+      document.getElementById('cancelLinkProject')?.addEventListener('click', () => {
+        document.getElementById('linkProjectModal').classList.remove('active');
+      });
+
+      // Helper functions
+      function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
+      function formatDate(timestamp) {
+        if (!timestamp) return 'Unknown';
+        const date = new Date(timestamp);
+        return date.toLocaleDateString();
+      }
+
+      function formatTimestamp(date) {
+        const now = new Date();
+        const diffMs = now - date;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
+
+        if (diffMins < 1) return 'Just now';
+        if (diffMins < 60) return `${diffMins}m ago`;
+        if (diffHours < 24) return `${diffHours}h ago`;
+        if (diffDays < 7) return `${diffDays}d ago`;
+        return date.toLocaleDateString();
+      }
+
+      // Initialize
+      renderTeams();
+    </script>
+  </body>
+</html>
+

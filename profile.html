@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profile - LumenSlides</title>
+  <link rel="stylesheet" href="./styles.css">
+  <style>
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    main.center-wrapper {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+    .profile-container {
+      max-width: 900px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 2.5rem;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08), 0 4px 10px rgba(0, 0, 0, 0.04);
+    }
+    @media (max-width: 768px) {
+      .profile-container {
+        padding: 1.5rem;
+        max-width: 100%;
+      }
+    }
+    .profile-header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+      padding-bottom: 2rem;
+      border-bottom: 2px solid #e2e8f0;
+    }
+    .profile-avatar-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .profile-avatar-container {
+      position: relative;
+      display: inline-block;
+    }
+    .profile-avatar,
+    .profile-avatar-placeholder {
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      border: 3px solid #e2e8f0;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+    .profile-avatar {
+      object-fit: cover;
+      opacity: 1;
+    }
+    .profile-avatar-placeholder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3.5rem;
+      font-weight: 600;
+      color: white;
+      background: var(--avatar-color, #94a3b8);
+      opacity: 1;
+    }
+    .profile-avatar-container:hover .profile-avatar,
+    .profile-avatar-container:hover .profile-avatar-placeholder {
+      transform: scale(1.02);
+    }
+    .avatar-buttons {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .btn-upload-avatar,
+    .btn-remove-avatar {
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .btn-upload-avatar {
+      background: #004c97;
+      color: white;
+    }
+    .btn-upload-avatar:hover {
+      background: #003d7a;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 4px rgba(0, 76, 151, 0.3);
+    }
+    .btn-remove-avatar {
+      background: #f1f5f9;
+      color: #475569;
+      border: 2px solid #e2e8f0;
+    }
+    .btn-remove-avatar:hover {
+      background: #e2e8f0;
+      color: #334155;
+      transform: translateY(-1px);
+    }
+    .btn-remove-avatar:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    @media (max-width: 768px) {
+      .profile-avatar,
+      .profile-avatar-placeholder {
+        width: 100px;
+        height: 100px;
+        font-size: 2.5rem;
+      }
+      .avatar-buttons {
+        flex-direction: column;
+        width: 100%;
+      }
+      .btn-upload-avatar,
+      .btn-remove-avatar {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+    .profile-info {
+      margin-top: 1.5rem;
+    }
+    .profile-name {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 0.5rem;
+    }
+    .profile-email {
+      font-size: 1rem;
+      color: #64748b;
+      margin-bottom: 1rem;
+    }
+    .profile-meta {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 1rem;
+    }
+    .profile-meta-item {
+      font-size: 0.875rem;
+      color: #64748b;
+    }
+    .profile-meta-item strong {
+      color: #1e293b;
+      margin-right: 0.25rem;
+    }
+    @media (max-width: 768px) {
+      .profile-name {
+        font-size: 1.5rem;
+      }
+      .profile-meta {
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: center;
+      }
+    }
+    .profile-section {
+      margin-bottom: 2.5rem;
+    }
+    .profile-section-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #1e293b;
+      margin-bottom: 1rem;
+    }
+    .profile-bio {
+      color: #475569;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      padding: 1rem;
+      background: #f8fafc;
+      border-radius: 8px;
+    }
+    .profile-actions {
+      display: flex;
+      gap: 1rem;
+      margin-top: 2.5rem;
+      justify-content: center;
+    }
+    @media (max-width: 768px) {
+      .profile-actions {
+        flex-direction: column;
+      }
+      .btn-edit,
+      .btn-cancel {
+        width: 100%;
+      }
+    }
+    .btn-edit {
+      background: #004c97;
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-edit:hover {
+      background: #003d7a;
+    }
+    .btn-cancel {
+      background: #e2e8f0;
+      color: #475569;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-cancel:hover {
+      background: #cbd5e1;
+    }
+    .form-group {
+      margin-bottom: 2rem;
+    }
+    .form-group:last-of-type {
+      margin-bottom: 2.5rem;
+    }
+    .form-label {
+      display: block;
+      font-weight: 600;
+      color: #1e293b;
+      margin-bottom: 0.5rem;
+      font-size: 0.875rem;
+    }
+    .form-input,
+    .form-textarea {
+      width: 100%;
+      padding: 0.75rem;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-family: inherit;
+      transition: border-color 0.2s;
+    }
+    .form-input:focus,
+    .form-textarea:focus {
+      outline: none;
+      border-color: #004c97;
+    }
+    .form-textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+    .hidden {
+      display: none;
+    }
+    .fade-in {
+      animation: fadeIn 0.2s ease-in;
+    }
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+    input[type="file"] {
+      display: none;
+    }
+  </style>
+</head>
+<body class="bg-white bg-modern bg-corner-dots">
+  <header class="site-header">
+    <div class="header-left">
+      <img class="site-logo site-logo--banner" src="./Screenshot 2025-11-06 at 1.14.39 PM.png" alt="Aramco Digital banner" onerror="this.remove(); var b=document.querySelector('.site-brand'); if(b){ b.textContent='Aramco Digital'; }" />
+      <a href="./index.html" class="home-icon-link" title="Home">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          <polyline points="9 22 9 12 15 12 15 22"></polyline>
+        </svg>
+      </a>
+    </div>
+    <nav class="site-nav site-nav--centered" aria-label="Primary">
+      <a href="home.html" class="nav-link">Home</a>
+      <a href="teams.html" class="nav-link">Teams</a>
+      <a href="templates.html" class="nav-link">Templates</a>
+      <a href="about.html" class="nav-link">About</a>
+    </nav>
+    <div class="header-right">
+      <div class="account-display" id="accountDisplay">
+        <button class="account-button" id="accountButton" aria-label="Account menu">
+          <span class="account-greeting" id="accountGreeting"></span>
+          <img class="account-avatar" id="accountAvatar" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; display: none;" />
+          <svg class="account-icon" id="accountIcon" width="32" height="32" viewBox="0 0 32 32" fill="none">
+            <circle cx="16" cy="16" r="14" stroke="currentColor" stroke-width="2"/>
+            <circle cx="16" cy="12" r="5" fill="currentColor"/>
+            <path d="M6 26c0-5.5 4.5-10 10-10s10 4.5 10 10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <div class="account-dropdown" id="accountDropdown" style="display: none;">
+          <a href="profile.html" class="dropdown-item">
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            Profile
+          </a>
+          <button class="dropdown-item dropdown-item--logout" id="logoutButton">
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+            Logout
+          </button>
+        </div>
+      </div>
+      <img class="site-logo site-logo--mark" src="./logo.png" alt="Aramco Digital logo" />
+    </div>
+  </header>
+
+  <main class="center-wrapper center-wrapper--top page-fade-in">
+    <div class="profile-container">
+      <!-- View Mode -->
+      <div id="viewMode">
+        <div class="profile-header">
+          <div class="profile-avatar-section">
+            <div class="profile-avatar-container">
+              <img id="profileAvatarImg" class="profile-avatar hidden" alt="Profile picture" />
+              <div id="profileAvatarPlaceholder" class="profile-avatar-placeholder"></div>
+            </div>
+          </div>
+          <div class="profile-info">
+            <h1 class="profile-name" id="profileName">Loading...</h1>
+            <div class="profile-email" id="profileEmail">Loading...</div>
+            <div class="profile-meta">
+              <div class="profile-meta-item" id="profileDepartmentContainer" style="display: none;">
+                <strong>Department:</strong> <span id="profileDepartment"></span>
+              </div>
+              <div class="profile-meta-item" id="profileRoleContainer" style="display: none;">
+                <strong>Role:</strong> <span id="profileRole"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="profile-section">
+          <h2 class="profile-section-title">About Me</h2>
+          <div class="profile-bio" id="profileBio">No bio available.</div>
+        </div>
+
+        <div class="profile-actions">
+          <button class="btn-edit" id="editProfileBtn">Edit Profile</button>
+        </div>
+      </div>
+
+      <!-- Edit Mode -->
+      <div id="editMode" class="hidden">
+        <form id="profileForm">
+          <div class="form-group">
+            <label class="form-label">Profile Picture</label>
+            <div class="profile-avatar-section">
+              <div class="profile-avatar-container">
+                <img id="editAvatarImg" class="profile-avatar hidden" alt="Profile picture" />
+                <div id="editAvatarPlaceholder" class="profile-avatar-placeholder"></div>
+              </div>
+              <div class="avatar-buttons">
+                <button type="button" class="btn-upload-avatar" id="editAvatarUploadBtn">
+                  <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="12" y1="18" x2="12" y2="12"></line>
+                    <line x1="9" y1="15" x2="15" y2="15"></line>
+                  </svg>
+                  Upload Photo
+                </button>
+                <button type="button" class="btn-remove-avatar" id="removeAvatarBtn" disabled>
+                  <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14zM10 11v6M14 11v6"></path>
+                  </svg>
+                  Remove Photo
+                </button>
+              </div>
+            </div>
+            <input type="file" id="avatarFileInput" accept="image/*" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="fullNameInput">Full Name</label>
+            <input type="text" id="fullNameInput" class="form-input" placeholder="Enter your full name" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="emailInput">Email</label>
+            <input type="email" id="emailInput" class="form-input" disabled />
+            <p style="font-size: 0.875rem; color: #64748b; margin-top: 0.25rem;">Email cannot be changed</p>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="departmentInput">Department</label>
+            <input type="text" id="departmentInput" class="form-input" placeholder="Enter your department" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="roleInput">Role</label>
+            <input type="text" id="roleInput" class="form-input" placeholder="Enter your role" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="bioInput">About Me / Bio</label>
+            <textarea id="bioInput" class="form-textarea" placeholder="Tell us about yourself..."></textarea>
+          </div>
+
+          <div class="profile-actions">
+            <button type="button" class="btn-cancel" id="cancelEditBtn">Cancel</button>
+            <button type="submit" class="btn-edit">Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <footer class="credits">Made by: Reema Alomari, Abdullah Alqahtani, Yara AlSardi</footer>
+
+  <script src="./scripts/auth.js"></script>
+  <script src="./scripts/profile.js"></script>
+  <script src="./scripts/global.js"></script>
+  <script>
+    // Account display and logout functionality
+    (function() {
+      const accountDisplay = document.getElementById('accountDisplay');
+      const accountButton = document.getElementById('accountButton');
+      const accountGreeting = document.getElementById('accountGreeting');
+      const accountDropdown = document.getElementById('accountDropdown');
+      const accountAvatar = document.getElementById('accountAvatar');
+      const accountIcon = document.getElementById('accountIcon');
+      const logoutButton = document.getElementById('logoutButton');
+
+      function updateAccountDisplay() {
+        const currentUser = getCurrentUser();
+        const isGuest = isGuestMode();
+
+        if (currentUser) {
+          accountGreeting.textContent = `Hello, ${currentUser.username || currentUser.email || 'User'}!`;
+          accountDisplay.style.display = 'flex';
+          
+          // Update avatar
+          const profilePicture = getUserProfilePicture(currentUser.id);
+          if (profilePicture) {
+            accountAvatar.src = profilePicture;
+            accountAvatar.style.display = 'block';
+            accountIcon.style.display = 'none';
+          } else {
+            accountAvatar.style.display = 'none';
+            accountIcon.style.display = 'block';
+          }
+
+          if (accountButton) {
+            accountButton.style.cursor = 'pointer';
+            accountButton.addEventListener('click', (e) => {
+              e.stopPropagation();
+              const isVisible = accountDropdown.style.display === 'block';
+              accountDropdown.style.display = isVisible ? 'none' : 'block';
+            });
+          }
+        } else if (isGuest) {
+          accountGreeting.textContent = 'Hello, Guest!';
+          accountDisplay.style.display = 'flex';
+          accountAvatar.style.display = 'none';
+          accountIcon.style.display = 'block';
+          if (accountDropdown) accountDropdown.style.display = 'none';
+          if (accountButton) {
+            accountButton.style.cursor = 'default';
+            accountButton.onclick = null;
+          }
+        } else {
+          if (window.fadeNavigate) {
+            window.fadeNavigate('./login.html');
+          } else {
+            window.location.href = './login.html';
+          }
+          return;
+        }
+
+        if (currentUser) {
+          document.addEventListener('click', (e) => {
+            if (accountDisplay && !accountDisplay.contains(e.target)) {
+              if (accountDropdown) accountDropdown.style.display = 'none';
+            }
+          });
+        }
+
+        if (logoutButton) {
+          logoutButton.addEventListener('click', () => {
+            logout();
+            if (window.fadeNavigate) {
+              window.fadeNavigate('./index.html');
+            } else {
+              window.location.href = './index.html';
+            }
+          });
+        }
+      }
+
+      updateAccountDisplay();
+    })();
+
+    // Profile page functionality
+    (function() {
+      const currentUser = getCurrentUser();
+      if (!currentUser) {
+        window.location.href = './login.html';
+        return;
+      }
+
+      const userId = currentUser.id;
+      let newAvatarData = null;
+      let avatarRemoved = false;
+
+      // Elements
+      const viewMode = document.getElementById('viewMode');
+      const editMode = document.getElementById('editMode');
+      const editProfileBtn = document.getElementById('editProfileBtn');
+      const cancelEditBtn = document.getElementById('cancelEditBtn');
+      const profileForm = document.getElementById('profileForm');
+      
+      // View mode elements
+      const profileName = document.getElementById('profileName');
+      const profileEmail = document.getElementById('profileEmail');
+      const profileDepartment = document.getElementById('profileDepartment');
+      const profileDepartmentContainer = document.getElementById('profileDepartmentContainer');
+      const profileRole = document.getElementById('profileRole');
+      const profileRoleContainer = document.getElementById('profileRoleContainer');
+      const profileBio = document.getElementById('profileBio');
+      const profileAvatarImg = document.getElementById('profileAvatarImg');
+      const profileAvatarPlaceholder = document.getElementById('profileAvatarPlaceholder');
+      const avatarUploadBtn = document.getElementById('avatarUploadBtn');
+      
+      // Edit mode elements
+      const fullNameInput = document.getElementById('fullNameInput');
+      const emailInput = document.getElementById('emailInput');
+      const departmentInput = document.getElementById('departmentInput');
+      const roleInput = document.getElementById('roleInput');
+      const bioInput = document.getElementById('bioInput');
+      const editAvatarImg = document.getElementById('editAvatarImg');
+      const editAvatarPlaceholder = document.getElementById('editAvatarPlaceholder');
+      const editAvatarUploadBtn = document.getElementById('editAvatarUploadBtn');
+      const avatarFileInput = document.getElementById('avatarFileInput');
+      const removeAvatarBtn = document.getElementById('removeAvatarBtn');
+
+      let isInitialRender = true;
+
+      function updateAvatarDisplay(avatarImg, placeholder, hasPicture, pictureSrc, initials, avatarColor, skipTransition = false) {
+        if (hasPicture && pictureSrc) {
+          if (skipTransition || isInitialRender) {
+            // Instant update on first render
+            placeholder.classList.add('hidden');
+            avatarImg.src = pictureSrc;
+            avatarImg.classList.remove('hidden');
+            avatarImg.style.opacity = '1';
+          } else {
+            // Fade out placeholder, fade in image
+            placeholder.style.opacity = '0';
+            setTimeout(() => {
+              placeholder.classList.add('hidden');
+              avatarImg.src = pictureSrc;
+              avatarImg.classList.remove('hidden');
+              avatarImg.style.opacity = '0';
+              setTimeout(() => {
+                avatarImg.style.opacity = '1';
+              }, 10);
+            }, 100);
+          }
+        } else {
+          if (skipTransition || isInitialRender) {
+            // Instant update on first render
+            avatarImg.classList.add('hidden');
+            placeholder.textContent = initials;
+            placeholder.style.setProperty('--avatar-color', avatarColor);
+            placeholder.style.background = avatarColor;
+            placeholder.classList.remove('hidden');
+            placeholder.style.opacity = '1';
+          } else {
+            // Fade out image, fade in placeholder
+            avatarImg.style.opacity = '0';
+            setTimeout(() => {
+              avatarImg.classList.add('hidden');
+              placeholder.textContent = initials;
+              placeholder.style.setProperty('--avatar-color', avatarColor);
+              placeholder.style.background = avatarColor;
+              placeholder.classList.remove('hidden');
+              placeholder.style.opacity = '0';
+              setTimeout(() => {
+                placeholder.style.opacity = '1';
+              }, 10);
+            }, 100);
+          }
+        }
+      }
+
+      function renderProfile() {
+        const user = getUserWithProfile(userId);
+        if (!user) return;
+
+        // View mode
+        profileName.textContent = user.fullName;
+        profileEmail.textContent = user.email;
+        
+        if (user.department) {
+          profileDepartment.textContent = user.department;
+          profileDepartmentContainer.style.display = 'block';
+        } else {
+          profileDepartmentContainer.style.display = 'none';
+        }
+        
+        if (user.role) {
+          profileRole.textContent = user.role;
+          profileRoleContainer.style.display = 'block';
+        } else {
+          profileRoleContainer.style.display = 'none';
+        }
+        
+        profileBio.textContent = user.bio || 'No bio available.';
+
+        // Update view mode avatar
+        const hasProfilePicture = !!user.profilePicture;
+        updateAvatarDisplay(
+          profileAvatarImg,
+          profileAvatarPlaceholder,
+          hasProfilePicture,
+          user.profilePicture,
+          user.initials,
+          user.avatarColor,
+          isInitialRender
+        );
+
+        // Edit mode
+        fullNameInput.value = user.fullName;
+        emailInput.value = user.email;
+        departmentInput.value = user.department || '';
+        roleInput.value = user.role || '';
+        bioInput.value = user.bio || '';
+
+        // Update edit mode avatar
+        updateAvatarDisplay(
+          editAvatarImg,
+          editAvatarPlaceholder,
+          hasProfilePicture,
+          user.profilePicture,
+          user.initials,
+          user.avatarColor,
+          isInitialRender
+        );
+
+        // Mark initial render as complete
+        if (isInitialRender) {
+          setTimeout(() => {
+            isInitialRender = false;
+          }, 100);
+        }
+
+        // Update remove button state
+        if (removeAvatarBtn) {
+          if (hasProfilePicture || newAvatarData) {
+            removeAvatarBtn.disabled = false;
+          } else {
+            removeAvatarBtn.disabled = true;
+          }
+        }
+      }
+
+      function showEditMode() {
+        viewMode.classList.add('hidden');
+        editMode.classList.remove('hidden');
+        renderProfile();
+      }
+
+      function showViewMode() {
+        editMode.classList.add('hidden');
+        viewMode.classList.remove('hidden');
+        newAvatarData = null;
+        avatarRemoved = false;
+        renderProfile();
+      }
+
+      function handleAvatarUpload(file) {
+        if (!file || !file.type.startsWith('image/')) {
+          alert('Please select a valid image file.');
+          return;
+        }
+
+        if (file.size > 5 * 1024 * 1024) { // 5MB limit
+          alert('Image size must be less than 5MB.');
+          return;
+        }
+
+        fileToDataURL(file).then(dataURL => {
+          newAvatarData = dataURL;
+          avatarRemoved = false; // Reset removal flag when uploading new image
+          // Update edit mode avatar immediately with smooth transition
+          const user = getUserWithProfile(userId);
+          updateAvatarDisplay(
+            editAvatarImg,
+            editAvatarPlaceholder,
+            true,
+            dataURL,
+            user ? user.initials : 'U',
+            user ? user.avatarColor : '#94a3b8'
+          );
+          // Enable remove button
+          if (removeAvatarBtn) {
+            removeAvatarBtn.disabled = false;
+          }
+        }).catch(err => {
+          console.error('Failed to process image', err);
+          alert('Failed to process image. Please try again.');
+        });
+      }
+
+      // Event listeners
+      editProfileBtn.addEventListener('click', showEditMode);
+      cancelEditBtn.addEventListener('click', showViewMode);
+
+      editAvatarUploadBtn.addEventListener('click', () => {
+        avatarFileInput.click();
+      });
+
+      avatarFileInput.addEventListener('change', (e) => {
+        if (e.target.files && e.target.files[0]) {
+          handleAvatarUpload(e.target.files[0]);
+        }
+      });
+
+      removeAvatarBtn.addEventListener('click', () => {
+        newAvatarData = null;
+        avatarRemoved = true;
+        // Update edit mode avatar immediately with smooth transition
+        const user = getUserWithProfile(userId);
+        updateAvatarDisplay(
+          editAvatarImg,
+          editAvatarPlaceholder,
+          false,
+          null,
+          user ? user.initials : 'U',
+          user ? user.avatarColor : '#94a3b8'
+        );
+        // Disable remove button
+        if (removeAvatarBtn) {
+          removeAvatarBtn.disabled = true;
+        }
+      });
+
+      profileForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        
+        const profileData = {
+          fullName: fullNameInput.value.trim(),
+          department: departmentInput.value.trim(),
+          role: roleInput.value.trim(),
+          bio: bioInput.value.trim()
+        };
+
+        // Handle profile picture
+        if (avatarRemoved) {
+          // User explicitly removed the avatar - set to null to show initials
+          profileData.profilePicture = null;
+        } else if (newAvatarData !== null) {
+          // User uploaded a new image
+          profileData.profilePicture = newAvatarData;
+        }
+        // If neither condition is true, don't update profilePicture (keep existing value)
+
+        if (saveUserProfile(userId, profileData)) {
+          alert('Profile updated successfully!');
+          showViewMode();
+        } else {
+          alert('Failed to save profile. Please try again.');
+        }
+      });
+
+      // Initial render
+      renderProfile();
+    })();
+  </script>
+</body>
+</html>
+

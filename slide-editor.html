@@ -653,6 +653,30 @@
       justify-content: space-between;
       margin-bottom: 0.5rem;
     }
+    .comment-author-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .comment-avatar {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+    .comment-avatar-placeholder {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 600;
+      color: white;
+      flex-shrink: 0;
+    }
     .comment-author {
       font-weight: 600;
       font-size: 0.875rem;
@@ -1250,6 +1274,15 @@
         <button id="shareCloseBtn" class="rounded-full border border-slate-200 px-2 py-1 text-sm text-slate-500 hover:bg-slate-100">Close</button>
       </div>
       <div class="mt-4 space-y-4">
+        <div>
+          <label class="text-xs font-semibold uppercase tracking-wide text-slate-500">Link to Team (optional)</label>
+          <div class="mt-1">
+            <select id="shareTeamSelect" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-[#004c97] focus:outline-none focus:ring-2 focus:ring-[#004c97]/30">
+              <option value="">No team (Personal project)</option>
+            </select>
+            <p class="mt-1 text-xs text-slate-500">Link this project to a team to enable collaboration</p>
+          </div>
+        </div>
         <div>
           <label class="text-xs font-semibold uppercase tracking-wide text-slate-500">Shareable Link</label>
           <div class="mt-1 flex gap-2">
@@ -1865,12 +1898,30 @@
       ? crypto.randomUUID()
       : `client-${Math.random().toString(16).slice(2)}`;
     
-    // Current user for comments (in a real app, this would come from auth)
-    const CURRENT_USER = {
-      id: SESSION_ID,
-      name: 'You',
-      avatar: null
-    };
+    // Get current user from auth system
+    function getCurrentUserForEditor() {
+      const user = getCurrentUser();
+      if (user) {
+        const userProfile = getUserWithProfile(user.id);
+        return {
+          id: user.id,
+          name: userProfile.fullName || user.username || user.email || 'You',
+          email: user.email,
+          avatar: userProfile.profilePicture || null,
+          initials: userProfile.initials,
+          avatarColor: userProfile.avatarColor
+        };
+      }
+      // Fallback for guest mode
+      return {
+        id: SESSION_ID,
+        name: 'Guest',
+        email: null,
+        avatar: null,
+        initials: 'G',
+        avatarColor: '#94a3b8'
+      };
+    }
     const urlParams = (typeof window !== 'undefined') ? new URLSearchParams(window.location.search) : null;
 
     let presentationId = urlParams?.get('id') || null;
@@ -2315,6 +2366,7 @@
     const shareCopyBtn = document.getElementById('shareCopyBtn');
     const shareLinkInput = document.getElementById('shareLinkInput');
     const shareCollaboratorList = document.getElementById('shareCollaboratorList');
+    const shareTeamSelect = document.getElementById('shareTeamSelect');
 
     const presenterOverlay = document.getElementById('presenterOverlay');
     const presenterCanvasEl = document.getElementById('presenterCanvas');
@@ -3149,6 +3201,8 @@
           preview: normalizedPreview,
         };
 
+        const isNewProject = existingIdx < 0;
+        
         if (existingIdx >= 0) {
           index[existingIdx] = entry;
         } else {
@@ -3160,6 +3214,19 @@
           index.length = MAX_RECENT_PRESENTATIONS;
         }
         localStorage.setItem(PRESENTATIONS_INDEX_KEY, JSON.stringify(index));
+        
+        // Track activity for new project creation
+        if (isNewProject) {
+          const currentUser = getCurrentUserForEditor();
+          if (currentUser && currentUser.id !== SESSION_ID) { // Only if logged in
+            logActivity({
+              userId: currentUser.id,
+              actionType: 'project_created',
+              projectId: presentationId,
+              details: { projectName: entryName }
+            });
+          }
+        }
       } catch (error) {
         console.warn('Failed to update recent presentations index', error);
       }
@@ -3168,18 +3235,41 @@
     function renderPresenceIndicators() {
       if (!presenceAvatarsEl) return;
       presenceAvatarsEl.innerHTML = '';
-      const active = collaborators.filter(c => c.status !== 'offline');
+      
+      // Get team members if project is linked to a team
+      const projectTeam = getProjectTeam(presentationId);
+      let teamMembers = [];
+      if (projectTeam) {
+        const members = getTeamMembersList(projectTeam.teamId);
+        teamMembers = members.map(m => {
+          const user = getUserById(m.userId);
+          if (!user) return null;
+          return {
+            id: user.id,
+            name: user.username || user.email || 'Unknown',
+            email: user.email,
+            role: m.role,
+            status: 'viewing' // Default status
+          };
+        }).filter(Boolean);
+      }
+      
+      // Combine with simulated collaborators for now (can be enhanced with real-time later)
+      const allCollaborators = teamMembers.length > 0 ? teamMembers : collaborators;
+      const active = allCollaborators.filter(c => c.status !== 'offline');
+      
       active.slice(0, 4).forEach(collab => {
         const badge = document.createElement('div');
         badge.className = 'flex h-8 w-8 items-center justify-center rounded-full border-2 border-white text-xs font-semibold text-white shadow-sm';
-        badge.style.backgroundColor = collab.color;
-        badge.title = `${collab.name} · ${collab.status}`;
-        badge.textContent = collab.name
+        badge.style.backgroundColor = collab.color || '#004c97';
+        badge.title = `${collab.name}${collab.role ? ` (${collab.role})` : ''} · ${collab.status}`;
+        const initials = (collab.name || 'U')
           .split(' ')
           .map(part => part[0])
           .join('')
           .slice(0, 2)
           .toUpperCase();
+        badge.textContent = initials;
         presenceAvatarsEl.appendChild(badge);
       });
       if (active.length > 4) {
@@ -3189,21 +3279,26 @@
         presenceAvatarsEl.appendChild(extra);
       }
       if (collaborationStatusEl) {
-        const editingCount = active.filter(c => c.status === 'editing').length;
-        const viewingCount = active.filter(c => c.status === 'viewing').length;
-        const parts = [];
-        if (editingCount) parts.push(`${editingCount} editing`);
-        if (viewingCount) parts.push(`${viewingCount} viewing`);
-        if (!parts.length) parts.push('All caught up');
-        collaborationStatusEl.textContent = parts.join(' · ');
+        if (projectTeam) {
+          collaborationStatusEl.textContent = `${teamMembers.length} team member${teamMembers.length !== 1 ? 's' : ''}`;
+        } else {
+          const editingCount = active.filter(c => c.status === 'editing').length;
+          const viewingCount = active.filter(c => c.status === 'viewing').length;
+          const parts = [];
+          if (editingCount) parts.push(`${editingCount} editing`);
+          if (viewingCount) parts.push(`${viewingCount} viewing`);
+          if (!parts.length) parts.push('All caught up');
+          collaborationStatusEl.textContent = parts.join(' · ');
+        }
       }
       if (shareCollaboratorList) {
         shareCollaboratorList.innerHTML = '';
-        collaborators.forEach(collab => {
+        const listToShow = teamMembers.length > 0 ? teamMembers : collaborators;
+        listToShow.forEach(collab => {
           const li = document.createElement('li');
           li.className = 'flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2';
           const name = document.createElement('span');
-          name.textContent = collab.name;
+          name.textContent = collab.name + (collab.role ? ` (${collab.role})` : '');
           name.className = 'font-medium text-slate-700';
           const status = document.createElement('span');
           status.textContent = collab.status === 'editing' ? 'Editing' : collab.status === 'viewing' ? 'Viewing' : collab.status === 'away' ? 'Away' : 'Offline';
@@ -3233,6 +3328,25 @@
       if (!shareModal) return;
       updateShareLink();
       renderPresenceIndicators();
+      
+      // Populate team selector
+      if (shareTeamSelect) {
+        const currentUser = getCurrentUserForEditor();
+        const userTeams = currentUser && currentUser.id !== SESSION_ID ? getUserTeams(currentUser.id) : [];
+        const currentTeam = getProjectTeam(presentationId);
+        
+        shareTeamSelect.innerHTML = '<option value="">No team (Personal project)</option>';
+        userTeams.forEach(team => {
+          const option = document.createElement('option');
+          option.value = team.teamId;
+          option.textContent = team.name;
+          if (currentTeam && currentTeam.teamId === team.teamId) {
+            option.selected = true;
+          }
+          shareTeamSelect.appendChild(option);
+        });
+      }
+      
       shareModal.classList.remove('hidden');
     }
 
@@ -4190,51 +4304,97 @@
     }
     
     function addComment(slideId, content, elementId = null) {
+      const currentUser = getCurrentUserForEditor();
       const comments = loadCommentsForSlide(slideId);
       const newComment = {
         id: crypto.randomUUID(),
         slideId,
         elementId,
-        author: CURRENT_USER.name,
-        authorId: CURRENT_USER.id,
+        author: currentUser.name,
+        authorId: currentUser.id,
         content: content.trim(),
         timestamp: Date.now(),
         replies: []
       };
       comments.push(newComment);
       saveCommentsForSlide(slideId, comments);
+      
+      // Track activity
+      const currentSlide = slides.find(s => s.id === slideId);
+      const slideIndex = slides.findIndex(s => s.id === slideId);
+      const projectTeam = getProjectTeam(presentationId);
+      if (projectTeam) {
+        logActivity({
+          teamId: projectTeam.teamId,
+          userId: currentUser.id,
+          actionType: 'comment_added',
+          projectId: presentationId,
+          slideId: slideId,
+          details: { slideNumber: slideIndex + 1, elementId }
+        });
+      }
+      
       return newComment;
     }
     
     function editComment(slideId, commentId, newContent) {
+      const currentUser = getCurrentUserForEditor();
       const comments = loadCommentsForSlide(slideId);
       const comment = comments.find(c => c.id === commentId);
-      if (!comment || comment.authorId !== CURRENT_USER.id) return null;
+      if (!comment || comment.authorId !== currentUser.id) return null;
       comment.content = newContent.trim();
       comment.editedAt = Date.now();
       saveCommentsForSlide(slideId, comments);
+      
+      // Track activity
+      const projectTeam = getProjectTeam(presentationId);
+      if (projectTeam) {
+        logActivity({
+          teamId: projectTeam.teamId,
+          userId: currentUser.id,
+          actionType: 'comment_edited',
+          projectId: presentationId,
+          slideId: slideId
+        });
+      }
+      
       return comment;
     }
     
     function deleteComment(slideId, commentId) {
+      const currentUser = getCurrentUserForEditor();
       const comments = loadCommentsForSlide(slideId);
       const index = comments.findIndex(c => c.id === commentId);
       if (index === -1) return false;
       const comment = comments[index];
-      if (comment.authorId !== CURRENT_USER.id) return false;
+      if (comment.authorId !== currentUser.id) return false;
       comments.splice(index, 1);
       saveCommentsForSlide(slideId, comments);
+      
+      // Track activity
+      const projectTeam = getProjectTeam(presentationId);
+      if (projectTeam) {
+        logActivity({
+          teamId: projectTeam.teamId,
+          userId: currentUser.id,
+          actionType: 'comment_deleted',
+          projectId: presentationId,
+          slideId: slideId
+        });
+      }
+      
       return true;
     }
     
     function addReply(slideId, commentId, content) {
+      const currentUser = getCurrentUserForEditor();
       const comments = loadCommentsForSlide(slideId);
       const comment = comments.find(c => c.id === commentId);
       if (!comment) return null;
       const reply = {
         id: crypto.randomUUID(),
-        author: CURRENT_USER.name,
-        authorId: CURRENT_USER.id,
+        author: currentUser.name,
+        authorId: currentUser.id,
         content: content.trim(),
         timestamp: Date.now()
       };
@@ -4245,13 +4405,14 @@
     }
     
     function deleteReply(slideId, commentId, replyId) {
+      const currentUser = getCurrentUserForEditor();
       const comments = loadCommentsForSlide(slideId);
       const comment = comments.find(c => c.id === commentId);
       if (!comment || !comment.replies) return false;
       const index = comment.replies.findIndex(r => r.id === replyId);
       if (index === -1) return false;
       const reply = comment.replies[index];
-      if (reply.authorId !== CURRENT_USER.id) return false;
+      if (reply.authorId !== currentUser.id) return false;
       comment.replies.splice(index, 1);
       saveCommentsForSlide(slideId, comments);
       return true;
@@ -4297,19 +4458,41 @@
       
       if (commentsEmptyState) commentsEmptyState.style.display = 'none';
       
+      const currentUser = getCurrentUserForEditor();
       commentsList.innerHTML = slideComments.map(comment => {
-        const isOwner = comment.authorId === CURRENT_USER.id;
+        const isOwner = comment.authorId === currentUser.id;
         const timeStr = formatTimestamp(comment.timestamp);
         const editedStr = comment.editedAt ? ` (edited ${formatTimestamp(comment.editedAt)})` : '';
         const elementInfo = comment.elementId ? `<span class="text-xs text-slate-400">• Attached to element</span>` : '';
         
+        // Get profile data for comment author
+        const commentAuthorProfile = getUserWithProfile(comment.authorId);
+        const commentAuthorName = commentAuthorProfile ? (commentAuthorProfile.fullName || comment.author) : comment.author;
+        const commentAuthorAvatar = commentAuthorProfile ? getUserProfilePicture(comment.authorId) : null;
+        const commentAuthorInitials = commentAuthorProfile ? commentAuthorProfile.initials : (comment.author ? comment.author.charAt(0).toUpperCase() : 'U');
+        const commentAuthorColor = commentAuthorProfile ? commentAuthorProfile.avatarColor : '#94a3b8';
+        
         const repliesHtml = (comment.replies || []).map(reply => {
-          const isReplyOwner = reply.authorId === CURRENT_USER.id;
+          const isReplyOwner = reply.authorId === currentUser.id;
           const replyTimeStr = formatTimestamp(reply.timestamp);
+          
+          // Get profile data for reply author
+          const replyAuthorProfile = getUserWithProfile(reply.authorId);
+          const replyAuthorName = replyAuthorProfile ? (replyAuthorProfile.fullName || reply.author) : reply.author;
+          const replyAuthorAvatar = replyAuthorProfile ? getUserProfilePicture(reply.authorId) : null;
+          const replyAuthorInitials = replyAuthorProfile ? replyAuthorProfile.initials : (reply.author ? reply.author.charAt(0).toUpperCase() : 'U');
+          const replyAuthorColor = replyAuthorProfile ? replyAuthorProfile.avatarColor : '#94a3b8';
+          
           return `
             <div class="comment-reply">
               <div class="comment-header">
-                <span class="comment-author">${reply.author}</span>
+                <div class="comment-author-wrapper">
+                  ${replyAuthorAvatar ? 
+                    `<img src="${escapeHtml(replyAuthorAvatar)}" class="comment-avatar" alt="${escapeHtml(replyAuthorName)}" />` :
+                    `<div class="comment-avatar-placeholder" style="background: ${replyAuthorColor};">${escapeHtml(replyAuthorInitials)}</div>`
+                  }
+                  <span class="comment-author">${escapeHtml(replyAuthorName)}</span>
+                </div>
                 <span class="comment-time">${replyTimeStr}</span>
               </div>
               <div class="comment-content">${escapeHtml(reply.content)}</div>
@@ -4326,7 +4509,13 @@
           <div class="comment-item" data-comment-id="${comment.id}">
             <div class="comment-header">
               <div class="flex items-center gap-2">
-                <span class="comment-author">${escapeHtml(comment.author)}</span>
+                <div class="comment-author-wrapper">
+                  ${commentAuthorAvatar ? 
+                    `<img src="${escapeHtml(commentAuthorAvatar)}" class="comment-avatar" alt="${escapeHtml(commentAuthorName)}" />` :
+                    `<div class="comment-avatar-placeholder" style="background: ${commentAuthorColor};">${escapeHtml(commentAuthorInitials)}</div>`
+                  }
+                  <span class="comment-author">${escapeHtml(commentAuthorName)}</span>
+                </div>
                 ${elementInfo}
               </div>
               <span class="comment-time">${timeStr}${editedStr}</span>
@@ -5592,11 +5781,26 @@
       if (!slide) return;
       const index = slide.elements.findIndex((el) => el.id === selectedElementId);
       if (index === -1) return;
+      const deletedElement = slide.elements[index];
       slide.elements.splice(index, 1);
       selectedElementId = null;
       editingTextElementId = null;
       markDirty();
       render();
+      
+      // Track activity
+      const currentUser = getCurrentUserForEditor();
+      const projectTeam = getProjectTeam(presentationId);
+      if (projectTeam && currentUser && currentUser.id !== SESSION_ID && deletedElement) {
+        logActivity({
+          teamId: projectTeam.teamId,
+          userId: currentUser.id,
+          actionType: 'element_deleted',
+          projectId: presentationId,
+          slideId: slide.id,
+          details: { elementType: deletedElement.type || 'element', slideNumber: activeSlideIndex + 1 }
+        });
+      }
     }
 
     const MIN_CHART_DIMENSION = 120;
@@ -6239,6 +6443,7 @@
     // Add slide
     if (addSlideBtn) {
       addSlideBtn.addEventListener('click', () => {
+        const currentUser = getCurrentUserForEditor();
         const newSlide = {
           id: crypto.randomUUID(),
           title: `Slide ${slides.length + 1}`,
@@ -6253,6 +6458,19 @@
         editingTextElementId = null;
         markDirty();
         render();
+        
+        // Track activity
+        const projectTeam = getProjectTeam(presentationId);
+        if (projectTeam) {
+          logActivity({
+            teamId: projectTeam.teamId,
+            userId: currentUser.id,
+            actionType: 'slide_created',
+            projectId: presentationId,
+            slideId: newSlide.id,
+            details: { slideNumber: activeSlideIndex + 1 }
+          });
+        }
       });
     }
 
@@ -6287,6 +6505,9 @@
         if (!confirm('Delete the current slide?')) {
           return;
         }
+        const currentUser = getCurrentUserForEditor();
+        const deletedSlide = slides[activeSlideIndex];
+        const slideNumber = activeSlideIndex + 1;
         slides.splice(activeSlideIndex, 1);
         if (activeSlideIndex >= slides.length) {
           activeSlideIndex = slides.length - 1;
@@ -6295,6 +6516,19 @@
         editingTextElementId = null;
         markDirty();
         render();
+        
+        // Track activity
+        const projectTeam = getProjectTeam(presentationId);
+        if (projectTeam && deletedSlide) {
+          logActivity({
+            teamId: projectTeam.teamId,
+            userId: currentUser.id,
+            actionType: 'slide_deleted',
+            projectId: presentationId,
+            slideId: deletedSlide.id,
+            details: { slideNumber }
+          });
+        }
       });
     }
 
@@ -6302,6 +6536,7 @@
       renameSlideBtn.addEventListener('click', () => {
         const slide = getActiveSlide();
         if (!slide) return;
+        const oldTitle = slide.title;
         const result = prompt('Slide title', slide.title || `Slide ${activeSlideIndex + 1}`);
         if (result !== null) {
           const trimmed = result.trim();
@@ -6309,6 +6544,20 @@
             slide.title = trimmed;
             markDirty();
             render();
+            
+            // Track activity
+            const currentUser = getCurrentUserForEditor();
+            const projectTeam = getProjectTeam(presentationId);
+            if (projectTeam && currentUser && currentUser.id !== SESSION_ID && trimmed !== oldTitle) {
+              logActivity({
+                teamId: projectTeam.teamId,
+                userId: currentUser.id,
+                actionType: 'slide_renamed',
+                projectId: presentationId,
+                slideId: slide.id,
+                details: { slideNumber: activeSlideIndex + 1, newName: trimmed, oldName: oldTitle }
+              });
+            }
           }
         }
       });
@@ -6358,6 +6607,21 @@
         selectedElementId = element.id;
         markDirty();
         render();
+        
+        // Track activity
+        const currentUser = getCurrentUserForEditor();
+        const projectTeam = getProjectTeam(presentationId);
+        if (projectTeam && currentUser && currentUser.id !== SESSION_ID) {
+          logActivity({
+            teamId: projectTeam.teamId,
+            userId: currentUser.id,
+            actionType: 'element_added',
+            projectId: presentationId,
+            slideId: slide.id,
+            details: { elementType: 'text', slideNumber: activeSlideIndex + 1 }
+          });
+        }
+        
         requestAnimationFrame(() => {
           const target = canvasContainerEl.querySelector(`[data-element-id="${element.id}"]`);
           if (target) {
@@ -7101,6 +7365,36 @@
         }
       });
     }
+    if (shareTeamSelect) {
+      shareTeamSelect.addEventListener('change', (e) => {
+        const teamId = e.target.value;
+        const currentUser = getCurrentUserForEditor();
+        
+        if (teamId) {
+          // Link project to team
+          const result = linkProjectToTeam(presentationId, teamId);
+          if (result.success) {
+            // Track activity
+            const team = getTeams().find(t => t.teamId === teamId);
+            if (team && currentUser && currentUser.id !== SESSION_ID) {
+              logActivity({
+                teamId: teamId,
+                userId: currentUser.id,
+                actionType: 'project_created',
+                projectId: presentationId,
+                details: { projectName: loadedPresentationName || 'Untitled', linkedToTeam: true }
+              });
+            }
+          }
+        } else {
+          // Unlink from team (remove team project link)
+          const projects = getTeamProjects();
+          const filtered = projects.filter(p => p.projectId !== presentationId);
+          saveTeamProjects(filtered);
+        }
+      });
+    }
+    
     if (shareCopyBtn) {
       shareCopyBtn.addEventListener('click', async () => {
         const link = updateShareLink();
@@ -7694,6 +7988,9 @@
       box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
     }
   </style>
+  <script src="./scripts/auth.js"></script>
+  <script src="./scripts/profile.js"></script>
+  <script src="./scripts/teams.js"></script>
 </body>
 </html>
 
