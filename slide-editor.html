@@ -128,11 +128,18 @@
       position: relative;
       overflow: visible;
       transition: width 0.25s ease, min-width 0.25s ease, max-width 0.25s ease, padding 0.25s ease, border-color 0.25s ease;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      max-height: 100vh;
+      width: 260px;
+      min-width: 260px;
+      max-width: 320px;
     }
     .slides-sidebar--collapsed {
-      width: 56px;
-      min-width: 56px;
-      max-width: 56px;
+      width: 48px !important;
+      min-width: 48px !important;
+      max-width: 48px !important;
       padding: 0;
       border-right-color: transparent;
     }
@@ -145,8 +152,42 @@
     }
     .slides-sidebar--collapsed .slides-sidebar__header {
       justify-content: center;
-      padding: 12px 0;
+      align-items: center;
+      padding: 0;
       background: transparent;
+      border-bottom: none;
+      min-height: 48px;
+    }
+    .slides-sidebar--collapsed .slides-sidebar-toggle {
+      width: 100%;
+      margin: 0;
+    }
+    .slides-sidebar__header {
+      flex-shrink: 0;
+    }
+    #thumbnails {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding-right: 4px;
+      scrollbar-width: thin;
+      scrollbar-color: #9db7d1 #e6eef7;
+    }
+    /* Custom scrollbar for thumbnails */
+    #thumbnails::-webkit-scrollbar {
+      width: 6px;
+    }
+    #thumbnails::-webkit-scrollbar-track {
+      background: #e6eef7;
+      border-radius: 10px;
+    }
+    #thumbnails::-webkit-scrollbar-thumb {
+      background: #9db7d1;
+      border-radius: 10px;
+    }
+    #thumbnails::-webkit-scrollbar-thumb:hover {
+      background: #7b9ab7;
     }
     .toolbar-icon-btn {
       display: inline-flex;
@@ -187,16 +228,25 @@
       background: rgba(0, 76, 151, 0.08);
       color: #004c97;
       cursor: pointer;
-      transition: transform 0.2s ease, background 0.2s ease;
+      transition: width 0.25s ease, background 0.2s ease, border-radius 0.25s ease, border 0.25s ease;
     }
     .slides-sidebar-toggle:hover {
       background: rgba(0, 76, 151, 0.16);
     }
     .slides-sidebar-toggle__icon {
       display: inline-block;
+      transition: transform 0.25s ease;
+      font-size: 14px;
     }
-    .slides-sidebar--collapsed .slides-sidebar-toggle__icon {
-      transform: rotate(180deg);
+    .slides-sidebar--collapsed .slides-sidebar-toggle {
+      width: 100%;
+      border-radius: 0;
+      border: none;
+      background: transparent;
+      height: 48px;
+    }
+    .slides-sidebar--collapsed .slides-sidebar-toggle:hover {
+      background: rgba(0, 76, 151, 0.08);
     }
     /* Hide native file inputs */
     input[type=file] { display: none; }
@@ -962,14 +1012,14 @@
     <!-- Content Row -->
     <div class="flex flex-1">
       <!-- Left Sidebar -->
-      <aside id="slidesSidebar" class="slides-sidebar w-1/5 min-w-[240px] max-w-[320px] border-r border-slate-200 bg-white">
+      <aside id="slidesSidebar" class="slides-sidebar border-r border-slate-200 bg-white">
         <div class="slides-sidebar__header flex items-center justify-between gap-2 border-b border-slate-200 bg-gradient-to-r from-[#004c97]/10 to-emerald-500/10 px-4 py-4">
           <h1 class="slides-sidebar__title text-lg font-semibold text-[#004c97]">Slides</h1>
           <button id="toggleSlidesSidebar" type="button" class="slides-sidebar-toggle" title="Toggle Slides">
             <span class="slides-sidebar-toggle__icon">❮</span>
           </button>
         </div>
-        <div id="thumbnails" class="overflow-y-auto p-3 space-y-3">
+        <div id="thumbnails" class="p-3 space-y-3">
           <!-- Thumbnails injected by JS -->
         </div>
       </aside>
