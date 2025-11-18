@@ -243,6 +243,37 @@
     .project-menu-item.danger:hover {
       background: #fee2e2;
     }
+    .project-card.important {
+      border: 2px solid #F4B400;
+      box-shadow: 0 6px 18px rgba(244, 180, 0, 0.25);
+    }
+    .important-badge {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      background: #F4B400;
+      color: #fff;
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 8px;
+      font-weight: 600;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      box-shadow: 0 2px 8px rgba(244, 180, 0, 0.3);
+    }
+    .important-badge svg {
+      width: 14px;
+      height: 14px;
+      fill: currentColor;
+    }
+    .project-menu-item.important {
+      color: #F4B400;
+    }
+    .project-menu-item.important:hover {
+      background: #FEF7E0;
+    }
     .empty-state {
       text-align: center;
       padding: 4rem 2rem;
@@ -501,6 +532,7 @@
           <option value="newest">Newest First</option>
           <option value="az">Alphabetically A-Z</option>
           <option value="za">Alphabetically Z-A</option>
+          <option value="important">Only Important ⭐</option>
         </select>
         <button class="btn-new-project" id="newProjectBtn">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
@@ -513,9 +545,9 @@
 
       <div id="projectsGrid" class="projects-grid"></div>
       <div id="emptyState" class="empty-state" style="display: none;">
-        <h2>No projects found</h2>
-        <p>Create your first project to get started!</p>
-        <button class="btn-new-project" onclick="document.getElementById('newProjectBtn').click()">
+        <h2 id="emptyStateMessage">No projects found</h2>
+        <p id="emptyStateSubtext">Create your first project to get started!</p>
+        <button class="btn-new-project" onclick="document.getElementById('newProjectBtn').click()" id="emptyStateButton" style="display: none;">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="10" y1="4" x2="10" y2="16"></line>
             <line x1="4" y1="10" x2="16" y2="10"></line>
@@ -760,7 +792,12 @@
         filteredProjects = [...allProjects];
         // Debug log to verify all projects are loaded
         console.log("Loaded projects:", allProjects);
-        renderProjects();
+        // Apply current filter/sort
+        const sortValue = document.getElementById('sortSelect')?.value;
+        if (sortValue === 'important') {
+          filteredProjects = filteredProjects.filter(p => p.important === true);
+        }
+        sortProjects();
         
         // Generate thumbnails for projects that don't have them
         allProjects.forEach(async (project) => {
@@ -785,10 +822,37 @@
     function renderProjects() {
       const grid = document.getElementById('projectsGrid');
       const emptyState = document.getElementById('emptyState');
+      const sortValue = document.getElementById('sortSelect').value;
+      const isEmptyState = document.getElementById('emptyStateMessage');
+      const isEmptyStateSubtext = document.getElementById('emptyStateSubtext');
 
       if (filteredProjects.length === 0) {
         grid.innerHTML = '';
         emptyState.style.display = 'block';
+        const emptyStateButton = document.getElementById('emptyStateButton');
+        
+        // Update empty state message based on filter
+        if (sortValue === 'important') {
+          if (isEmptyState) {
+            isEmptyState.innerHTML = 'No important projects found';
+          }
+          if (isEmptyStateSubtext) {
+            isEmptyStateSubtext.innerHTML = '⭐ Mark a project as important to see it here.';
+          }
+          if (emptyStateButton) {
+            emptyStateButton.style.display = 'none';
+          }
+        } else {
+          if (isEmptyState) {
+            isEmptyState.innerHTML = 'No projects found';
+          }
+          if (isEmptyStateSubtext) {
+            isEmptyStateSubtext.innerHTML = 'Create your first project to get started!';
+          }
+          if (emptyStateButton) {
+            emptyStateButton.style.display = 'inline-flex';
+          }
+        }
         return;
       }
 
@@ -805,8 +869,21 @@
           ? `<img src="${escapeHtml(project.thumbnail)}" alt="Project preview" class="project-thumbnail" />`
           : `<div class="project-thumbnail fallback">${escapeHtml(initials)}</div>`;
         
+        const isImportant = project.important === true;
+        const importantClass = isImportant ? 'important' : '';
+        const importantBadge = isImportant ? `
+          <div class="important-badge">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+            </svg>
+            Important
+          </div>
+        ` : '';
+        const importantMenuText = isImportant ? '✦ Remove Important' : '⭐ Mark as Important';
+        
         return `
-          <div class="project-card" data-project-id="${project.id}">
+          <div class="project-card ${importantClass}" data-project-id="${project.id}">
+            ${importantBadge}
             ${thumbnailHTML}
             <div class="project-info">
               <div class="project-title">${escapeHtml(project.name || 'Untitled')}</div>
@@ -817,6 +894,7 @@
                 ⋮
               </button>
               <div class="project-menu" id="menu-${project.id}">
+                <button class="project-menu-item ${isImportant ? 'important' : ''}" onclick="event.stopPropagation(); toggleImportant('${project.id}')">${importantMenuText}</button>
                 <button class="project-menu-item" onclick="event.stopPropagation(); renameProject('${project.id}')">Rename Project</button>
                 <button class="project-menu-item" onclick="event.stopPropagation(); duplicateProject('${project.id}')">Duplicate Project</button>
                 <button class="project-menu-item delete" onclick="event.stopPropagation(); deleteProject('${project.id}')">Delete Project</button>
@@ -870,6 +948,53 @@
       }, 0);
     }
 
+    // Toggle important status
+    function toggleImportant(projectId) {
+      try {
+        // Find project in allProjects
+        const projectIndex = allProjects.findIndex(p => p.id === projectId);
+        if (projectIndex === -1) return;
+        
+        const project = allProjects[projectIndex];
+        const newImportantStatus = !(project.important === true);
+        
+        // Update in allProjects array
+        project.important = newImportantStatus;
+        
+        // Update in filteredProjects if it exists there
+        const filteredIndex = filteredProjects.findIndex(p => p.id === projectId);
+        if (filteredIndex >= 0) {
+          filteredProjects[filteredIndex].important = newImportantStatus;
+        }
+        
+        // Update in index
+        const indexRaw = localStorage.getItem(PRESENTATIONS_INDEX_KEY);
+        if (indexRaw) {
+          const index = JSON.parse(indexRaw);
+          const indexProjectIndex = index.findIndex(p => p && p.id === projectId);
+          if (indexProjectIndex >= 0) {
+            index[indexProjectIndex].important = newImportantStatus;
+            localStorage.setItem(PRESENTATIONS_INDEX_KEY, JSON.stringify(index));
+          }
+        }
+        
+        // Update in project storage
+        const projectDataKey = PRESENTATION_STORAGE_PREFIX + projectId;
+        const projectDataRaw = localStorage.getItem(projectDataKey);
+        if (projectDataRaw) {
+          const projectData = JSON.parse(projectDataRaw);
+          projectData.important = newImportantStatus;
+          localStorage.setItem(projectDataKey, JSON.stringify(projectData));
+        }
+        
+        // Re-sort and re-render
+        sortProjects();
+      } catch (err) {
+        console.error('Failed to toggle important status', err);
+        alert('Failed to update project. Please try again.');
+      }
+    }
+
     // Open project
     function openProject(projectId) {
       window.location.href = `slide-editor.html?id=${encodeURIComponent(projectId)}`;
@@ -903,13 +1028,14 @@
         const newProjectId = crypto.randomUUID ? crypto.randomUUID() : `project-${Date.now()}-${Math.random().toString(36).slice(2)}`;
         const newProjectName = `${project.name || 'Untitled'} (Copy)`;
 
-        // Create duplicate
+        // Create duplicate (don't copy important flag - duplicates start as not important)
         const duplicateData = {
           ...projectData,
           id: newProjectId,
           name: newProjectName,
           createdAt: Date.now(),
-          updatedAt: Date.now()
+          updatedAt: Date.now(),
+          important: false
         };
 
         // Save duplicate
@@ -922,7 +1048,8 @@
           name: newProjectName,
           createdAt: Date.now(),
           updatedAt: Date.now(),
-          preview: project.preview
+          preview: project.preview,
+          important: false
         });
 
         localStorage.setItem(PRESENTATIONS_INDEX_KEY, JSON.stringify(index));
@@ -957,10 +1084,18 @@
     // Search projects
     function searchProjects(query) {
       const lowerQuery = query.toLowerCase().trim();
+      const sortValue = document.getElementById('sortSelect').value;
+      
+      // Start with all projects or filter by important if selected
+      let baseProjects = allProjects;
+      if (sortValue === 'important') {
+        baseProjects = allProjects.filter(p => p.important === true);
+      }
+      
       if (!lowerQuery) {
-        filteredProjects = [...allProjects];
+        filteredProjects = [...baseProjects];
       } else {
-        filteredProjects = allProjects.filter(project => {
+        filteredProjects = baseProjects.filter(project => {
           const name = (project.name || '').toLowerCase();
           return name.includes(lowerQuery);
         });
@@ -968,19 +1103,38 @@
       sortProjects();
     }
 
-    // Sort projects
+    // Sort projects (important projects appear first)
     function sortProjects() {
       const sortValue = document.getElementById('sortSelect').value;
       
+      // Helper function to prioritize important projects (for other sort modes)
+      const compareImportant = (a, b) => {
+        const aImportant = a.important === true;
+        const bImportant = b.important === true;
+        if (aImportant && !bImportant) return -1;
+        if (!aImportant && bImportant) return 1;
+        return 0;
+      };
+      
       switch (sortValue) {
         case 'recent':
-          filteredProjects.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+          filteredProjects.sort((a, b) => {
+            const importantCompare = compareImportant(a, b);
+            if (importantCompare !== 0) return importantCompare;
+            return (b.updatedAt || 0) - (a.updatedAt || 0);
+          });
           break;
         case 'newest':
-          filteredProjects.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+          filteredProjects.sort((a, b) => {
+            const importantCompare = compareImportant(a, b);
+            if (importantCompare !== 0) return importantCompare;
+            return (b.createdAt || 0) - (a.createdAt || 0);
+          });
           break;
         case 'az':
           filteredProjects.sort((a, b) => {
+            const importantCompare = compareImportant(a, b);
+            if (importantCompare !== 0) return importantCompare;
             const nameA = (a.name || 'Untitled').toLowerCase();
             const nameB = (b.name || 'Untitled').toLowerCase();
             return nameA.localeCompare(nameB);
@@ -988,10 +1142,16 @@
           break;
         case 'za':
           filteredProjects.sort((a, b) => {
+            const importantCompare = compareImportant(a, b);
+            if (importantCompare !== 0) return importantCompare;
             const nameA = (a.name || 'Untitled').toLowerCase();
             const nameB = (b.name || 'Untitled').toLowerCase();
             return nameB.localeCompare(nameA);
           });
+          break;
+        case 'important':
+          // Sort important projects by most recently edited
+          filteredProjects.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
           break;
       }
       renderProjects();
@@ -1025,7 +1185,9 @@
     });
 
     document.getElementById('sortSelect').addEventListener('change', () => {
-      sortProjects();
+      // Reset filtered projects based on current search and filter
+      const searchQuery = document.getElementById('searchInput').value;
+      searchProjects(searchQuery);
     });
 
     // New project
@@ -1063,7 +1225,8 @@
           backgroundColor: '#ffffff'
         }],
         createdAt: now,
-        updatedAt: now
+        updatedAt: now,
+        important: false
       };
 
       // Save project
@@ -1075,7 +1238,8 @@
         id: newProjectId,
         name: projectName,
         createdAt: now,
-        updatedAt: now
+        updatedAt: now,
+        important: false
       });
       localStorage.setItem(PRESENTATIONS_INDEX_KEY, JSON.stringify(index));
 

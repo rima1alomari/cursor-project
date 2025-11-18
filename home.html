@@ -349,8 +349,14 @@
           const allProjects = Array.isArray(parsed)
             ? parsed.filter((item) => item && item.id && item.name)
             : [];
-          // Sort by updatedAt (most recent first) and take only MAX_RECENT
-          const sorted = allProjects.sort((a, b) => (b?.updatedAt ?? 0) - (a?.updatedAt ?? 0));
+          // Sort: important projects first, then by updatedAt (most recent first)
+          const sorted = allProjects.sort((a, b) => {
+            const aImportant = a.important === true;
+            const bImportant = b.important === true;
+            if (aImportant && !bImportant) return -1;
+            if (!aImportant && bImportant) return 1;
+            return (b?.updatedAt ?? 0) - (a?.updatedAt ?? 0);
+          });
           const entries = sorted.slice(0, MAX_RECENT);
 
           if (!entries.length) return;

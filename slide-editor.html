@@ -3217,6 +3217,9 @@
           ? normalizePreview(metadata.preview)
           : (existing?.preview ? normalizePreview(existing.preview) : normalizePreview(presentationPreview));
 
+        // Preserve important flag from existing entry
+        const existingImportant = existing?.important === true;
+
         let entryName = resolvedName || existingName;
         const entryNameLower = entryName.toLowerCase();
         
@@ -3293,6 +3296,7 @@
           createdAt: calculatedCreatedAt,
           updatedAt: calculatedUpdatedAt,
           preview: normalizedPreview,
+          important: existingImportant || false,
         };
 
         const isNewProject = existingIdx < 0;
