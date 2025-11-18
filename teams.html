@@ -67,17 +67,26 @@
         margin-top: 0.5rem;
       }
       .btn-create-team {
-        background: #004c97;
-        color: white;
+        background: linear-gradient(90deg, #10b981, #3b82f6);
+        background-size: 200% 100%;
+        color: #ffffff;
         padding: 0.75rem 1.5rem;
-        border-radius: 8px;
+        border-radius: 10px;
         border: none;
         font-weight: 600;
         cursor: pointer;
-        transition: background 0.2s;
+        transition: transform 0.25s ease, box-shadow 0.25s ease, background-position 0.3s ease, filter 0.25s ease;
+        position: relative;
+        overflow: hidden;
       }
       .btn-create-team:hover {
-        background: #003d78;
+        background-position: 100% 0;
+        box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+        filter: brightness(1.1);
+        transform: translateY(-1px);
+      }
+      .btn-create-team:active {
+        transform: translateY(0) scale(0.98);
       }
       .modal {
         display: none;
@@ -269,6 +278,7 @@
       </div>
       <nav class="site-nav site-nav--centered" aria-label="Primary">
         <a href="home.html" class="nav-link">Home</a>
+        <a href="projects.html" class="nav-link">Projects</a>
         <a href="teams.html" class="nav-link nav-link--current" aria-current="page">Teams</a>
         <a href="templates.html" class="nav-link">Templates</a>
         <a href="about.html" class="nav-link">About</a>
@@ -445,7 +455,7 @@
         emptyState.style.display = 'none';
         teamsGrid.innerHTML = teams.map(team => {
           const members = getTeamMembersList(team.teamId);
-          const projects = getTeamProjectsList(team.teamId);
+          const actualProjectsCount = getActualTeamProjectsCount(team.teamId);
           const icon = team.icon || (team.name ? team.name.charAt(0).toUpperCase() : 'T');
           const color = team.color || '#004c97';
 
@@ -455,7 +465,7 @@
                 <div class="team-icon" style="background: ${color}">${icon}</div>
                 <div>
                   <div class="team-name">${escapeHtml(team.name)}</div>
-                  <div class="team-meta">${members.length} member${members.length !== 1 ? 's' : ''} · ${projects.length} project${projects.length !== 1 ? 's' : ''}</div>
+                  <div class="team-meta">${members.length} member${members.length !== 1 ? 's' : ''} · ${actualProjectsCount} project${actualProjectsCount !== 1 ? 's' : ''}</div>
                 </div>
               </div>
             </div>
@@ -471,6 +481,35 @@
         });
       }
 
+      function getActualTeamProjectsCount(teamId) {
+        const teamProjectLinks = getTeamProjectsList(teamId);
+        const projectIds = teamProjectLinks.map(p => p.projectId).filter(Boolean);
+        
+        // Load presentations index to check which projects actually exist
+        const PRESENTATIONS_INDEX_KEY = 'lumen-presentations-index';
+        let index = [];
+        try {
+          const indexRaw = localStorage.getItem(PRESENTATIONS_INDEX_KEY);
+          if (indexRaw) {
+            index = JSON.parse(indexRaw);
+            if (!Array.isArray(index)) {
+              index = [];
+            }
+          }
+        } catch (err) {
+          console.warn('Failed to load presentations index', err);
+          index = [];
+        }
+        
+        // Count only projects that exist in the index
+        const actualProjects = index.filter(p => {
+          if (!p || !p.id) return false;
+          return projectIds.includes(p.id);
+        });
+        
+        return actualProjects.length;
+      }
+
       function openTeamWorkspace(teamId) {
         currentTeamId = teamId;
         const teams = getTeams();
@@ -482,8 +521,8 @@
 
         document.getElementById('workspaceTeamName').textContent = team.name;
         const members = getTeamMembersList(teamId);
-        const projects = getTeamProjectsList(teamId);
-        document.getElementById('workspaceTeamMeta').textContent = `${members.length} members · ${projects.length} projects`;
+        const actualProjectsCount = getActualTeamProjectsCount(teamId);
+        document.getElementById('workspaceTeamMeta').textContent = `${members.length} members · ${actualProjectsCount} project${actualProjectsCount !== 1 ? 's' : ''}`;
 
         renderTeamProjects(teamId);
         renderTeamMembers(teamId);
@@ -672,6 +711,8 @@
         document.getElementById('teamWorkspace').classList.remove('active');
         document.getElementById('teamsDashboard').style.display = 'block';
         currentTeamId = null;
+        // Refresh teams list to update project counts
+        renderTeams();
       });
 
       // Tab switching
@@ -771,6 +812,12 @@
               const projectId = btn.dataset.linkProject;
               linkProjectToTeam(projectId, currentTeamId);
               modal.classList.remove('active');
+              
+              // Update workspace meta with new project count (only count existing projects)
+              const members = getTeamMembersList(currentTeamId);
+              const actualProjectsCount = getActualTeamProjectsCount(currentTeamId);
+              document.getElementById('workspaceTeamMeta').textContent = `${members.length} members · ${actualProjectsCount} project${actualProjectsCount !== 1 ? 's' : ''}`;
+              
               renderTeamProjects(currentTeamId);
               renderTeamActivity(currentTeamId);
               alert('Project linked to team successfully!');
@@ -839,6 +886,38 @@
         // DOM is already loaded
         initializeTeamsPage();
       }
+      
+      // Refresh teams list when page becomes visible (e.g., when returning from slide editor)
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) {
+          // Page became visible, refresh teams to update project counts
+          if (document.getElementById('teamsDashboard').style.display !== 'none') {
+            renderTeams();
+          } else if (currentTeamId) {
+            // If in workspace, refresh the workspace meta
+            const members = getTeamMembersList(currentTeamId);
+            const actualProjectsCount = getActualTeamProjectsCount(currentTeamId);
+            document.getElementById('workspaceTeamMeta').textContent = `${members.length} members · ${actualProjectsCount} project${actualProjectsCount !== 1 ? 's' : ''}`;
+            renderTeamProjects(currentTeamId);
+          }
+        }
+      });
+      
+      // Also listen for storage changes (if projects are linked from another tab)
+      window.addEventListener('storage', (event) => {
+        if (event.key === 'lumen-team-projects' || event.key === 'lumen-presentations-index') {
+          // Team projects or presentations index changed, refresh
+          if (document.getElementById('teamsDashboard').style.display !== 'none') {
+            renderTeams();
+          } else if (currentTeamId) {
+            // If in workspace, refresh the workspace meta
+            const members = getTeamMembersList(currentTeamId);
+            const actualProjectsCount = getActualTeamProjectsCount(currentTeamId);
+            document.getElementById('workspaceTeamMeta').textContent = `${members.length} members · ${actualProjectsCount} project${actualProjectsCount !== 1 ? 's' : ''}`;
+            renderTeamProjects(currentTeamId);
+          }
+        }
+      });
     </script>
   </body>
 </html>

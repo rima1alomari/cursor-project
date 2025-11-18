@@ -1924,7 +1924,16 @@
     }
     const urlParams = (typeof window !== 'undefined') ? new URLSearchParams(window.location.search) : null;
 
-    let presentationId = urlParams?.get('id') || null;
+    // Track if project is saved (named and saved to index)
+    let isProjectSaved = false;
+    
+    // Check for unsaved project from sessionStorage
+    const unsavedProjectId = (typeof window !== 'undefined' && sessionStorage.getItem('unsavedProjectId')) || null;
+    const isUnsavedProject = (typeof window !== 'undefined' && sessionStorage.getItem('isUnsavedProject') === 'true') || false;
+    const newProjectParam = urlParams?.get('newProject') || null;
+    
+    // Use unsaved project ID if available, otherwise use URL param or generate new
+    let presentationId = newProjectParam || unsavedProjectId || urlParams?.get('id') || null;
     let presentationCreatedAt = Date.now();
     let presentationUpdatedAt = presentationCreatedAt;
     let slides = [];
@@ -2038,12 +2047,6 @@
       }
       presentationStorageKey = `${PRESENTATION_STORAGE_PREFIX}${presentationId}`;
       
-      // Check if this is a fresh new presentation (ID provided but no stored data)
-      // If ID was provided in URL, it means it's intentionally a new presentation
-      if (!isNew) {
-        isNewPresentation = hadIdInUrl;
-      }
-      
       try {
         // Skip loading stored data if this is a brand new presentation (already initialized above)
         if (!newSession && !isNew) {
@@ -2051,6 +2054,9 @@
         if (storedRaw) {
           const storedState = JSON.parse(storedRaw);
           loadedExistingPresentation = true;
+          // CRITICAL: If we successfully loaded existing data, this is NOT a new presentation
+          isNewPresentation = false;
+          
           if (storedState && Array.isArray(storedState.slides)) {
             slides = storedState.slides;
           }
@@ -2069,33 +2075,57 @@
           if (storedState?.preview) {
             presentationPreview = normalizePreview(storedState.preview);
             }
-          } else if (isNewPresentation) {
-            // New presentation with ID provided - ensure it starts completely fresh
-            // Clear any cached data and reset to defaults
-            slides = [{
-              id: crypto.randomUUID(),
-              title: 'Slide 1',
-              backgroundColor: '#ffffff',
-              backgroundImage: null,
-              elements: [],
-              animation: { type: 'none', duration: 600, delay: 0 },
-            }];
-            activeSlideIndex = 0;
-            loadedPresentationName = DEFAULT_PRESENTATION_NAME;
-            presentationCreatedAt = Date.now();
-            presentationUpdatedAt = presentationCreatedAt;
-            presentationPreview = null;
-            
-            // Clear any legacy autosave data to prevent loading old content
+          }
+          
+          // Also check the presentations index for the name (in case it's stored there but not in project data)
+          if (!loadedPresentationName || loadedPresentationName === DEFAULT_PRESENTATION_NAME) {
             try {
-              localStorage.removeItem(AUTOSAVE_KEY);
-              localStorage.removeItem(SYNC_KEY);
-              localStorage.removeItem('currentPresentation');
-              localStorage.removeItem('currentSlide');
-              localStorage.removeItem('currentSlideContent');
+              const indexRaw = localStorage.getItem(PRESENTATIONS_INDEX_KEY);
+              if (indexRaw) {
+                const index = JSON.parse(indexRaw);
+                if (Array.isArray(index)) {
+                  const indexEntry = index.find(item => item && item.id === presentationId);
+                  if (indexEntry && indexEntry.name && indexEntry.name.trim() && indexEntry.name.toLowerCase() !== DEFAULT_PRESENTATION_NAME.toLowerCase()) {
+                    loadedPresentationName = indexEntry.name.trim();
+                  }
+                }
+              }
             } catch (e) {
-              // Ignore errors
+              // Ignore errors when loading from index
             }
+          }
+        }
+        
+        // Only treat as new presentation if:
+        // 1. No existing data was loaded, AND
+        // 2. An ID was provided in URL (meaning it's intentionally a new project with that ID)
+        if (!loadedExistingPresentation && hadIdInUrl && !isNew) {
+          isNewPresentation = true;
+          // New presentation with ID provided - ensure it starts completely fresh
+          // Clear any cached data and reset to defaults
+          slides = [{
+            id: crypto.randomUUID(),
+            title: 'Slide 1',
+            backgroundColor: '#ffffff',
+            backgroundImage: null,
+            elements: [],
+            animation: { type: 'none', duration: 600, delay: 0 },
+          }];
+          activeSlideIndex = 0;
+          loadedPresentationName = DEFAULT_PRESENTATION_NAME;
+          presentationCreatedAt = Date.now();
+          presentationUpdatedAt = presentationCreatedAt;
+          presentationPreview = null;
+          
+          // Clear any legacy autosave data to prevent loading old content
+          try {
+            localStorage.removeItem(AUTOSAVE_KEY);
+            localStorage.removeItem(SYNC_KEY);
+            localStorage.removeItem('currentPresentation');
+            localStorage.removeItem('currentSlide');
+            localStorage.removeItem('currentSlideContent');
+          } catch (e) {
+            // Ignore errors
           }
         }
       } catch (error) {
@@ -2126,6 +2156,25 @@
           }
         } catch (error) {
           console.warn('Failed to load legacy autosave state', error);
+        }
+      }
+      
+      // Always check the presentations index for the name, even if no stored state was found
+      // This ensures names are loaded when opening projects from the home/projects page
+      if (!loadedPresentationName || loadedPresentationName === DEFAULT_PRESENTATION_NAME) {
+        try {
+          const indexRaw = localStorage.getItem(PRESENTATIONS_INDEX_KEY);
+          if (indexRaw) {
+            const index = JSON.parse(indexRaw);
+            if (Array.isArray(index) && presentationId) {
+              const indexEntry = index.find(item => item && item.id === presentationId);
+              if (indexEntry && indexEntry.name && indexEntry.name.trim() && indexEntry.name.toLowerCase() !== DEFAULT_PRESENTATION_NAME.toLowerCase()) {
+                loadedPresentationName = indexEntry.name.trim();
+              }
+            }
+          }
+        } catch (e) {
+          // Ignore errors when loading from index
         }
       }
     }
@@ -2163,6 +2212,28 @@
     if (presentationNameInput) {
       presentationNameInput.value = loadedPresentationName || presentationNameInput.value || DEFAULT_PRESENTATION_NAME;
     }
+    
+    // Check if this is an existing saved project (has a name that's not "Untitled")
+    if (loadedPresentationName && loadedPresentationName.toLowerCase() !== DEFAULT_PRESENTATION_NAME.toLowerCase()) {
+      isProjectSaved = true;
+    }
+    
+    // Add beforeunload protection for unsaved projects
+    if (typeof window !== 'undefined') {
+      window.addEventListener('beforeunload', (event) => {
+        // Only warn if project is not saved (unnamed)
+        if (!isProjectSaved && (isUnsavedProject || newProjectParam)) {
+          const nameValue = presentationNameInput ? presentationNameInput.value.trim() : '';
+          const nameIsDefault = !nameValue || nameValue.toLowerCase() === DEFAULT_PRESENTATION_NAME.toLowerCase();
+          if (nameIsDefault) {
+            event.preventDefault();
+            event.returnValue = 'You have an unsaved project. Please name your project before leaving.';
+            return event.returnValue;
+          }
+        }
+      });
+    }
+    
     const CANVAS_ZOOM_MIN = 50;
     const CANVAS_ZOOM_MAX = 200;
     let currentCanvasZoomPercent = 100;
@@ -3066,10 +3137,20 @@
           updatedAt: now,
           preview: presentationPreview,
         };
+        
+        // Always save to autosave key (legacy support)
         localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(presentationState));
+        
+        // CRITICAL: Always save to project storage if presentationId exists
+        // This ensures changes are saved even if the project name is "Untitled"
         if (presentationId) {
-          localStorage.setItem(`${PRESENTATION_STORAGE_PREFIX}${presentationId}`, JSON.stringify(presentationState));
+          const projectStorageKey = `${PRESENTATION_STORAGE_PREFIX}${presentationId}`;
+          localStorage.setItem(projectStorageKey, JSON.stringify(presentationState));
+          console.log('Autosave: Saved to', projectStorageKey, 'with', slides.length, 'slides');
+        } else {
+          console.warn('Autosave: No presentationId available, cannot save to project storage');
         }
+        
         const syncPayload = JSON.stringify({
           sessionId: SESSION_ID,
           timestamp: now,
@@ -3086,7 +3167,20 @@
         needsAutosave = false;
         lastSavedAt = new Date(now);
         updateAutosaveStatus('Saved just now', 'saved');
-        ensureRecentPresentationEntry({ name: presentationName, createdAt: presentationCreatedAt, updatedAt: presentationUpdatedAt });
+        
+        // Only save to index if project is named (not "Untitled")
+        // But the project data itself is always saved above
+        const nameIsValid = presentationName && presentationName.trim() && presentationName.toLowerCase() !== DEFAULT_PRESENTATION_NAME.toLowerCase();
+        if (nameIsValid) {
+          ensureRecentPresentationEntry({ name: presentationName, createdAt: presentationCreatedAt, updatedAt: presentationUpdatedAt });
+          // Mark as saved once it has a valid name and is saved to index
+          isProjectSaved = true;
+          // Clear unsaved project flags once saved
+          if (typeof window !== 'undefined') {
+            sessionStorage.removeItem('unsavedProjectId');
+            sessionStorage.removeItem('isUnsavedProject');
+          }
+        }
         scheduleAutosaveIdleReset();
       } catch (error) {
         console.warn('Autosave failed', error);
@@ -3210,9 +3304,8 @@
         }
 
         index.sort((a, b) => (b?.updatedAt ?? 0) - (a?.updatedAt ?? 0));
-        if (index.length > MAX_RECENT_PRESENTATIONS) {
-          index.length = MAX_RECENT_PRESENTATIONS;
-        }
+        // DO NOT truncate the index - keep all projects
+        // The home page will limit display to 1-2 recent, but all projects should be preserved
         localStorage.setItem(PRESENTATIONS_INDEX_KEY, JSON.stringify(index));
         
         // Track activity for new project creation
@@ -7796,14 +7889,36 @@
 
     const homeLink = document.getElementById('homeLink');
     if (homeLink) {
+      // Prevent default navigation to handle it manually
       homeLink.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        // Check if presentation is named - if not, show popup to require naming before exiting
         const nameValue = presentationNameInput ? presentationNameInput.value.trim() : '';
         const nameIsDefault = !nameValue || nameValue.toLowerCase() === DEFAULT_PRESENTATION_NAME.toLowerCase();
-        if (nameIsDefault) {
-          event.preventDefault();
+        
+        // Check if this is a new unsaved project (created via "Create Slide" button)
+        const isNewUnsavedProject = (typeof window !== 'undefined' && (
+          sessionStorage.getItem('isUnsavedProject') === 'true' ||
+          sessionStorage.getItem('unsavedProjectId') !== null ||
+          urlParams?.get('newProject') !== null
+        ));
+        
+        // For new unsaved projects, ALWAYS show popup (even if they typed a name in toolbar, it hasn't been saved to index yet)
+        if (isNewUnsavedProject) {
+          // Show popup requiring user to name the presentation
           showNamePrompt();
+          return; // Don't navigate, popup will handle it
+        }
+        
+        // For existing projects, show popup if name is still "Untitled"
+        if (nameIsDefault || !isProjectSaved) {
+          // Show popup requiring user to name the presentation
+          showNamePrompt();
+          return; // Don't navigate, popup will handle it
         } else {
-          // Save and navigate home
+          // Presentation is named and saved - save and navigate home
           runAutosave();
           setTimeout(() => {
             if (window.fadeNavigate) {
@@ -7818,10 +7933,65 @@
 
     function showNamePrompt() {
       const modal = document.getElementById('namePrompt');
+      const nameInputContainer = document.getElementById('nameInputContainer');
       const input = document.getElementById('presentationNameInputModal');
-      if (modal && input) {
-        modal.style.display = 'flex';
-        input.value = presentationNameInput ? presentationNameInput.value.trim() : '';
+      const nameAndSaveBtn = document.getElementById('nameAndSaveBtn');
+      
+      if (!modal) {
+        console.error('Name prompt modal not found!');
+        // Fallback: try to navigate anyway if modal doesn't exist
+        if (window.fadeNavigate) {
+          window.fadeNavigate('home.html');
+        } else {
+          window.location.href = 'home.html';
+        }
+        return;
+      }
+      
+      // Get current name from toolbar input
+      const currentName = presentationNameInput ? presentationNameInput.value.trim() : '';
+      const hasValidName = currentName && currentName.toLowerCase() !== DEFAULT_PRESENTATION_NAME.toLowerCase();
+      
+      modal.style.display = 'flex';
+      
+      // If they already typed a name in the toolbar, show it in the input field
+      if (hasValidName) {
+        if (nameInputContainer) {
+          nameInputContainer.style.display = 'block';
+        }
+        if (input) {
+          input.value = currentName;
+          setTimeout(() => {
+            input.focus();
+            input.select();
+          }, 100);
+        }
+        // Change button text to "Save" since name is already entered
+        if (nameAndSaveBtn) {
+          nameAndSaveBtn.textContent = 'Save';
+        }
+      } else {
+        // Hide name input initially (will show when "Name & Save" is clicked)
+        if (nameInputContainer) {
+          nameInputContainer.style.display = 'none';
+        }
+        if (input) {
+          input.value = '';
+        }
+        // Reset button text
+        if (nameAndSaveBtn) {
+          nameAndSaveBtn.textContent = 'Name & Save';
+        }
+      }
+    }
+    
+    function showNameInput() {
+      const nameInputContainer = document.getElementById('nameInputContainer');
+      const input = document.getElementById('presentationNameInputModal');
+      if (nameInputContainer) {
+        nameInputContainer.style.display = 'block';
+      }
+      if (input) {
         setTimeout(() => {
           input.focus();
           input.select();
@@ -7847,8 +8017,17 @@
         needsAutosave = true;
       }
 
-      // Save presentation
+      // Save presentation (this will now save to index since name is valid)
       runAutosave();
+      
+      // Mark as saved
+      isProjectSaved = true;
+      
+      // Clear unsaved project flags
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('unsavedProjectId');
+        sessionStorage.removeItem('isUnsavedProject');
+      }
 
       // Close modal
       const modal = document.getElementById('namePrompt');
@@ -7873,12 +8052,22 @@
       }
     }
 
-    function cancelExit() {
+    function exitWithoutSaving() {
+      // Mark as "saved" to prevent beforeunload warning
+      isProjectSaved = true;
+      
+      // Clear unsaved project flags - unnamed projects should never be saved
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('unsavedProjectId');
+        sessionStorage.removeItem('isUnsavedProject');
+      }
+      
       const modal = document.getElementById('namePrompt');
       if (modal) {
         modal.style.display = 'none';
       }
-      // Exit without saving
+      
+      // Exit without saving - unnamed projects should never be saved
       setTimeout(() => {
         if (window.fadeNavigate) {
           window.fadeNavigate('home.html');
@@ -7888,31 +8077,119 @@
       }, 100);
     }
 
+    function cancelExit() {
+      exitWithoutSaving();
+    }
+
     // Setup modal event listeners after DOM is ready
     setTimeout(() => {
-      const applyNameBtn = document.getElementById('applyNameBtn');
-      const goBackBtn = document.getElementById('goBackBtn');
-      const cancelExitBtn = document.getElementById('cancelExitBtn');
+      const cancelBtn = document.getElementById('cancelBtn');
+      const nameAndSaveBtn = document.getElementById('nameAndSaveBtn');
+      const exitWithoutSavingBtn = document.getElementById('exitWithoutSavingBtn');
       const namePromptModal = document.getElementById('namePrompt');
       const nameInputModal = document.getElementById('presentationNameInputModal');
 
-      if (applyNameBtn) {
-        applyNameBtn.addEventListener('click', savePresentationAndGoHome);
+      // Cancel button - close popup and stay on editor
+      if (cancelBtn) {
+        cancelBtn.addEventListener('click', () => {
+          const modal = document.getElementById('namePrompt');
+          const nameInputContainer = document.getElementById('nameInputContainer');
+          if (modal) {
+            modal.style.display = 'none';
+          }
+          if (nameInputContainer) {
+            nameInputContainer.style.display = 'none';
+          }
+          // Reset button text if it was changed
+          if (nameAndSaveBtn) {
+            nameAndSaveBtn.textContent = 'Name & Save';
+          }
+        });
       }
 
-      if (goBackBtn) {
-        goBackBtn.addEventListener('click', goBackWithoutSaving);
+      // Name & Save button - show input field, then save when name is entered
+      if (nameAndSaveBtn) {
+        nameAndSaveBtn.addEventListener('click', () => {
+          const nameInputContainer = document.getElementById('nameInputContainer');
+          const input = document.getElementById('presentationNameInputModal');
+          
+          // If input is already visible, save the name
+          if (nameInputContainer && nameInputContainer.style.display === 'block') {
+            const name = input ? input.value.trim() : '';
+            if (!name || name.toLowerCase() === DEFAULT_PRESENTATION_NAME.toLowerCase()) {
+              alert('Please enter a name for your presentation.');
+              if (input) {
+                input.focus();
+                input.select();
+              }
+              return;
+            }
+            
+            // Update presentation name
+            if (presentationNameInput) {
+              presentationNameInput.value = name;
+              needsAutosave = true;
+            }
+
+            // Save presentation
+            runAutosave();
+            
+            // Mark as saved
+            isProjectSaved = true;
+            
+            // Clear unsaved project flags
+            if (typeof window !== 'undefined') {
+              sessionStorage.removeItem('unsavedProjectId');
+              sessionStorage.removeItem('isUnsavedProject');
+            }
+
+            // Close modal
+            const modal = document.getElementById('namePrompt');
+            if (modal) {
+              modal.style.display = 'none';
+            }
+            if (nameInputContainer) {
+              nameInputContainer.style.display = 'none';
+            }
+            
+            // Reset button text
+            nameAndSaveBtn.textContent = 'Name & Save';
+
+            // Navigate home after a short delay to ensure save completes
+            setTimeout(() => {
+              if (window.fadeNavigate) {
+                window.fadeNavigate('home.html');
+              } else {
+                window.location.href = 'home.html';
+              }
+            }, 200);
+          } else {
+            // Show input field
+            showNameInput();
+            // Change button text to "Save"
+            nameAndSaveBtn.textContent = 'Save';
+          }
+        });
       }
 
-      if (cancelExitBtn) {
-        cancelExitBtn.addEventListener('click', cancelExit);
+      // Exit Without Saving button - close editor and return home without saving
+      if (exitWithoutSavingBtn) {
+        exitWithoutSavingBtn.addEventListener('click', exitWithoutSaving);
       }
 
       // Close modal on backdrop click
       if (namePromptModal) {
         namePromptModal.addEventListener('click', (e) => {
           if (e.target === namePromptModal) {
-            goBackWithoutSaving();
+            const nameInputContainer = document.getElementById('nameInputContainer');
+            namePromptModal.style.display = 'none';
+            if (nameInputContainer) {
+              nameInputContainer.style.display = 'none';
+            }
+            // Reset button text
+            if (nameAndSaveBtn) {
+              nameAndSaveBtn.textContent = 'Name & Save';
+            }
           }
         });
       }
@@ -7920,7 +8197,15 @@
       // Close modal on Escape key
       document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && namePromptModal && namePromptModal.style.display === 'flex') {
-          goBackWithoutSaving();
+          const nameInputContainer = document.getElementById('nameInputContainer');
+          namePromptModal.style.display = 'none';
+          if (nameInputContainer) {
+            nameInputContainer.style.display = 'none';
+          }
+          // Reset button text
+          if (nameAndSaveBtn) {
+            nameAndSaveBtn.textContent = 'Name & Save';
+          }
         }
       });
 
@@ -7929,23 +8214,31 @@
         nameInputModal.addEventListener('keydown', (e) => {
           if (e.key === 'Enter') {
             e.preventDefault();
-            savePresentationAndGoHome();
+            // Trigger the save action (same as clicking "Name & Save" when input is visible)
+            if (nameAndSaveBtn) {
+              nameAndSaveBtn.click();
+            }
           }
         });
       }
     }, 100);
   </script>
   
-  <!-- Name Prompt Modal -->
+  <!-- Name Required Modal -->
   <div id="namePrompt" style="display:none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center;">
     <div style="background: #ffffff; border-radius: 16px; padding: 32px; max-width: 480px; width: 90%; box-shadow: 0 20px 40px rgba(15, 23, 42, 0.2); text-align: center;">
-      <h2 style="margin: 0 0 12px; font-size: 24px; font-weight: 600; color: #0f172a;">Name Your Presentation</h2>
-      <p style="margin: 0 0 24px; color: #64748b; font-size: 15px; line-height: 1.5;">Please name your presentation before exiting, or it won't be saved.</p>
-      <input id="presentationNameInputModal" type="text" placeholder="Enter presentation name" style="width: 100%; margin-bottom: 24px; padding: 10px 16px; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 14px; box-sizing: border-box; font-family: 'Inter', sans-serif;">
+      <h2 style="margin: 0 0 16px; font-size: 24px; font-weight: 600; color: #0f172a;">Name Required</h2>
+      <p style="margin: 0 0 24px; color: #64748b; font-size: 15px; line-height: 1.6;">You need to give your presentation a name before it can be saved.<br>If you exit now, it will not be saved.</p>
+      
+      <!-- Name input field (initially hidden, shown when "Name & Save" is clicked) -->
+      <div id="nameInputContainer" style="display: none; margin-bottom: 24px;">
+        <input id="presentationNameInputModal" type="text" placeholder="Enter presentation name" style="width: 100%; padding: 10px 16px; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 14px; box-sizing: border-box; font-family: 'Inter', sans-serif;">
+      </div>
+      
       <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
-        <button id="cancelExitBtn" class="btn btn-danger" style="padding: 10px 20px; border-radius: 10px; border: none; background: linear-gradient(90deg, #ef4444, #dc2626); color: #ffffff; font-weight: 600; cursor: pointer; min-width: 100px; transition: all 0.25s ease;">Cancel Exit</button>
-        <button id="goBackBtn" class="btn btn-outline" style="padding: 10px 20px; border-radius: 10px; border: 1px solid #e2e8f0; background: #ffffff; color: #0f172a; font-weight: 600; cursor: pointer; min-width: 100px; transition: transform 0.2s ease, box-shadow 0.2s ease;">Go Back</button>
-        <button id="applyNameBtn" class="btn btn-primary" style="padding: 10px 20px; border-radius: 10px; border: none; background: linear-gradient(90deg, #3b82f6, #2563eb); color: #ffffff; font-weight: 600; cursor: pointer; min-width: 100px; transition: transform 0.2s ease, box-shadow 0.2s ease;">Apply</button>
+        <button id="cancelBtn" class="btn btn-outline" style="padding: 10px 20px; border-radius: 10px; border: 1px solid #e2e8f0; background: #ffffff; color: #0f172a; font-weight: 600; cursor: pointer; min-width: 120px; transition: transform 0.2s ease, box-shadow 0.2s ease;">Cancel</button>
+        <button id="nameAndSaveBtn" class="btn btn-primary" style="padding: 10px 20px; border-radius: 10px; border: none; background: linear-gradient(90deg, #3b82f6, #2563eb); color: #ffffff; font-weight: 600; cursor: pointer; min-width: 120px; transition: transform 0.2s ease, box-shadow 0.2s ease;">Name & Save</button>
+        <button id="exitWithoutSavingBtn" class="btn btn-danger" style="padding: 10px 20px; border-radius: 10px; border: none; background: linear-gradient(90deg, #ef4444, #dc2626); color: #ffffff; font-weight: 600; cursor: pointer; min-width: 140px; transition: all 0.25s ease;">Exit Without Saving</button>
       </div>
     </div>
   </div>
