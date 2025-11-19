@@ -6,10 +6,11 @@
   const CHATBOT_HIDDEN_KEY = 'chatbot_hidden';
   const CHATBOT_LANGUAGE_KEY = 'chatbot_language';
   
-  // Google Gemini API Configuration
-  // IMPORTANT: Replace with your actual Gemini API key
-  const GEMINI_API_KEY = 'YOUR_GEMINI_API_KEY_HERE'; // Get from: https://makersuite.google.com/app/apikey
-  const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
+  // OpenAI API Configuration
+  // IMPORTANT: Set your OpenAI API key here or use environment variable
+  // Get your API key from: https://platform.openai.com/api-keys
+  const OPENAI_API_KEY = window.OPENAI_API_KEY || 'YOUR_OPENAI_API_KEY_HERE';
+  const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
   
   // Language detection and responses
   const translations = {
@@ -234,8 +235,8 @@
       // Show typing indicator
       const typingIndicator = addTypingIndicator();
       
-      // Always try to get a real answer from Gemini API first
-      getGeminiResponse(message, detectedLang)
+      // Always try to get a real answer from OpenAI API first
+      getOpenAIResponse(message, detectedLang)
         .then(response => {
           removeTypingIndicator(typingIndicator);
           // Ensure we have a response
@@ -245,8 +246,8 @@
             // If empty response, provide helpful message
             const lang = getCurrentLanguage();
             const fallbackMsg = lang === 'ar'
-              ? 'عذراً، لم أتمكن من الحصول على إجابة. يرجى المحاولة مرة أخرى أو إضافة مفتاح Google Gemini API للحصول على إجابات أفضل.'
-              : 'Sorry, I couldn\'t get a response. Please try again or add your Google Gemini API key for better answers.';
+              ? 'عذراً، لم أتمكن من الحصول على إجابة. يرجى المحاولة مرة أخرى.'
+              : 'Sorry, I couldn\'t get a response. Please try again.';
             addMessage('bot', fallbackMsg);
           }
         })
@@ -256,8 +257,8 @@
           // Try one more time with fallback
           const lang = getCurrentLanguage();
           const errorMsg = lang === 'ar' 
-            ? 'عذراً، حدث خطأ في الاتصال. يرجى المحاولة مرة أخرى. للحصول على إجابات أفضل، أضف مفتاح Google Gemini API.'
-            : 'Sorry, there was an error. Please try again. For better answers, add your Google Gemini API key.';
+            ? 'عذراً، حدث خطأ في الاتصال. يرجى المحاولة مرة أخرى.'
+            : 'Sorry, there was an error. Please try again.';
           addMessage('bot', errorMsg);
         });
     }
@@ -317,13 +318,134 @@
       }, 10);
     }
     
-    // Get response from Google Gemini API - answers ANY question
-    async function getGeminiResponse(userMessage, lang) {
-      // Always try to get a real answer first
-      // If API key is not set, use free AI services
-      if (!GEMINI_API_KEY || GEMINI_API_KEY === 'YOUR_GEMINI_API_KEY_HERE') {
-        console.warn('Gemini API key not configured. Using free AI services...');
-        // Try free AI services that don't require API keys
+    // Search Wikipedia for information
+    async function searchWikipedia(query, lang = 'en') {
+      try {
+        const wikiLang = lang === 'ar' ? 'ar' : 'en';
+        // Replace spaces with underscores for Wikipedia API
+        const pageTitle = query.trim().replace(/\s+/g, '_');
+        const searchUrl = `https://${wikiLang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(pageTitle)}`;
+        
+        const response = await fetch(searchUrl);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.extract && !data.type) { // type exists for disambiguation pages
+            return {
+              title: data.title,
+              extract: data.extract,
+              url: data.content_urls?.desktop?.page || data.content_urls?.mobile?.page || ''
+            };
+          }
+        }
+      } catch (error) {
+        console.log('Wikipedia search error:', error);
+      }
+      return null;
+    }
+    
+    // Search Wikipedia by query (not exact title)
+    async function searchWikipediaByQuery(query, lang = 'en') {
+      try {
+        const wikiLang = lang === 'ar' ? 'ar' : 'en';
+        // First, search for the page
+        const searchUrl = `https://${wikiLang}.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&format=json&origin=*&srlimit=1`;
+        
+        const searchResponse = await fetch(searchUrl);
+        if (searchResponse.ok) {
+          const searchData = await searchResponse.json();
+          if (searchData.query && searchData.query.search && searchData.query.search.length > 0) {
+            const pageTitle = searchData.query.search[0].title;
+            // Now get the summary
+            return await searchWikipedia(pageTitle, lang);
+          }
+        }
+      } catch (error) {
+        console.log('Wikipedia query search error:', error);
+      }
+      return null;
+    }
+    
+    // Extract main topic from question for Wikipedia search
+    function extractTopicForWikipedia(question, lang) {
+      // Use the same extraction logic as generateSmartAnswer
+      const lowerQuestion = question.toLowerCase();
+      
+      // Try to extract topic from question patterns first
+      const questionPatterns = lang === 'ar'
+        ? [
+            /(?:ما|ماذا|من|أين|متى|لماذا|كيف|أخبرني|اشرح|وصف).*?(?:عن|حول|هو|هي)\s+(.+)/i,
+            /(?:ما|ماذا|من|أين|متى|لماذا|كيف|أخبرني|اشرح|وصف)\s+(.+)/i,
+            /(?:عن|حول)\s+(.+)/i
+          ]
+        : [
+            /(?:what|tell me|explain|describe|discuss).*?(?:about|on|regarding|is|are)\s+(.+)/i,
+            /(?:what|tell me|explain|describe|discuss)\s+(.+)/i,
+            /(?:think|opinion|thoughts).*?(?:about|on|regarding)\s+(.+)/i
+          ];
+      
+      for (const pattern of questionPatterns) {
+        const match = question.match(pattern);
+        if (match && match[1]) {
+          const topic = match[1].trim();
+          const cleanTopic = topic.replace(/[?.,!;:]+$/, '').trim();
+          if (cleanTopic.length > 2) {
+            return cleanTopic;
+          }
+        }
+      }
+      
+      // Fallback: remove question words and get meaningful words
+      const questionWords = lang === 'ar' 
+        ? ['ما', 'من', 'أين', 'متى', 'لماذا', 'كيف', 'ما هو', 'ما هي', 'ماذا', 'أخبرني', 'عن', 'حول', 'هو', 'هي', 'في', 'على', 'من', 'إلى']
+        : ['what', 'who', 'where', 'when', 'why', 'how', 'tell', 'me', 'about', 'explain', 'describe', 'is', 'are', 'the', 'a', 'an', 'in', 'on', 'at'];
+      
+      let cleaned = question;
+      questionWords.forEach(word => {
+        const regex = new RegExp(`\\b${word}\\b`, 'gi');
+        cleaned = cleaned.replace(regex, '');
+      });
+      
+      // Extract key phrases (2-4 words)
+      const words = cleaned.trim().split(/\s+/).filter(w => {
+        const cleanWord = w.replace(/[?.,!;:()]+/g, '');
+        return cleanWord.length > 2;
+      });
+      
+      if (words.length >= 2) {
+        // Take last 2-3 words as they're usually the topic
+        return words.slice(-3).join(' ');
+      }
+      
+      return cleaned.trim() || question;
+    }
+    
+    // Get response from OpenAI API with Wikipedia integration - answers ANY question
+    async function getOpenAIResponse(userMessage, lang) {
+      // First, try to get Wikipedia information
+      let wikipediaInfo = null;
+      const topic = extractTopicForWikipedia(userMessage, lang);
+      
+      // Try exact search first
+      wikipediaInfo = await searchWikipedia(topic, lang);
+      
+      // If exact search fails, try query search
+      if (!wikipediaInfo) {
+        wikipediaInfo = await searchWikipediaByQuery(topic, lang);
+      }
+      
+      // If API key is not set, use Wikipedia + free AI services
+      if (!OPENAI_API_KEY || OPENAI_API_KEY === 'YOUR_OPENAI_API_KEY_HERE') {
+        console.warn('OpenAI API key not configured. Using Wikipedia and free AI services...');
+        
+        // If we have Wikipedia info, return it
+        if (wikipediaInfo) {
+          const wikiText = lang === 'ar'
+            ? `📚 معلومات من ويكيبيديا:\n\n${wikipediaInfo.title}\n\n${wikipediaInfo.extract}\n\n${wikipediaInfo.url ? `المصدر: ${wikipediaInfo.url}` : ''}`
+            : `📚 Information from Wikipedia:\n\n${wikipediaInfo.title}\n\n${wikipediaInfo.extract}\n\n${wikipediaInfo.url ? `Source: ${wikipediaInfo.url}` : ''}`;
+          return wikiText;
+        }
+        
+        // Try free AI services
         const freeResponse = await tryFreeAIServices(userMessage, lang);
         if (freeResponse) {
           return freeResponse;
@@ -333,57 +455,76 @@
       }
       
       try {
-        // Enhanced prompt to answer ANY question comprehensively
-        const systemPrompt = lang === 'ar' 
+        // Enhanced prompt with Wikipedia context
+        let systemPrompt = lang === 'ar' 
           ? `أنت مساعد ذكي متقدم ومتعلم جيداً. مهمتك هي الإجابة على أي سؤال بدقة وشمولية.
 
 القواعد:
 1. أجب على أي سؤال بغض النظر عن الموضوع - علوم، تاريخ، تقنية، رياضيات، صحة، طعام، رياضة، فنون، أدب، جغرافيا، سياسة، اقتصاد، أو أي موضوع آخر
 2. قدم إجابات مفصلة ومفيدة
 3. إذا كان السؤال عن LumenSlides (منصة العروض التقديمية)، قدم معلومات دقيقة
-4. إذا لم تكن متأكداً من شيء، اعترف بذلك ولكن قدم أفضل إجابة ممكنة بناءً على معرفتك
-5. استخدم لغة واضحة ومفهومة
-6. أجب دائماً بالعربية إذا كان السؤال بالعربية
-7. لا ترفض الإجابة على أي سؤال - حاول دائماً تقديم معلومات مفيدة
-
-أجب على السؤال التالي بشكل شامل ومفيد:`
+4. إذا تم توفير معلومات من ويكيبيديا، استخدمها كمرجع أساسي ولكن أضف تحليلك وتفسيرك
+5. إذا لم تكن متأكداً من شيء، اعترف بذلك ولكن قدم أفضل إجابة ممكنة بناءً على معرفتك
+6. استخدم لغة واضحة ومفهومة
+7. أجب دائماً بالعربية إذا كان السؤال بالعربية
+8. لا ترفض الإجابة على أي سؤال - حاول دائماً تقديم معلومات مفيدة`
           : `You are an advanced, well-educated AI assistant. Your task is to answer ANY question accurately and comprehensively.
 
 Rules:
 1. Answer ANY question regardless of topic - science, history, technology, math, health, food, sports, arts, literature, geography, politics, economics, or any other subject
 2. Provide detailed and helpful answers
 3. If the question is about LumenSlides (presentation platform), provide accurate information
-4. If you're not certain about something, admit it but provide the best possible answer based on your knowledge
-5. Use clear and understandable language
-6. Always respond in the same language as the question
-7. Never refuse to answer - always try to provide helpful information
-
-Answer the following question comprehensively and helpfully:`;
+4. If Wikipedia information is provided, use it as a primary reference but add your analysis and explanation
+5. If you're not certain about something, admit it but provide the best possible answer based on your knowledge
+6. Use clear and understandable language
+7. Always respond in the same language as the question
+8. Never refuse to answer - always try to provide helpful information`;
         
-        const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+        // Add Wikipedia context if available
+        let userContent = userMessage;
+        if (wikipediaInfo) {
+          const wikiContext = lang === 'ar'
+            ? `\n\nمعلومات من ويكيبيديا:\nالعنوان: ${wikipediaInfo.title}\nالمحتوى: ${wikipediaInfo.extract.substring(0, 500)}...`
+            : `\n\nInformation from Wikipedia:\nTitle: ${wikipediaInfo.title}\nContent: ${wikipediaInfo.extract.substring(0, 500)}...`;
+          userContent = userMessage + wikiContext;
+        }
+        
+        const response = await fetch(OPENAI_API_URL, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${OPENAI_API_KEY}`
           },
           body: JSON.stringify({
-            contents: [{
-              parts: [{
-                text: `${systemPrompt}\n\nUser Question: ${userMessage}\n\nYour Answer:`
-              }]
-            }],
-            generationConfig: {
-              temperature: 0.8,
-              topK: 40,
-              topP: 0.95,
-              maxOutputTokens: 2048, // Increased for longer, more detailed answers
-            }
+            model: 'gpt-3.5-turbo',
+            messages: [
+              {
+                role: 'system',
+                content: systemPrompt
+              },
+              {
+                role: 'user',
+                content: userContent
+              }
+            ],
+            temperature: 0.8,
+            max_tokens: 2048
           })
         });
         
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
-          console.error('Gemini API error:', errorData);
-          // Try free AI services if Gemini fails
+          console.error('OpenAI API error:', errorData);
+          
+          // If OpenAI fails but we have Wikipedia, return Wikipedia info
+          if (wikipediaInfo) {
+            const wikiText = lang === 'ar'
+              ? `📚 معلومات من ويكيبيديا:\n\n${wikipediaInfo.title}\n\n${wikipediaInfo.extract}\n\n${wikipediaInfo.url ? `المصدر: ${wikipediaInfo.url}` : ''}`
+              : `📚 Information from Wikipedia:\n\n${wikipediaInfo.title}\n\n${wikipediaInfo.extract}\n\n${wikipediaInfo.url ? `Source: ${wikipediaInfo.url}` : ''}`;
+            return wikiText;
+          }
+          
+          // Try free AI services if OpenAI fails
           const freeResponse = await tryFreeAIServices(userMessage, lang);
           if (freeResponse) return freeResponse;
           return generateSmartAnswer(userMessage, lang);
@@ -391,18 +532,43 @@ Answer the following question comprehensively and helpfully:`;
         
         const data = await response.json();
         
-        if (data.candidates && data.candidates[0] && data.candidates[0].content) {
-          const text = data.candidates[0].content.parts[0].text;
-          return text.trim();
+        if (data.choices && data.choices[0] && data.choices[0].message) {
+          let text = data.choices[0].message.content.trim();
+          
+          // Add Wikipedia source link if available
+          if (wikipediaInfo && wikipediaInfo.url) {
+            const sourceText = lang === 'ar'
+              ? `\n\n📚 المصدر: ${wikipediaInfo.url}`
+              : `\n\n📚 Source: ${wikipediaInfo.url}`;
+            text += sourceText;
+          }
+          
+          return text;
         }
         
-        // If response format is unexpected, try free services
+        // If response format is unexpected, try Wikipedia or free services
+        if (wikipediaInfo) {
+          const wikiText = lang === 'ar'
+            ? `📚 معلومات من ويكيبيديا:\n\n${wikipediaInfo.title}\n\n${wikipediaInfo.extract}\n\n${wikipediaInfo.url ? `المصدر: ${wikipediaInfo.url}` : ''}`
+            : `📚 Information from Wikipedia:\n\n${wikipediaInfo.title}\n\n${wikipediaInfo.extract}\n\n${wikipediaInfo.url ? `Source: ${wikipediaInfo.url}` : ''}`;
+          return wikiText;
+        }
+        
         const freeResponse = await tryFreeAIServices(userMessage, lang);
         if (freeResponse) return freeResponse;
         return generateSmartAnswer(userMessage, lang);
       } catch (error) {
-        console.error('Gemini API error:', error);
-        // Try free AI services if Gemini fails
+        console.error('OpenAI API error:', error);
+        
+        // If OpenAI fails but we have Wikipedia, return Wikipedia info
+        if (wikipediaInfo) {
+          const wikiText = lang === 'ar'
+            ? `📚 معلومات من ويكيبيديا:\n\n${wikipediaInfo.title}\n\n${wikipediaInfo.extract}\n\n${wikipediaInfo.url ? `المصدر: ${wikipediaInfo.url}` : ''}`
+            : `📚 Information from Wikipedia:\n\n${wikipediaInfo.title}\n\n${wikipediaInfo.extract}\n\n${wikipediaInfo.url ? `Source: ${wikipediaInfo.url}` : ''}`;
+          return wikiText;
+        }
+        
+        // Try free AI services if OpenAI fails
         const freeResponse = await tryFreeAIServices(userMessage, lang);
         if (freeResponse) return freeResponse;
         return generateSmartAnswer(userMessage, lang);
@@ -479,14 +645,53 @@ Answer the following question comprehensively and helpfully:`;
       const lowerMessage = userMessage.toLowerCase();
       const message = userMessage;
       
-      // Extract key terms from the question
+      // Extract key terms from the question - improved to find actual topic
       const extractKeyTerms = (text) => {
-        const words = text.toLowerCase().split(/\s+/);
-        return words.filter(w => w.length > 3 && !['what', 'who', 'where', 'when', 'why', 'how', 'about', 'information', 'tell', 'me', 'give', 'the'].includes(w));
+        const lowerText = text.toLowerCase();
+        
+        // Common stop words to filter out
+        const stopWords = ['what', 'who', 'where', 'when', 'why', 'how', 'about', 'information', 'tell', 'me', 'give', 'the', 'think', 'know', 'want', 'need', 'like', 'would', 'could', 'should', 'can', 'do', 'you', 'your', 'is', 'are', 'was', 'were', 'been', 'have', 'has', 'had', 'does', 'did', 'will', 'this', 'that', 'these', 'those', 'with', 'from', 'for', 'and', 'or', 'but', 'if', 'then', 'than', 'more', 'most', 'some', 'any', 'all', 'each', 'every'];
+        
+        // Extract phrases after common question patterns
+        const questionPatterns = [
+          /(?:what|tell me|explain|describe|discuss).*?(?:about|on|regarding)\s+(.+)/i,
+          /(?:what|tell me|explain|describe|discuss)\s+(?:is|are|was|were)\s+(.+)/i,
+          /(?:what|tell me|explain|describe|discuss)\s+(.+)/i,
+          /(?:think|opinion|thoughts).*?(?:about|on|regarding)\s+(.+)/i
+        ];
+        
+        // Try to extract topic from question patterns
+        for (const pattern of questionPatterns) {
+          const match = text.match(pattern);
+          if (match && match[1]) {
+            const topic = match[1].trim();
+            // Remove trailing question marks and punctuation
+            const cleanTopic = topic.replace(/[?.,!;:]+$/, '').trim();
+            if (cleanTopic.length > 2) {
+              return cleanTopic;
+            }
+          }
+        }
+        
+        // Fallback: extract meaningful words (not stop words, length > 2)
+        const words = lowerText.split(/\s+/);
+        const meaningfulWords = words.filter(w => {
+          const cleanWord = w.replace(/[?.,!;:()]+/g, '');
+          return cleanWord.length > 2 && !stopWords.includes(cleanWord);
+        });
+        
+        // If we have meaningful words, join them (take last 2-3 words as they're usually the topic)
+        if (meaningfulWords.length > 0) {
+          // Take the last meaningful words (usually the topic comes at the end)
+          const topicWords = meaningfulWords.slice(-3).join(' ');
+          return topicWords;
+        }
+        
+        // Last resort: take last few words
+        return text.split(' ').slice(-3).join(' ');
       };
       
-      const keyTerms = extractKeyTerms(userMessage);
-      const mainTopic = keyTerms[0] || message.split(' ').slice(-2).join(' ');
+      const mainTopic = extractKeyTerms(userMessage) || 'this topic';
       
       if (lang === 'ar') {
         // Arabic smart answers
@@ -526,7 +731,7 @@ Answer the following question comprehensively and helpfully:`;
 • يمكن العثور على معلومات مفصلة من مصادر متخصصة
 • هناك جوانب متعددة يمكن استكشافها
 
-للحصول على إجابات أكثر دقة وتفصيلاً، يرجى إضافة مفتاح Google Gemini API في ملف chatbot.js للحصول على إجابات ذكية من Google AI.`;
+للحصول على إجابات أكثر دقة وتفصيلاً، يرجى المحاولة مرة أخرى.`;
       } else {
         // English smart answers
         if (message.includes('aramco') || lowerMessage.includes('aramco')) {
@@ -566,9 +771,7 @@ Let me provide helpful information:
 • Detailed information can be found from specialized sources
 • There are multiple aspects that can be explored
 
-For more accurate and detailed answers, please add your Google Gemini API key in the chatbot.js file to get intelligent responses from Google AI. You can get a free API key from: https://makersuite.google.com/app/apikey
-
-Alternatively, you can ask more specific questions and I'll provide the best information I have.`;
+For more accurate and detailed answers, please try asking again or rephrase your question.`;
       }
     }
 
@@ -703,14 +906,14 @@ Alternatively, you can ask more specific questions and I'll provide the best inf
           return `بناءً على سؤالك "${userMessage}"، يمكنني مساعدتك. هذا موضوع مثير للاهتمام. دعني أقدم لك معلومات شاملة:\n\n• الموضوع يتعلق بمجال واسع من المعرفة\n• يمكنك الحصول على معلومات أكثر تفصيلاً من مصادر متخصصة\n• إذا كان السؤال عن موضوع محدد، يمكنني تقديم تفاصيل أكثر\n\nهل تريد معلومات أكثر تفصيلاً عن جانب معين من هذا الموضوع؟`;
         }
         
-        return `سؤالك "${userMessage}" مهم ومثير للاهتمام. هذا موضوع يمكن استكشافه من عدة جوانب. يمكنني مساعدتك في:\n\n• فهم المفاهيم الأساسية\n• تقديم معلومات عامة\n• توجيهك إلى مصادر إضافية\n\nللحصول على إجابات أكثر دقة، يرجى إضافة مفتاح Google Gemini API في ملف chatbot.js. يمكنك الحصول عليه من: https://makersuite.google.com/app/apikey\n\nأو يمكنك طرح سؤال أكثر تحديداً وسأحاول مساعدتك بأفضل ما لدي.`;
+        return `سؤالك "${userMessage}" مهم ومثير للاهتمام. هذا موضوع يمكن استكشافه من عدة جوانب. يمكنني مساعدتك في:\n\n• فهم المفاهيم الأساسية\n• تقديم معلومات عامة\n• توجيهك إلى مصادر إضافية\n\nللحصول على إجابات أكثر دقة، يرجى المحاولة مرة أخرى أو إعادة صياغة سؤالك.`;
       } else {
         // English comprehensive answers
         if (lowerMessage.includes('what is') || lowerMessage.includes('what are') || lowerMessage.includes('explain')) {
           return `Based on your question "${userMessage}", I can help you. This is an interesting topic. Let me provide comprehensive information:\n\n• This topic relates to a broad field of knowledge\n• You can get more detailed information from specialized sources\n• If the question is about a specific topic, I can provide more details\n\nWould you like more detailed information about a specific aspect of this topic?`;
         }
         
-        return `Your question "${userMessage}" is important and interesting. This is a topic that can be explored from multiple angles. I can help you with:\n\n• Understanding basic concepts\n• Providing general information\n• Guiding you to additional resources\n\nFor more accurate answers, please add your Google Gemini API key in the chatbot.js file. You can get it from: https://makersuite.google.com/app/apikey\n\nOr you can ask a more specific question and I'll try to help you with the best I have.`;
+        return `Your question "${userMessage}" is important and interesting. This is a topic that can be explored from multiple angles. I can help you with:\n\n• Understanding basic concepts\n• Providing general information\n• Guiding you to additional resources\n\nFor more accurate answers, please try again or rephrase your question.`;
       }
     }
     
