@@ -53,6 +53,59 @@
       </section>
     </main>
     <footer class="credits">Crafted with LumenSlides · Illuminate every idea</footer>
+    
+    <!-- Chatbot Component -->
+    <div id="chatbot">
+      <button id="chatbotToggle" aria-label="Open chatbot">
+        <svg class="robot-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <rect class="robot-head" x="20" y="15" width="60" height="50" rx="8"/>
+          <circle class="robot-eye" cx="35" cy="35" r="5"/>
+          <circle class="robot-eye" cx="65" cy="35" r="5"/>
+          <rect class="robot-body" x="25" y="70" width="50" height="25" rx="5"/>
+          <rect x="30" y="75" width="15" height="8" rx="2" fill="#ffffff" opacity="0.6"/>
+          <rect x="55" y="75" width="15" height="8" rx="2" fill="#ffffff" opacity="0.6"/>
+        </svg>
+      </button>
+      <div id="chatbotWindow">
+        <div class="chatbot-header">
+          <div class="chatbot-header-left">
+            <div>
+              <h3 class="chatbot-header-title">🤖 AI Assistant</h3>
+              <p class="chatbot-header-subtitle">How can I help you?</p>
+            </div>
+          </div>
+          <div class="chatbot-header-actions">
+            <button id="chatbotMinimize" class="chatbot-header-btn" aria-label="Minimize">−</button>
+            <button id="chatbotClose" class="chatbot-header-btn" aria-label="Close">×</button>
+          </div>
+        </div>
+        <div id="chatbotMessages"></div>
+        <div class="chatbot-input-area">
+          <div class="chatbot-input-wrapper">
+            <textarea id="chatbotInput" placeholder="Type your message..." rows="1"></textarea>
+          </div>
+          <div class="chatbot-input-actions">
+            <button id="chatbotVoice" class="chatbot-action-btn" aria-label="Voice input">
+              <span class="voice-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                  <line x1="12" y1="19" x2="12" y2="23"></line>
+                  <line x1="8" y1="23" x2="16" y2="23"></line>
+                </svg>
+              </span>
+            </button>
+            <button id="chatbotSend" class="chatbot-action-btn" aria-label="Send message">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="./scripts/chatbot.js"></script>
   </body>
   </html>
 

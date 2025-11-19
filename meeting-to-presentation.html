@@ -131,7 +131,12 @@
       }
 
       .slide-section {
+        position: relative;
+        padding: 20px;
         margin-bottom: 32px;
+        border: 2px solid transparent;
+        border-radius: 8px;
+        transition: all 0.2s ease;
       }
 
       .slide-section:last-child {
@@ -156,6 +161,182 @@
       .slide-section li {
         margin-bottom: 6px;
       }
+
+      .slide-section.editing {
+        border-color: var(--blue);
+        background: #f8fafc;
+      }
+
+      .slide-actions {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        display: flex;
+        gap: 8px;
+      }
+
+      .edit-btn, .save-btn, .cancel-btn, .add-point-btn, .remove-point-btn {
+        padding: 6px 12px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: #ffffff;
+        color: var(--text);
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .edit-btn:hover {
+        background: var(--blue);
+        color: #ffffff;
+        border-color: var(--blue);
+      }
+
+      .save-btn {
+        background: var(--green);
+        color: #ffffff;
+        border-color: var(--green);
+      }
+
+      .save-btn:hover {
+        opacity: 0.9;
+      }
+
+      .cancel-btn {
+        background: #f3f4f6;
+        color: var(--text);
+      }
+
+      .cancel-btn:hover {
+        background: #e5e7eb;
+      }
+
+      .add-point-btn {
+        background: var(--blue);
+        color: #ffffff;
+        border-color: var(--blue);
+        margin-top: 8px;
+        font-size: 0.8rem;
+      }
+
+      .add-point-btn:hover {
+        opacity: 0.9;
+      }
+
+      .remove-point-btn {
+        background: #fee;
+        color: #c33;
+        border-color: #fcc;
+        padding: 4px 8px;
+        font-size: 0.75rem;
+        margin-left: 8px;
+      }
+
+      .remove-point-btn:hover {
+        background: #fcc;
+      }
+
+      .editable-title {
+        display: none;
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 12px;
+        font-family: inherit;
+      }
+
+      .slide-section.editing .editable-title {
+        display: block;
+      }
+
+      .slide-section.editing h3 {
+        display: none;
+      }
+
+      .editable-point {
+        display: none;
+        width: 100%;
+        padding: 6px 10px;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        font-size: 0.95rem;
+        margin-bottom: 6px;
+        font-family: inherit;
+      }
+
+      .slide-section.editing .editable-point {
+        display: block;
+      }
+
+      .slide-section.editing ul {
+        display: none;
+      }
+
+      .editable-points-container {
+        display: none;
+      }
+
+      .slide-section.editing .editable-points-container {
+        display: block;
+      }
+
+      .point-input-wrapper {
+        display: flex;
+        align-items: center;
+        margin-bottom: 6px;
+      }
+
+      .point-input-wrapper input {
+        flex: 1;
+      }
+
+      .loading-spinner {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: #ffffff;
+        animation: spin 1s ease-in-out infinite;
+        margin-right: 8px;
+        vertical-align: middle;
+      }
+
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+
+      .error-message {
+        background: #fee;
+        border: 1px solid #fcc;
+        border-radius: 8px;
+        padding: 16px;
+        margin-top: 16px;
+        color: #c33;
+        display: none;
+      }
+
+      .error-message.show {
+        display: block;
+      }
+
+      .status-message {
+        margin-top: 16px;
+        padding: 12px;
+        background: #f0f9ff;
+        border: 1px solid #bae6fd;
+        border-radius: 8px;
+        color: #0369a1;
+        font-size: 0.9rem;
+        display: none;
+      }
+
+      .status-message.show {
+        display: block;
+      }
     </style>
   </head>
   <body class="bg-white bg-modern bg-corner-dots">
@@ -167,6 +348,7 @@
         <a href="home.html" class="nav-link">Home</a>
         <a href="about.html" class="nav-link">About</a>
         <a href="meeting-to-presentation.html" class="nav-link nav-link--current" aria-current="page">Meeting to Presentation</a>
+        <a href="ai-assistant.html" class="nav-link">AI Assistant</a>
       </nav>
       <div class="header-right">
         <img class="site-logo site-logo--mark" src="./logo.png" alt="Aramco Digital logo" />
@@ -189,7 +371,7 @@
               type="file"
               id="audioFile"
               class="file-input"
-              accept=".mp3,.wav,.m4a"
+              accept=".mp3,.wav,.m4a,.mp4,.webm,.ogg"
             />
             <p class="file-name" id="fileName"></p>
           </div>
@@ -197,41 +379,23 @@
           <button class="generate-btn" id="generateBtn" disabled>
             Generate Presentation Points
           </button>
+          <div class="status-message" id="statusMessage"></div>
+          <div class="error-message" id="errorMessage"></div>
+        </div>
+
+        <!-- Export to Editor Button -->
+        <div class="upload-card" id="exportCard" style="display: none;">
+          <h2>Ready to Edit?</h2>
+          <p style="color: var(--muted); margin-bottom: 16px;">Export your presentation to the slide editor for advanced editing and design.</p>
+          <button class="generate-btn" id="exportToEditorBtn" style="background: linear-gradient(90deg, var(--blue), var(--green));">
+            Open in Slide Editor
+          </button>
         </div>
 
         <!-- Results Card -->
         <div class="results-card" id="resultsCard">
           <h2>AI Generated Presentation Summary</h2>
-
-          <div class="slide-section">
-            <h3>Slide 1: Meeting Overview</h3>
-            <ul>
-              <li>Purpose of the meeting</li>
-              <li>Team members present</li>
-            </ul>
-          </div>
-
-          <div class="slide-section">
-            <h3>Slide 2: Key Discussions</h3>
-            <ul>
-              <li>Main topic points summarized</li>
-            </ul>
-          </div>
-
-          <div class="slide-section">
-            <h3>Slide 3: Decisions Made</h3>
-            <ul>
-              <li>Final conclusions or agreements</li>
-            </ul>
-          </div>
-
-          <div class="slide-section">
-            <h3>Slide 4: Action Items</h3>
-            <ul>
-              <li>Who is responsible</li>
-              <li>Deadlines</li>
-            </ul>
-          </div>
+          <div id="resultsContent"></div>
         </div>
       </div>
     </main>
@@ -239,33 +403,690 @@
     <footer class="credits">Made by: Reema Alomari, Abdullah Alqahtani, Yara AlSardi</footer>
 
     <script>
+      // OpenAI API Key - In production, this should be stored securely on the backend
+      // Replace 'YOUR_API_KEY_HERE' with your actual API key or load it from a secure backend service
+      const API_KEY = 'YOUR_API_KEY_HERE';
       const audioFileInput = document.getElementById('audioFile');
       const fileName = document.getElementById('fileName');
       const generateBtn = document.getElementById('generateBtn');
       const resultsCard = document.getElementById('resultsCard');
+      const resultsContent = document.getElementById('resultsContent');
+      const statusMessage = document.getElementById('statusMessage');
+      const errorMessage = document.getElementById('errorMessage');
+      const exportCard = document.getElementById('exportCard');
+      const exportToEditorBtn = document.getElementById('exportToEditorBtn');
+      
+      // Store slides data for editing
+      let slidesData = [];
 
       // Handle file selection
       audioFileInput.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (file) {
-          fileName.textContent = 'Selected: ' + file.name;
+          // Validate file type
+          const validTypes = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/x-wav', 'audio/mp4', 'audio/m4a', 'audio/x-m4a', 'audio/webm', 'audio/ogg'];
+          const validExtensions = ['.mp3', '.wav', '.m4a', '.mp4', '.webm', '.ogg'];
+          const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+          const isValidType = validTypes.includes(file.type) || validExtensions.includes(fileExtension);
+          
+          if (!isValidType) {
+            showError('Invalid file type. Please select an audio file (.mp3, .wav, .m4a, .mp4, .webm, or .ogg)');
+            audioFileInput.value = '';
+            fileName.classList.remove('show');
+            generateBtn.disabled = true;
+            return;
+          }
+
+          // Validate file size (25MB limit)
+          const maxSize = 25 * 1024 * 1024; // 25MB
+          if (file.size > maxSize) {
+            showError('File size exceeds 25MB limit. Please use a smaller audio file.');
+            audioFileInput.value = '';
+            fileName.classList.remove('show');
+            generateBtn.disabled = true;
+            return;
+          }
+
+          const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+          fileName.textContent = `Selected: ${file.name} (${fileSizeMB} MB)`;
           fileName.classList.add('show');
           generateBtn.disabled = false;
+          hideError();
         } else {
           fileName.classList.remove('show');
           generateBtn.disabled = true;
         }
       });
 
-      // Handle generate button click
-      generateBtn.addEventListener('click', function() {
-        // Show results
-        resultsCard.classList.add('show');
+      function showStatus(message) {
+        statusMessage.textContent = message;
+        statusMessage.classList.add('show');
+      }
+
+      function hideStatus() {
+        statusMessage.classList.remove('show');
+      }
+
+      function showError(message) {
+        errorMessage.textContent = message;
+        errorMessage.classList.add('show');
+        hideStatus();
+      }
+
+      function hideError() {
+        errorMessage.classList.remove('show');
+      }
+
+      async function transcribeAudio(file) {
+        // Validate file size (25MB limit for Whisper API)
+        const maxSize = 25 * 1024 * 1024; // 25MB
+        if (file.size > maxSize) {
+          throw new Error('File size exceeds 25MB limit. Please use a smaller audio file.');
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('model', 'whisper-1');
+        formData.append('response_format', 'json');
+
+        try {
+          const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${API_KEY}`
+            },
+            body: formData
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ error: { message: 'Failed to transcribe audio' } }));
+            const errorMsg = errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`;
+            throw new Error(errorMsg);
+          }
+
+          const data = await response.json();
+          if (!data.text) {
+            throw new Error('No transcript received from API');
+          }
+          return data.text;
+        } catch (error) {
+          if (error.message.includes('CORS') || error.message.includes('Failed to fetch')) {
+            throw new Error('Network error. Please check your internet connection or try using a local server.');
+          }
+          throw error;
+        }
+      }
+
+      async function generatePresentationPoints(transcript) {
+        if (!transcript || transcript.trim().length === 0) {
+          throw new Error('Transcript is empty. Please try uploading the audio file again.');
+        }
+
+        // Truncate transcript if too long (to avoid token limits)
+        const maxTranscriptLength = 10000; // characters
+        const truncatedTranscript = transcript.length > maxTranscriptLength 
+          ? transcript.substring(0, maxTranscriptLength) + '... [transcript truncated]'
+          : transcript;
+
+        const prompt = `Based on the following meeting transcript, create a structured presentation summary with 4-6 slides. For each slide, provide:
+1. A clear slide title
+2. A list of 3-5 key bullet points
+
+Format your response as JSON with this structure:
+{
+  "slides": [
+    {
+      "title": "Slide Title",
+      "points": ["Point 1", "Point 2", "Point 3"]
+    }
+  ]
+}
+
+Meeting Transcript:
+${truncatedTranscript}`;
+
+        try {
+          const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${API_KEY}`
+            },
+            body: JSON.stringify({
+              model: 'gpt-4o-mini', // Using gpt-4o-mini for better availability and lower cost
+              messages: [
+                {
+                  role: 'system',
+                  content: 'You are a professional presentation assistant. Create clear, concise presentation slides from meeting transcripts. Always respond with valid JSON only, no markdown formatting.'
+                },
+                {
+                  role: 'user',
+                  content: prompt
+                }
+              ],
+              temperature: 0.7,
+              max_tokens: 2000,
+              response_format: { type: 'json_object' }
+            })
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ error: { message: 'Failed to generate presentation' } }));
+            const errorMsg = errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`;
+            throw new Error(errorMsg);
+          }
+
+          const data = await response.json();
+          if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+            throw new Error('Invalid response format from API');
+          }
+
+          const content = data.choices[0].message.content.trim();
+          
+          // Try to extract JSON from the response (in case it's wrapped in markdown or has extra text)
+          let jsonMatch = content.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            const parsed = JSON.parse(jsonMatch[0]);
+            // Ensure we have slides array
+            if (parsed.slides && Array.isArray(parsed.slides)) {
+              return parsed;
+            }
+          }
+          
+          // Try direct parse
+          const parsed = JSON.parse(content);
+          if (parsed.slides && Array.isArray(parsed.slides)) {
+            return parsed;
+          }
+          
+          throw new Error('Invalid response format: missing slides array');
+        } catch (error) {
+          if (error.message.includes('CORS') || error.message.includes('Failed to fetch')) {
+            throw new Error('Network error. Please check your internet connection.');
+          }
+          if (error instanceof SyntaxError) {
+            throw new Error('Failed to parse AI response. Please try again.');
+          }
+          throw error;
+        }
+      }
+
+      function displayResults(presentation) {
+        // Handle both direct slides array and object with slides property
+        const slides = Array.isArray(presentation) ? presentation : (presentation.slides || []);
         
-        // Scroll to results
+        if (!slides || slides.length === 0) {
+          showError('No slides were generated. Please try again.');
+          return;
+        }
+
+        // Store slides data
+        slidesData = slides.map((slide, index) => ({
+          title: slide.title || `Slide ${index + 1}`,
+          points: Array.isArray(slide.points) ? [...slide.points] : (slide.points ? [String(slide.points)] : ['No points generated for this slide'])
+        }));
+
+        renderSlides();
+        resultsCard.classList.add('show');
+        exportCard.style.display = 'block';
         resultsCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+
+      function renderSlides() {
+        let html = '';
+        slidesData.forEach((slide, index) => {
+          const title = slide.title || `Slide ${index + 1}`;
+          const points = slide.points || [];
+          
+          html += `
+            <div class="slide-section" data-slide-index="${index}">
+              <div class="slide-actions">
+                <button class="edit-btn" onclick="editSlide(${index})">Edit</button>
+              </div>
+              <h3>Slide ${index + 1}: ${escapeHtml(title)}</h3>
+              <input type="text" class="editable-title" value="${escapeHtml(title)}" data-slide-index="${index}">
+              <ul>
+                ${points.map((point, pIndex) => `<li>${escapeHtml(String(point))}</li>`).join('')}
+              </ul>
+              <div class="editable-points-container">
+                ${points.map((point, pIndex) => `
+                  <div class="point-input-wrapper">
+                    <input type="text" class="editable-point" value="${escapeHtml(String(point))}" 
+                           data-slide-index="${index}" data-point-index="${pIndex}">
+                    <button class="remove-point-btn" onclick="removePoint(${index}, ${pIndex})">Remove</button>
+                  </div>
+                `).join('')}
+                <button class="add-point-btn" onclick="addPoint(${index})">+ Add Point</button>
+              </div>
+            </div>
+          `;
+        });
+        
+        resultsContent.innerHTML = html;
+      }
+
+      function editSlide(index) {
+        const slideSection = document.querySelector(`[data-slide-index="${index}"]`);
+        if (!slideSection) return;
+
+        slideSection.classList.add('editing');
+
+        // Update actions
+        const actionsDiv = slideSection.querySelector('.slide-actions');
+        actionsDiv.innerHTML = `
+          <button class="save-btn" onclick="saveSlide(${index})">Save</button>
+          <button class="cancel-btn" onclick="cancelEdit(${index})">Cancel</button>
+        `;
+      }
+
+      function saveSlide(index) {
+        const slideSection = document.querySelector(`[data-slide-index="${index}"]`);
+        if (!slideSection) return;
+
+        // Get edited title
+        const titleInput = slideSection.querySelector('.editable-title');
+        if (titleInput) {
+          slidesData[index].title = titleInput.value.trim() || `Slide ${index + 1}`;
+        }
+
+        // Get edited points
+        const pointInputs = slideSection.querySelectorAll('.editable-point');
+        slidesData[index].points = Array.from(pointInputs)
+          .map(input => input.value.trim())
+          .filter(point => point.length > 0);
+
+        if (slidesData[index].points.length === 0) {
+          slidesData[index].points = ['No points'];
+        }
+
+        // Re-render
+        renderSlides();
+      }
+
+      function cancelEdit(index) {
+        // Just re-render to discard changes
+        renderSlides();
+      }
+
+      function removePoint(slideIndex, pointIndex) {
+        if (slidesData[slideIndex] && slidesData[slideIndex].points) {
+          slidesData[slideIndex].points.splice(pointIndex, 1);
+          if (slidesData[slideIndex].points.length === 0) {
+            slidesData[slideIndex].points = ['No points'];
+          }
+          renderSlides();
+          // Re-enter edit mode
+          editSlide(slideIndex);
+        }
+      }
+
+      function addPoint(slideIndex) {
+        if (slidesData[slideIndex]) {
+          if (!slidesData[slideIndex].points) {
+            slidesData[slideIndex].points = [];
+          }
+          slidesData[slideIndex].points.push('New point');
+          renderSlides();
+          // Re-enter edit mode
+          editSlide(slideIndex);
+          // Focus on the new point input
+          const slideSection = document.querySelector(`[data-slide-index="${slideIndex}"]`);
+          const pointInputs = slideSection.querySelectorAll('.editable-point');
+          if (pointInputs.length > 0) {
+            pointInputs[pointInputs.length - 1].focus();
+          }
+        }
+      }
+
+      // Make functions globally available
+      window.editSlide = editSlide;
+      window.saveSlide = saveSlide;
+      window.cancelEdit = cancelEdit;
+      window.removePoint = removePoint;
+      window.addPoint = addPoint;
+
+      // Get theme colors based on presentation content
+      function getThemeForPresentation() {
+        // Analyze content to determine theme
+        const allText = slidesData.map(s => s.title + ' ' + (s.points || []).join(' ')).join(' ').toLowerCase();
+        
+        if (allText.includes('business') || allText.includes('report') || allText.includes('quarter')) {
+          return 'professional';
+        } else if (allText.includes('creative') || allText.includes('design') || allText.includes('innovation')) {
+          return 'creative';
+        } else if (allText.includes('modern') || allText.includes('tech') || allText.includes('digital')) {
+          return 'modern';
+        }
+        return 'professional'; // default
+      }
+
+      function getThemeColors(theme) {
+        const themes = {
+          professional: {
+            primary: '#1e40af',
+            secondary: '#3b82f6',
+            background: '#ffffff',
+            backgroundGradient: '#f0f4ff',
+            backgroundAlt: '#e0e7ff',
+            text: '#0f172a',
+            accent: '#2563eb',
+            lightAccent: '#eff6ff'
+          },
+          modern: {
+            primary: '#10b981',
+            secondary: '#34d399',
+            background: '#ffffff',
+            backgroundGradient: '#ecfdf5',
+            backgroundAlt: '#d1fae5',
+            text: '#0f172a',
+            accent: '#059669',
+            lightAccent: '#f0fdf4'
+          },
+          creative: {
+            primary: '#7c3aed',
+            secondary: '#a78bfa',
+            background: '#ffffff',
+            backgroundGradient: '#f5f3ff',
+            backgroundAlt: '#ede9fe',
+            text: '#0f172a',
+            accent: '#6d28d9',
+            lightAccent: '#faf5ff'
+          },
+          minimal: {
+            primary: '#64748b',
+            secondary: '#94a3b8',
+            background: '#ffffff',
+            backgroundGradient: '#f8fafc',
+            backgroundAlt: '#f1f5f9',
+            text: '#0f172a',
+            accent: '#475569',
+            lightAccent: '#f8fafc'
+          }
+        };
+        return themes[theme] || themes.professional;
+      }
+
+      // Export to slide editor
+      function convertToEditorFormat() {
+        if (!slidesData || slidesData.length === 0) {
+          showError('No slides to export. Please generate a presentation first.');
+          return null;
+        }
+
+        const theme = getThemeForPresentation();
+        const colors = getThemeColors(theme);
+
+        const editorSlides = slidesData.map((slide, index) => {
+          const slideId = typeof crypto !== 'undefined' && crypto.randomUUID 
+            ? crypto.randomUUID() 
+            : `slide-${Date.now()}-${index}`;
+          
+          const elements = [];
+          
+          // Determine background - title slide gets gradient, others alternate
+          let backgroundColor = '#ffffff';
+          if (index === 0) {
+            backgroundColor = colors.backgroundGradient || colors.background;
+          } else {
+            const useAltBackground = index % 2 === 0;
+            backgroundColor = useAltBackground 
+              ? (colors.backgroundAlt || colors.backgroundGradient || colors.background)
+              : (colors.backgroundGradient || colors.background);
+          }
+          
+          // Add title element with theme color
+          elements.push({
+            id: `${slideId}-title`,
+            type: 'text',
+            content: slide.title || `Slide ${index + 1}`,
+            x: 100,
+            y: index === 0 ? 280 : 70,
+            width: 800,
+            height: 80,
+            fontSize: index === 0 ? 64 : 44,
+            fontWeight: 700,
+            color: colors.primary,
+            fontFamily: 'Inter',
+            textAlign: 'left',
+            zIndex: 1
+          });
+
+          // Add bullet points with creative styling
+          const points = slide.points || [];
+          points.forEach((point, pIndex) => {
+            const bulletColor = pIndex === 0 ? colors.accent : colors.text;
+            const bulletSize = pIndex === 0 ? 20 : 18;
+            const yPos = index === 0 ? 400 + (pIndex * 60) : 150 + (pIndex * 55);
+            
+            elements.push({
+              id: `${slideId}-point-${pIndex}`,
+              type: 'text',
+              content: `• ${point}`,
+              x: 140,
+              y: yPos,
+              width: 740,
+              height: 40,
+              fontSize: bulletSize,
+              fontWeight: 400,
+              color: bulletColor,
+              fontFamily: 'Inter',
+              textAlign: 'left',
+              zIndex: 1
+            });
+          });
+
+          return {
+            id: slideId,
+            title: slide.title || `Slide ${index + 1}`,
+            backgroundColor: backgroundColor,
+            backgroundImage: null,
+            elements: elements,
+            animation: { type: 'none', duration: 600, delay: 0 }
+          };
+        });
+
+        return {
+          slides: editorSlides,
+          activeSlideIndex: 0,
+          presentationName: 'Meeting Presentation',
+          createdAt: Date.now(),
+          updatedAt: Date.now()
+        };
+      }
+
+      // Handle export to editor button
+      if (exportToEditorBtn) {
+        exportToEditorBtn.addEventListener('click', function() {
+          const editorData = convertToEditorFormat();
+          if (!editorData) return;
+
+          // Generate a new presentation ID
+          const presentationId = typeof crypto !== 'undefined' && crypto.randomUUID 
+            ? crypto.randomUUID() 
+            : `presentation-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+          // Store the presentation data in localStorage
+          try {
+            const PRESENTATION_STORAGE_PREFIX = 'lumen-presentation-';
+            const AUTOSAVE_KEY = 'slide-editor-autosave-v1';
+            const PRESENTATIONS_INDEX_KEY = 'lumen-presentations-index';
+
+            // Prepare the presentation state with all required fields
+            const presentationState = {
+              slides: editorData.slides,
+              activeSlideIndex: editorData.activeSlideIndex,
+              presentationName: editorData.presentationName,
+              createdAt: editorData.createdAt,
+              updatedAt: editorData.updatedAt,
+              preview: {
+                title: editorData.slides[0]?.title || 'Meeting Presentation',
+                snippet: editorData.slides[0]?.elements?.find(e => e.type === 'text')?.text?.substring(0, 100) || '',
+                backgroundColor: '#ffffff',
+                accentColor: '#004c97'
+              }
+            };
+
+            // Store the full presentation
+            localStorage.setItem(
+              `${PRESENTATION_STORAGE_PREFIX}${presentationId}`,
+              JSON.stringify(presentationState)
+            );
+
+            // Also store as autosave (as backup)
+            localStorage.setItem(
+              AUTOSAVE_KEY,
+              JSON.stringify(presentationState)
+            );
+
+            // Add to recent presentations index
+            try {
+              const indexRaw = localStorage.getItem(PRESENTATIONS_INDEX_KEY);
+              const index = indexRaw ? JSON.parse(indexRaw) : [];
+              const existingIndex = index.findIndex(item => item.id === presentationId);
+              
+              const indexEntry = {
+                id: presentationId,
+                name: editorData.presentationName,
+                url: `slide-editor.html?id=${presentationId}`,
+                updatedAt: Date.now(),
+                preview: {
+                  title: editorData.slides[0]?.title || 'Meeting Presentation',
+                  snippet: editorData.slides[0]?.elements?.find(e => e.type === 'text')?.text?.substring(0, 100) || ''
+                }
+              };
+
+              if (existingIndex >= 0) {
+                index[existingIndex] = indexEntry;
+              } else {
+                index.unshift(indexEntry);
+                // Keep only last 20
+                if (index.length > 20) {
+                  index.pop();
+                }
+              }
+
+              localStorage.setItem(PRESENTATIONS_INDEX_KEY, JSON.stringify(index));
+            } catch (e) {
+              console.warn('Failed to update presentations index', e);
+            }
+
+            // Clear the forceNewPresentation flag so editor doesn't reset
+            localStorage.removeItem('forceNewPresentation');
+            localStorage.removeItem('isNewPresentation');
+
+            // Navigate to slide editor
+            const editorUrl = `slide-editor.html?id=${presentationId}`;
+            if (window.fadeNavigate) {
+              window.fadeNavigate(editorUrl);
+            } else {
+              window.location.href = editorUrl;
+            }
+          } catch (error) {
+            console.error('Failed to export to editor', error);
+            showError('Failed to export to editor. Please try again.');
+          }
+        });
+      }
+
+      function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
+      // Handle generate button click
+      generateBtn.addEventListener('click', async function() {
+        const file = audioFileInput.files[0];
+        if (!file) {
+          showError('Please select an audio file first.');
+          return;
+        }
+
+        // Disable button and show loading state
+        generateBtn.disabled = true;
+        const originalText = generateBtn.textContent;
+        generateBtn.innerHTML = '<span class="loading-spinner"></span>Processing...';
+        hideError();
+        hideStatus();
+
+        try {
+          // Step 1: Transcribe audio
+          showStatus('Step 1/2: Transcribing audio...');
+          const transcript = await transcribeAudio(file);
+          
+          // Step 2: Generate presentation points
+          showStatus('Step 2/2: Generating presentation points...');
+          const presentation = await generatePresentationPoints(transcript);
+          
+          // Step 3: Display results
+          hideStatus();
+          if (!presentation || (!presentation.slides && !Array.isArray(presentation))) {
+            throw new Error('Invalid presentation format received');
+          }
+          displayResults(presentation);
+        } catch (error) {
+          console.error('Error:', error);
+          showError(`Error: ${error.message || 'Something went wrong. Please try again.'}`);
+        } finally {
+          // Re-enable button
+          generateBtn.disabled = false;
+          generateBtn.textContent = originalText;
+        }
       });
     </script>
+    
+    <!-- Chatbot Component -->
+    <div id="chatbot">
+      <button id="chatbotToggle" aria-label="Open chatbot">
+        <svg class="robot-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <rect class="robot-head" x="20" y="15" width="60" height="50" rx="8"/>
+          <circle class="robot-eye" cx="35" cy="35" r="5"/>
+          <circle class="robot-eye" cx="65" cy="35" r="5"/>
+          <rect class="robot-body" x="25" y="70" width="50" height="25" rx="5"/>
+          <rect x="30" y="75" width="15" height="8" rx="2" fill="#ffffff" opacity="0.6"/>
+          <rect x="55" y="75" width="15" height="8" rx="2" fill="#ffffff" opacity="0.6"/>
+        </svg>
+      </button>
+      <div id="chatbotWindow">
+        <div class="chatbot-header">
+          <div class="chatbot-header-left">
+            <div>
+              <h3 class="chatbot-header-title">🤖 AI Assistant</h3>
+              <p class="chatbot-header-subtitle">How can I help you?</p>
+            </div>
+          </div>
+          <div class="chatbot-header-actions">
+            <button id="chatbotMinimize" class="chatbot-header-btn" aria-label="Minimize">−</button>
+            <button id="chatbotClose" class="chatbot-header-btn" aria-label="Close">×</button>
+          </div>
+        </div>
+        <div id="chatbotMessages"></div>
+        <div class="chatbot-input-area">
+          <div class="chatbot-input-wrapper">
+            <textarea id="chatbotInput" placeholder="Type your message..." rows="1"></textarea>
+          </div>
+          <div class="chatbot-input-actions">
+            <button id="chatbotVoice" class="chatbot-action-btn" aria-label="Voice input">
+              <span class="voice-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                  <line x1="12" y1="19" x2="12" y2="23"></line>
+                  <line x1="8" y1="23" x2="16" y2="23"></line>
+                </svg>
+              </span>
+            </button>
+            <button id="chatbotSend" class="chatbot-action-btn" aria-label="Send message">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="./scripts/chatbot.js"></script>
   </body>
 </html>
 

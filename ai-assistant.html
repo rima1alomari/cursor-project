@@ -1,0 +1,1636 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Assistant · LumenSlides</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="./scripts/global.js"></script>
+    <style>
+      .ai-assistant-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 40px 24px;
+      }
+
+      .ai-assistant-header {
+        text-align: center;
+        margin-bottom: 50px;
+        padding: 0;
+      }
+
+      .ai-assistant-header h1 {
+        font-size: 56px;
+        margin: 0 0 20px;
+        background: linear-gradient(90deg, var(--text) 0%, var(--blue-700) 50%, var(--green-700) 100%);
+        background-size: 200% 100%;
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        animation: titleShimmer 6s ease-in-out infinite alternate;
+        line-height: 1.2;
+      }
+
+      .ai-assistant-header p {
+        color: var(--muted);
+        font-size: 22px;
+        margin: 0;
+        line-height: 1.5;
+      }
+
+      .ai-form {
+        background: #ffffff;
+        border: 1px solid var(--border);
+        border-radius: 28px;
+        padding: 64px;
+        box-shadow: var(--shadow);
+        max-width: 1100px;
+        margin: 0 auto;
+      }
+
+      .form-group {
+        margin-bottom: 32px;
+      }
+
+      .form-group label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 12px;
+        color: var(--text);
+        font-size: 16px;
+      }
+
+      .form-field-container {
+        background: #f8fafc;
+        border: 2px solid var(--border);
+        border-radius: 16px;
+        padding: 24px;
+        transition: all 0.3s ease;
+        box-sizing: border-box;
+        width: 100%;
+      }
+
+      .form-field-container.description-container {
+        padding: 16px;
+        max-width: 100%;
+      }
+
+      .form-field-container:focus-within {
+        border-color: var(--blue);
+        background: #ffffff;
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+      }
+
+      .form-group input,
+      .form-group textarea,
+      .form-group select {
+        width: 100%;
+        padding: 14px 18px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        font-size: 16px;
+        font-family: inherit;
+        transition: border-color 0.25s ease, box-shadow 0.25s ease;
+        background: #ffffff;
+        box-sizing: border-box;
+        max-width: 100%;
+      }
+
+      .form-group input:focus,
+      .form-group textarea:focus,
+      .form-group select:focus {
+        outline: none;
+        border-color: var(--blue);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      }
+
+      .form-group textarea {
+        min-height: 120px;
+        resize: vertical;
+      }
+
+      .theme-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 12px;
+        margin-top: 8px;
+      }
+
+      .theme-option {
+        position: relative;
+        padding: 16px;
+        border: 2px solid var(--border);
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.25s ease;
+        background: #ffffff;
+        text-align: center;
+      }
+
+      .theme-option:hover {
+        border-color: var(--blue);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+      }
+
+      .theme-option input[type="radio"] {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .theme-option input[type="radio"]:checked + .theme-preview {
+        border-color: var(--blue);
+        background: rgba(59, 130, 246, 0.1);
+      }
+
+      .theme-preview {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .theme-color {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        border: 2px solid rgba(0, 0, 0, 0.1);
+      }
+
+      .theme-name {
+        font-weight: 600;
+        font-size: 13px;
+        color: var(--text);
+      }
+
+      .generate-button {
+        width: 100%;
+        padding: 20px 24px;
+        font-size: 18px;
+        font-weight: 600;
+        margin-top: 8px;
+        min-height: 60px;
+      }
+
+      .generate-button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .loading-state {
+        display: none;
+        text-align: center;
+        padding: 20px;
+        color: var(--muted);
+      }
+
+      .loading-state.active {
+        display: block;
+      }
+
+      .loading-spinner {
+        display: inline-block;
+        width: 40px;
+        height: 40px;
+        border: 4px solid rgba(59, 130, 246, 0.1);
+        border-top-color: var(--blue);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 16px;
+      }
+
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+
+      .error-message {
+        display: none;
+        padding: 12px 16px;
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        border-radius: 8px;
+        color: #dc2626;
+        font-size: 14px;
+        margin-top: 16px;
+      }
+
+      .error-message.active {
+        display: block;
+      }
+
+      .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--blue-700);
+        text-decoration: none;
+        font-weight: 500;
+        margin-bottom: 24px;
+        transition: color 0.2s ease;
+      }
+
+      .back-link:hover {
+        color: var(--blue);
+      }
+
+      .voice-input-btn {
+        position: absolute;
+        right: 12px;
+        top: 12px;
+        width: 40px;
+        height: 40px;
+        border: none;
+        background: var(--blue);
+        color: white;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+      }
+
+      .voice-input-btn:hover {
+        background: var(--blue-700);
+        transform: scale(1.1);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+      }
+
+      .voice-input-btn:active {
+        transform: scale(0.95);
+      }
+
+      .voice-input-btn.recording {
+        background: #ef4444;
+        animation: pulse 1.5s ease-in-out infinite;
+      }
+
+      .voice-input-btn.recording:hover {
+        background: #dc2626;
+      }
+
+      @keyframes pulse {
+        0%, 100% {
+          box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+        }
+        50% {
+          box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+        }
+      }
+
+      .voice-status {
+        position: absolute;
+        bottom: -24px;
+        left: 0;
+        font-size: 12px;
+        color: var(--blue-700);
+        font-weight: 500;
+      }
+
+      .voice-status.listening {
+        color: #ef4444;
+      }
+
+      .form-group textarea {
+        padding-right: 60px;
+      }
+    </style>
+  </head>
+  <body class="bg-white bg-modern bg-corner-dots">
+    <header class="site-header">
+      <div class="header-left">
+        <img class="site-logo site-logo--banner" src="./Screenshot 2025-11-06 at 1.14.39 PM.png" alt="Aramco Digital banner" onerror="this.remove(); var b=document.querySelector('.site-brand'); if(b){ b.textContent='Aramco Digital'; }" />
+        <a href="./index.html" class="home-icon-link" title="Home">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+          </svg>
+        </a>
+      </div>
+      <nav class="site-nav site-nav--centered" aria-label="Primary">
+        <a href="home.html" class="nav-link">Home</a>
+        <a href="templates.html" class="nav-link">Templates</a>
+        <a href="about.html" class="nav-link">About</a>
+        <a href="meeting-to-presentation.html" class="nav-link">Meeting to Presentation</a>
+        <a href="ai-assistant.html" class="nav-link nav-link--current">AI Assistant</a>
+      </nav>
+      <div class="header-right">
+        <div class="account-display" id="accountDisplay">
+          <button class="account-button" id="accountButton" aria-label="Account menu">
+            <span class="account-greeting" id="accountGreeting"></span>
+            <svg class="account-icon" width="32" height="32" viewBox="0 0 32 32" fill="none">
+              <circle cx="16" cy="16" r="14" stroke="currentColor" stroke-width="2"/>
+              <circle cx="16" cy="12" r="5" fill="currentColor"/>
+              <path d="M6 26c0-5.5 4.5-10 10-10s10 4.5 10 10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
+          <div class="account-dropdown" id="accountDropdown" style="display: none;">
+            <button class="dropdown-item dropdown-item--logout" id="logoutButton">
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+              </svg>
+              Logout
+            </button>
+          </div>
+        </div>
+        <img class="site-logo site-logo--mark" src="./logo.png" alt="Aramco Digital logo" />
+      </div>
+    </header>
+
+    <main class="center-wrapper center-wrapper--top page-fade-in">
+      <div class="ai-assistant-container">
+        <a href="home.html" class="back-link">
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M15 18l-6-6 6-6"></path>
+          </svg>
+          Back to Home
+        </a>
+
+        <div class="ai-assistant-header animate-fade-in">
+          <h1>AI Presentation Assistant</h1>
+          <p>Describe your presentation idea and let AI create it for you</p>
+        </div>
+
+        <div class="ai-form card animate-fade-in animate-delay-1">
+          <form id="aiForm">
+            <div class="form-group">
+              <label for="description">
+                Describe Your Presentation
+                <span style="color: var(--muted); font-weight: 400; font-size: 12px;">(Type or speak)</span>
+              </label>
+              <div class="form-field-container description-container">
+                <div style="position: relative;">
+                  <textarea 
+                    id="description" 
+                    name="description" 
+                    placeholder="Tell us what your presentation should cover. For example: 'A quarterly business review covering sales performance, marketing initiatives, and future goals. Include data visualization and key metrics.'"
+                    required
+                  ></textarea>
+                  <button 
+                    type="button" 
+                    id="voiceInputBtn" 
+                    class="voice-input-btn"
+                    title="Click to speak"
+                    aria-label="Voice input"
+                  >
+                    <svg id="micIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                    <line x1="12" y1="19" x2="12" y2="23"></line>
+                    <line x1="8" y1="23" x2="16" y2="23"></line>
+                  </svg>
+                  <svg id="stopIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                    <rect x="6" y="6" width="12" height="12"></rect>
+                  </svg>
+                </button>
+                <div id="voiceStatus" class="voice-status" style="display: none;"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="presentationTitle">Presentation Title <span style="color: var(--muted); font-weight: 400; font-size: 12px;">(Auto-generated, you can edit)</span></label>
+              <div class="form-field-container">
+                <input 
+                  type="text" 
+                  id="presentationTitle" 
+                  name="title" 
+                  placeholder="Title will be generated from your description..."
+                />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Choose a Theme</label>
+              <div class="form-field-container">
+                <div class="theme-grid">
+                <label class="theme-option">
+                  <input type="radio" name="theme" value="professional" checked />
+                  <div class="theme-preview">
+                    <div class="theme-color" style="background: linear-gradient(135deg, #1e40af, #3b82f6);"></div>
+                    <span class="theme-name">Professional</span>
+                  </div>
+                </label>
+                <label class="theme-option">
+                  <input type="radio" name="theme" value="modern" />
+                  <div class="theme-preview">
+                    <div class="theme-color" style="background: linear-gradient(135deg, #10b981, #34d399);"></div>
+                    <span class="theme-name">Modern</span>
+                  </div>
+                </label>
+                <label class="theme-option">
+                  <input type="radio" name="theme" value="creative" />
+                  <div class="theme-preview">
+                    <div class="theme-color" style="background: linear-gradient(135deg, #7c3aed, #a78bfa);"></div>
+                    <span class="theme-name">Creative</span>
+                  </div>
+                </label>
+                <label class="theme-option">
+                  <input type="radio" name="theme" value="minimal" />
+                  <div class="theme-preview">
+                    <div class="theme-color" style="background: linear-gradient(135deg, #64748b, #94a3b8);"></div>
+                    <span class="theme-name">Minimal</span>
+                  </div>
+                </label>
+                </div>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary generate-button" id="generateBtn">
+              Generate Presentation
+            </button>
+
+            <div class="loading-state" id="loadingState">
+              <div class="loading-spinner"></div>
+              <p>AI is creating your presentation...</p>
+            </div>
+
+            <div class="error-message" id="errorMessage"></div>
+          </form>
+        </div>
+      </div>
+    </main>
+
+    <footer class="credits">Made by: Reema Alomari, Abdullah Alqahtani, Yara AlSardi</footer>
+
+    <script src="./scripts/auth.js"></script>
+    <script>
+      // Account display and logout functionality
+      (function() {
+        const accountDisplay = document.getElementById('accountDisplay');
+        const accountButton = document.getElementById('accountButton');
+        const accountGreeting = document.getElementById('accountGreeting');
+        const accountDropdown = document.getElementById('accountDropdown');
+        const logoutButton = document.getElementById('logoutButton');
+
+        function updateAccountDisplay() {
+          const currentUser = getCurrentUser();
+          const isGuest = isGuestMode();
+
+          if (!accountDisplay) return;
+
+          if (currentUser) {
+            accountGreeting.textContent = `Hello, ${currentUser.username}`;
+            accountDisplay.style.display = 'flex';
+            if (accountDropdown) accountDropdown.style.display = 'none';
+            
+            if (accountButton) {
+              accountButton.style.cursor = 'pointer';
+              accountButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isVisible = accountDropdown.style.display === 'block';
+                accountDropdown.style.display = isVisible ? 'none' : 'block';
+              });
+            }
+          } else if (isGuest) {
+            accountGreeting.textContent = 'Hello, Guest!';
+            accountDisplay.style.display = 'flex';
+            if (accountDropdown) accountDropdown.style.display = 'none';
+            if (accountButton) {
+              accountButton.style.cursor = 'default';
+              accountButton.onclick = null;
+            }
+          } else {
+            if (window.fadeNavigate) {
+              window.fadeNavigate('./login.html');
+            } else {
+              window.location.href = './login.html';
+            }
+            return;
+          }
+
+          if (currentUser) {
+            document.addEventListener('click', (e) => {
+              if (accountDisplay && !accountDisplay.contains(e.target)) {
+                if (accountDropdown) accountDropdown.style.display = 'none';
+              }
+            });
+          }
+
+          if (logoutButton && currentUser) {
+            logoutButton.addEventListener('click', () => {
+              logout();
+              if (window.fadeNavigate) {
+                window.fadeNavigate('./login.html');
+              } else {
+                window.location.href = './login.html';
+              }
+            });
+          }
+        }
+
+        updateAccountDisplay();
+      })();
+
+      // AI Presentation Generation
+      (function() {
+        const form = document.getElementById('aiForm');
+        const generateBtn = document.getElementById('generateBtn');
+        const loadingState = document.getElementById('loadingState');
+        const errorMessage = document.getElementById('errorMessage');
+        const descriptionInput = document.getElementById('description');
+        const titleInput = document.getElementById('presentationTitle');
+        const voiceInputBtn = document.getElementById('voiceInputBtn');
+        const voiceStatus = document.getElementById('voiceStatus');
+        const micIcon = document.getElementById('micIcon');
+        const stopIcon = document.getElementById('stopIcon');
+        let userEditedTitle = false;
+        let titleGenerationTimeout = null;
+        let recognition = null;
+        let isListening = false;
+
+        function generateTitleFromDescription(description) {
+          if (!description || description.trim().length < 10) {
+            return '';
+          }
+
+          const desc = description.toLowerCase().trim();
+          
+          // Detect main topic/theme from description
+          const topicPatterns = {
+            // Business & Reports
+            'business': ['business', 'company', 'corporate', 'organization'],
+            'report': ['report', 'review', 'analysis', 'summary', 'overview'],
+            'quarterly': ['quarterly', 'q1', 'q2', 'q3', 'q4', 'quarter'],
+            'annual': ['annual', 'yearly', 'year end'],
+            'sales': ['sales', 'revenue', 'revenue', 'income'],
+            'marketing': ['marketing', 'campaign', 'promotion', 'advertising'],
+            'financial': ['financial', 'finance', 'budget', 'revenue', 'profit', 'cost'],
+            
+            // Technology
+            'technology': ['technology', 'tech', 'digital', 'software', 'system'],
+            'product': ['product', 'launch', 'release', 'feature'],
+            'innovation': ['innovation', 'innovative', 'new', 'development'],
+            
+            // Education & Training
+            'training': ['training', 'workshop', 'course', 'education', 'learning'],
+            'education': ['education', 'teaching', 'learning', 'student'],
+            
+            // Project Management
+            'project': ['project', 'plan', 'planning', 'strategy'],
+            'meeting': ['meeting', 'discussion', 'agenda'],
+            'team': ['team', 'teamwork', 'collaboration'],
+            
+            // Research & Analysis
+            'research': ['research', 'study', 'findings', 'data'],
+            'analysis': ['analysis', 'analyze', 'evaluate', 'assessment'],
+            'results': ['results', 'findings', 'outcomes', 'conclusion'],
+            
+            // Strategy & Planning
+            'strategy': ['strategy', 'strategic', 'plan', 'planning'],
+            'goals': ['goals', 'objectives', 'targets', 'aims'],
+            'future': ['future', 'roadmap', 'vision', 'outlook']
+          };
+          
+          // Find the main topic
+          let mainTopic = null;
+          let secondaryTopic = null;
+          
+          for (const [topic, keywords] of Object.entries(topicPatterns)) {
+            const matches = keywords.filter(kw => desc.includes(kw));
+            if (matches.length > 0) {
+              if (!mainTopic) {
+                mainTopic = topic;
+              } else if (!secondaryTopic) {
+                secondaryTopic = topic;
+              }
+            }
+          }
+          
+          // Build title from detected topics
+          if (mainTopic && secondaryTopic) {
+            // Two-word title: Secondary + Main
+            const title = `${capitalize(secondaryTopic)} ${capitalize(mainTopic)}`;
+            return title.length <= 40 ? title : capitalize(mainTopic);
+          } else if (mainTopic) {
+            // Single topic - add descriptive word
+            const descriptors = {
+              'business': 'Business',
+              'report': 'Report',
+              'quarterly': 'Quarterly Review',
+              'annual': 'Annual Report',
+              'sales': 'Sales',
+              'marketing': 'Marketing',
+              'financial': 'Financial',
+              'technology': 'Technology',
+              'product': 'Product',
+              'innovation': 'Innovation',
+              'training': 'Training',
+              'education': 'Education',
+              'project': 'Project',
+              'meeting': 'Meeting',
+              'team': 'Team',
+              'research': 'Research',
+              'analysis': 'Analysis',
+              'results': 'Results',
+              'strategy': 'Strategy',
+              'goals': 'Goals',
+              'future': 'Future'
+            };
+            
+            const title = descriptors[mainTopic] || capitalize(mainTopic);
+            return title.length <= 30 ? title : capitalize(mainTopic);
+          }
+          
+          // If no clear topic, extract key concepts
+          const importantWords = desc
+            .replace(/[^\w\s]/g, ' ')
+            .split(/\s+/)
+            .filter(w => w.length > 4)
+            .filter(w => !['about', 'this', 'that', 'with', 'from', 'will', 'should', 'could', 'would', 'presentation', 'slides', 'create', 'make', 'include', 'cover', 'discuss'].includes(w));
+          
+          // Find most frequent or important words
+          const wordFreq = {};
+          importantWords.forEach(w => {
+            wordFreq[w] = (wordFreq[w] || 0) + 1;
+          });
+          
+          const sortedWords = Object.keys(wordFreq)
+            .sort((a, b) => wordFreq[b] - wordFreq[a])
+            .slice(0, 3);
+          
+          if (sortedWords.length >= 2) {
+            const title = sortedWords
+              .slice(0, Math.min(sortedWords.length, 3))
+              .map(w => capitalize(w))
+              .join(' ');
+            return title;
+          }
+          
+          // Final fallback: extract nouns and important words
+          const nouns = desc
+            .split(/\s+/)
+            .filter(w => w.length > 4)
+            .filter(w => !['about', 'this', 'that', 'with', 'from', 'will', 'should', 'could', 'would', 'presentation'].includes(w))
+            .slice(0, 3);
+          
+          if (nouns.length >= 2) {
+            return nouns
+              .slice(0, Math.min(nouns.length, 3))
+              .map(w => capitalize(w))
+              .join(' ');
+          }
+          
+          return 'Presentation';
+        }
+        
+        function capitalize(str) {
+          if (!str) return '';
+          return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+
+        // Auto-generate title when user types description (with debounce)
+        descriptionInput.addEventListener('input', (e) => {
+          if (userEditedTitle || !titleInput) return;
+          
+          // Clear previous timeout
+          if (titleGenerationTimeout) {
+            clearTimeout(titleGenerationTimeout);
+          }
+          
+          // Wait for user to pause typing (500ms)
+          titleGenerationTimeout = setTimeout(() => {
+            const generatedTitle = generateTitleFromDescription(e.target.value);
+            if (generatedTitle && !userEditedTitle) {
+              titleInput.value = generatedTitle;
+            }
+          }, 500);
+        });
+
+        // Track if user manually edits the title
+        titleInput.addEventListener('input', () => {
+          userEditedTitle = true;
+        });
+
+        // Voice Input Setup
+        function initVoiceRecognition() {
+          if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+            voiceInputBtn.style.display = 'none';
+            return;
+          }
+
+          const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+          recognition = new SpeechRecognition();
+          recognition.continuous = true;
+          recognition.interimResults = true;
+          recognition.lang = 'en-US';
+
+          recognition.onstart = () => {
+            isListening = true;
+            voiceInputBtn.classList.add('recording');
+            voiceStatus.textContent = 'Listening...';
+            voiceStatus.classList.add('listening');
+            voiceStatus.style.display = 'block';
+            micIcon.style.display = 'none';
+            stopIcon.style.display = 'block';
+          };
+
+          recognition.onresult = (event) => {
+            let finalTranscript = '';
+
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+              const transcript = event.results[i][0].transcript;
+              if (event.results[i].isFinal) {
+                finalTranscript += transcript + ' ';
+              }
+            }
+
+            if (finalTranscript) {
+              // Append to existing text with a space if needed
+              const currentText = descriptionInput.value.trim();
+              const separator = currentText && !currentText.endsWith('.') && !currentText.endsWith('!') && !currentText.endsWith('?') ? ' ' : '';
+              descriptionInput.value = currentText + separator + finalTranscript.trim();
+              
+              // Trigger title generation
+              const inputEvent = new Event('input', { bubbles: true });
+              descriptionInput.dispatchEvent(inputEvent);
+              
+              // Auto-scroll to bottom of textarea
+              descriptionInput.scrollTop = descriptionInput.scrollHeight;
+            }
+          };
+
+          recognition.onerror = (event) => {
+            console.error('Speech recognition error:', event.error);
+            if (event.error === 'no-speech') {
+              voiceStatus.textContent = 'No speech detected. Try again.';
+            } else if (event.error === 'audio-capture') {
+              voiceStatus.textContent = 'Microphone not found.';
+            } else if (event.error === 'not-allowed') {
+              voiceStatus.textContent = 'Microphone permission denied.';
+            } else {
+              voiceStatus.textContent = 'Error: ' + event.error;
+            }
+            stopListening();
+          };
+
+          recognition.onend = () => {
+            stopListening();
+          };
+        }
+
+        function startListening() {
+          if (!recognition) {
+            voiceStatus.textContent = 'Voice recognition not supported in this browser.';
+            voiceStatus.style.display = 'block';
+            return;
+          }
+
+          try {
+            recognition.start();
+          } catch (error) {
+            if (error.name === 'InvalidStateError') {
+              // Already started, stop and restart
+              recognition.stop();
+              setTimeout(() => recognition.start(), 100);
+            } else {
+              console.error('Error starting recognition:', error);
+              voiceStatus.textContent = 'Error starting voice input.';
+              voiceStatus.style.display = 'block';
+            }
+          }
+        }
+
+        function stopListening() {
+          if (recognition && isListening) {
+            recognition.stop();
+            isListening = false;
+            voiceInputBtn.classList.remove('recording');
+            voiceStatus.textContent = 'Voice input stopped.';
+            voiceStatus.classList.remove('listening');
+            setTimeout(() => {
+              voiceStatus.style.display = 'none';
+            }, 2000);
+            micIcon.style.display = 'block';
+            stopIcon.style.display = 'none';
+          }
+        }
+
+        voiceInputBtn.addEventListener('click', () => {
+          if (isListening) {
+            stopListening();
+          } else {
+            startListening();
+          }
+        });
+
+        // Initialize voice recognition on page load
+        initVoiceRecognition();
+
+        function generatePresentationId() {
+          if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+            return crypto.randomUUID();
+          }
+          return `presentation-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+        }
+
+        function createEmptySlide() {
+          return {
+            id: generatePresentationId(),
+            title: 'Slide',
+            backgroundColor: '#ffffff',
+            backgroundImage: null,
+            elements: [],
+            animation: { type: 'none', duration: 600, delay: 0 }
+          };
+        }
+
+        function createTextElement(text, x, y, width, fontSize = 24, fontWeight = 600, color = '#0f172a') {
+          return {
+            id: generatePresentationId(),
+            type: 'text',
+            text: text,
+            left: x,
+            top: y,
+            width: width,
+            fontSize: fontSize,
+            fontFamily: 'Inter, sans-serif',
+            color: color,
+            bold: fontWeight >= 600,
+            italic: false,
+            underline: false,
+            align: 'left',
+            lineHeight: 1.4,
+            letterSpacing: 0,
+            textTransform: 'none',
+            backgroundColor: null,
+            animation: { type: 'none', duration: 600, delay: 0 }
+          };
+        }
+
+        function getThemeColors(theme) {
+          const themes = {
+            professional: {
+              primary: '#1e40af',
+              secondary: '#3b82f6',
+              background: '#ffffff',
+              backgroundGradient: '#f0f4ff',
+              backgroundAlt: '#e0e7ff',
+              text: '#0f172a',
+              accent: '#2563eb',
+              lightAccent: '#eff6ff'
+            },
+            modern: {
+              primary: '#10b981',
+              secondary: '#34d399',
+              background: '#ffffff',
+              backgroundGradient: '#ecfdf5',
+              backgroundAlt: '#d1fae5',
+              text: '#0f172a',
+              accent: '#059669',
+              lightAccent: '#f0fdf4'
+            },
+            creative: {
+              primary: '#7c3aed',
+              secondary: '#a78bfa',
+              background: '#ffffff',
+              backgroundGradient: '#f5f3ff',
+              backgroundAlt: '#ede9fe',
+              text: '#0f172a',
+              accent: '#6d28d9',
+              lightAccent: '#faf5ff'
+            },
+            minimal: {
+              primary: '#64748b',
+              secondary: '#94a3b8',
+              background: '#ffffff',
+              backgroundGradient: '#f8fafc',
+              backgroundAlt: '#f1f5f9',
+              text: '#0f172a',
+              accent: '#475569',
+              lightAccent: '#f8fafc'
+            }
+          };
+          return themes[theme] || themes.professional;
+        }
+
+        function createBulletPoint(text, x, y, width, fontSize = 18, color = '#0f172a') {
+          // Keep full text - don't truncate
+          const fullText = text.trim();
+            
+          return {
+            id: generatePresentationId(),
+            type: 'text',
+            text: `• ${fullText}`,
+            left: x,
+            top: y,
+            width: width,
+            fontSize: fontSize,
+            fontFamily: 'Inter, sans-serif',
+            color: color,
+            bold: false,
+            italic: false,
+            underline: false,
+            align: 'left',
+            lineHeight: 1.5,
+            letterSpacing: 0,
+            textTransform: 'none',
+            backgroundColor: null,
+            animation: { type: 'none', duration: 600, delay: 0 }
+          };
+        }
+
+        function generateSlidesFromDescription(description, title, theme) {
+          const colors = getThemeColors(theme);
+          const slides = [];
+          
+          // Title slide with creative background
+          const titleSlide = createEmptySlide();
+          titleSlide.title = 'Title';
+          // Use gradient background for title slide
+          titleSlide.backgroundColor = colors.backgroundGradient || colors.background;
+          // Center the title on the slide
+          titleSlide.elements = [
+            createTextElement(title, 100, 300, 800, 56, 700, colors.primary)
+          ];
+          slides.push(titleSlide);
+
+          // Parse description more intelligently
+          const descLower = description.toLowerCase();
+          const sentences = description.split(/[.!?]+/).filter(s => s.trim().length > 5);
+          const words = descLower.split(/\s+/);
+
+          // Extract key concepts and topics
+          function extractKeyTopics() {
+            const topics = [];
+            const topicPatterns = {
+              'Introduction': ['introduction', 'overview', 'about', 'background', 'context'],
+              'Problem Statement': ['problem', 'challenge', 'issue', 'difficulty', 'obstacle'],
+              'Solution': ['solution', 'approach', 'method', 'strategy', 'plan'],
+              'Features': ['feature', 'capability', 'function', 'benefit', 'advantage'],
+              'Data & Results': ['data', 'metric', 'result', 'performance', 'statistic', 'analysis', 'report'],
+              'Implementation': ['implementation', 'process', 'steps', 'how', 'procedure'],
+              'Benefits': ['benefit', 'advantage', 'value', 'impact', 'improvement'],
+              'Conclusion': ['conclusion', 'summary', 'next step', 'future', 'outlook', 'recommendation']
+            };
+
+            for (const [topic, patterns] of Object.entries(topicPatterns)) {
+              if (patterns.some(pattern => descLower.includes(pattern))) {
+                topics.push(topic);
+              }
+            }
+
+            return topics;
+          }
+
+          function generateContentForTopic(topic, allSentences) {
+            const topicLower = topic.toLowerCase();
+            const relevantSentences = allSentences.filter(s => {
+              const sLower = s.toLowerCase();
+              const topicWords = topicLower.split(' ');
+              
+              // Check if sentence relates to topic
+              if (topicWords.some(word => sLower.includes(word))) return true;
+              
+              // Special matching for specific topics
+              if (topic === 'Introduction' && (sLower.includes('overview') || sLower.includes('about') || sLower.includes('background'))) return true;
+              if (topic === 'Data & Results' && (sLower.includes('data') || sLower.includes('result') || sLower.includes('metric') || sLower.includes('analysis'))) return true;
+              if (topic === 'Solution' && (sLower.includes('solution') || sLower.includes('approach') || sLower.includes('method'))) return true;
+              if (topic === 'Features' && (sLower.includes('feature') || sLower.includes('capability') || sLower.includes('function'))) return true;
+              if (topic === 'Benefits' && (sLower.includes('benefit') || sLower.includes('advantage') || sLower.includes('value'))) return true;
+              if (topic === 'Conclusion' && (sLower.includes('conclusion') || sLower.includes('summary') || sLower.includes('future'))) return true;
+              
+              return false;
+            });
+
+            return relevantSentences.length > 0 ? relevantSentences : allSentences;
+          }
+
+          function createContentSlide(topicTitle, contentSentences, slideNumber) {
+            const slide = createEmptySlide();
+            slide.title = topicTitle;
+            // Alternate between gradient backgrounds for visual variety
+            const useAltBackground = slideNumber % 2 === 0;
+            slide.backgroundColor = useAltBackground 
+              ? (colors.backgroundAlt || colors.backgroundGradient || colors.background)
+              : (colors.backgroundGradient || colors.background);
+            const elements = [];
+
+            // Add decorative accent shape (using text element as placeholder for visual interest)
+            // Add title with better styling
+            elements.push(createTextElement(topicTitle, 100, 70, 800, 44, 700, colors.primary));
+
+            // Create bullet points or paragraphs from content
+            if (contentSentences.length > 0) {
+              const contentToUse = contentSentences.slice(0, 5);
+              let yPos = 150;
+              const lineHeight = 55;
+
+              contentToUse.forEach((sentence, idx) => {
+                const cleanSentence = sentence.trim();
+                if (cleanSentence.length > 0) {
+                  // Use accent color for first bullet point, then text color
+                  const bulletColor = idx === 0 ? colors.accent : colors.text;
+                  const bulletSize = idx === 0 ? 20 : 18;
+                  
+                  // Split long sentences into shorter bullet points
+                  if (cleanSentence.length > 100) {
+                    const parts = cleanSentence.match(/.{1,100}(\s|$)/g) || [cleanSentence];
+                    parts.forEach(part => {
+                      if (part.trim().length > 10) {
+                        elements.push(createBulletPoint(part.trim(), 140, yPos, 740, bulletSize, bulletColor));
+                        yPos += lineHeight;
+                      }
+                    });
+                  } else {
+                    elements.push(createBulletPoint(cleanSentence, 140, yPos, 740, bulletSize, bulletColor));
+                    yPos += lineHeight;
+                  }
+                }
+              });
+
+              // If no content, add placeholder
+              if (elements.length === 1) {
+                const expandedContent = expandTopicContent(topicTitle, description, title);
+                expandedContent.forEach((point, idx) => {
+                  const bulletColor = idx === 0 ? colors.accent : colors.text;
+                  const bulletSize = idx === 0 ? 20 : 18;
+                  elements.push(createBulletPoint(point, 140, 150 + (idx * lineHeight), 740, bulletSize, bulletColor));
+                });
+              }
+            } else {
+              // Generate content based on topic
+              const expandedContent = expandTopicContent(topicTitle, description, title);
+              expandedContent.forEach((point, idx) => {
+                const bulletColor = idx === 0 ? colors.accent : colors.text;
+                const bulletSize = idx === 0 ? 20 : 18;
+                elements.push(createBulletPoint(point, 140, 150 + (idx * 55), 740, bulletSize, bulletColor));
+              });
+            }
+
+            slide.elements = elements;
+            return slide;
+          }
+
+          function expandTopicContent(topic, baseDescription, presentationTitle) {
+            const topicLower = topic.toLowerCase();
+            const expansions = {
+              'Introduction': [
+                `Overview of ${presentationTitle || 'the presentation'}`,
+                'Key objectives and goals',
+                'Background and context',
+                'What we will cover today'
+              ],
+              'Problem Statement': [
+                'Current challenges we face',
+                'Issues that need to be addressed',
+                'Pain points in the current process',
+                'Why this matters'
+              ],
+              'Solution': [
+                'Our proposed approach',
+                'How we will solve this',
+                'Key strategies and methods',
+                'Implementation plan'
+              ],
+              'Features': [
+                'Key features and capabilities',
+                'What makes this unique',
+                'Core functionality',
+                'Main benefits'
+              ],
+              'Data & Results': [
+                'Performance metrics and KPIs',
+                'Key statistics and findings',
+                'Analysis and insights',
+                'Measurable outcomes'
+              ],
+              'Implementation': [
+                'Step-by-step process',
+                'Timeline and milestones',
+                'Required resources',
+                'Next actions'
+              ],
+              'Benefits': [
+                'Key advantages and value',
+                'Positive impact',
+                'Return on investment',
+                'Long-term benefits'
+              ],
+              'Conclusion': [
+                'Summary of key points',
+                'Main takeaways',
+                'Next steps and recommendations',
+                'Questions and discussion'
+              ]
+            };
+
+            // Try to find relevant content from description
+            const relevantParts = baseDescription.split(/[.!?]+/).filter(s => {
+              const sLower = s.toLowerCase();
+              return sLower.length > 20 && (
+                sLower.includes(topicLower.split(' ')[0]) ||
+                (topic === 'Introduction' && (sLower.includes('overview') || sLower.includes('about'))) ||
+                (topic === 'Data & Results' && (sLower.includes('data') || sLower.includes('result')))
+              );
+            });
+
+            if (relevantParts.length > 0) {
+              return relevantParts.slice(0, 4).map(p => p.trim());
+            }
+
+            return expansions[topic] || [
+              `Key point about ${topic.toLowerCase()}`,
+              'Important information',
+              'Relevant details',
+              'Additional context'
+            ];
+          }
+
+          // Generate slides based on detected topics
+          const topics = extractKeyTopics();
+          
+          if (topics.length > 0) {
+            // Create slides for each detected topic
+            topics.forEach((topic) => {
+              const relevantContent = generateContentForTopic(topic, sentences);
+              const slide = createContentSlide(topic, relevantContent, slides.length + 1);
+              slides.push(slide);
+            });
+          } else {
+            // No specific topics detected - create structured slides from description
+            const totalSlides = Math.max(4, Math.min(8, Math.ceil(sentences.length / 2)));
+            const sentencesPerSlide = Math.ceil(sentences.length / totalSlides);
+
+            for (let i = 0; i < totalSlides; i++) {
+              const startIdx = i * sentencesPerSlide;
+              const endIdx = Math.min(startIdx + sentencesPerSlide, sentences.length);
+              const slideSentences = sentences.slice(startIdx, endIdx);
+
+              if (slideSentences.length > 0) {
+                const slideTitle = i === 0 ? 'Overview' : 
+                                 i === totalSlides - 1 ? 'Conclusion' : 
+                                 `Key Point ${i}`;
+                const slide = createContentSlide(slideTitle, slideSentences, i + 1);
+                slides.push(slide);
+              }
+            }
+          }
+
+          // Ensure we have at least 4 slides (title + 3 content)
+          while (slides.length < 4) {
+            const slideNumber = slides.length;
+            const defaultTopics = ['Overview', 'Key Points', 'Details', 'Conclusion'];
+            const topicTitle = defaultTopics[slideNumber - 1] || `Slide ${slideNumber}`;
+            const slide = createContentSlide(topicTitle, [], slideNumber);
+            slides.push(slide);
+          }
+
+          // Limit to maximum 10 slides
+          if (slides.length > 10) {
+            slides.splice(10);
+          }
+
+          return slides;
+        }
+
+        // OpenAI API Key - In production, this should be stored securely on the backend
+        // Replace 'YOUR_API_KEY_HERE' with your actual API key or load it from a secure backend service
+        const API_KEY = 'YOUR_API_KEY_HERE';
+
+        async function generatePresentationWithAI(description, title, theme) {
+          const colors = getThemeColors(theme);
+          const themeDescription = {
+            professional: 'professional blue color scheme',
+            modern: 'modern green color scheme',
+            creative: 'creative purple color scheme',
+            minimal: 'minimal gray color scheme'
+          }[theme] || 'professional blue color scheme';
+
+          const prompt = `Create a comprehensive presentation based on the following description. Generate 5-8 slides with creative, engaging content.
+
+Presentation Title: ${title}
+Theme: ${themeDescription}
+Description: ${description}
+
+IMPORTANT: For each slide, you MUST provide:
+1. A clear, engaging slide title (required)
+2. An array of "points" with 3-5 well-written bullet points (REQUIRED - each point must be a complete sentence or phrase)
+
+Format your response as JSON with this EXACT structure (no markdown, no code blocks):
+{
+  "slides": [
+    {
+      "title": "Introduction to [Topic]",
+      "points": ["First key point about the topic", "Second important detail", "Third relevant information", "Fourth actionable insight"]
+    },
+    {
+      "title": "Key Concepts",
+      "points": ["Concept 1 explanation", "Concept 2 details", "Concept 3 insights"]
+    }
+  ]
+}
+
+CRITICAL REQUIREMENTS:
+- Every slide MUST have a "title" field
+- Every slide MUST have a "points" array with at least 3 items
+- Each point in the "points" array must be a string with actual content (not empty)
+- Make content specific, detailed, and relevant to: ${description}
+- Include an introduction slide, 3-5 main content slides, and a conclusion slide
+- Write complete, informative bullet points (not just keywords)
+
+Return ONLY valid JSON, no other text.`;
+
+          try {
+            const response = await fetch('https://api.openai.com/v1/chat/completions', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${API_KEY}`
+              },
+              body: JSON.stringify({
+                model: 'gpt-4o-mini',
+                messages: [
+                  {
+                    role: 'system',
+                    content: 'You are a professional presentation designer. Create engaging, well-structured presentation slides. Always respond with valid JSON only, no markdown formatting. Make content creative and tailored to the user\'s needs.'
+                  },
+                  {
+                    role: 'user',
+                    content: prompt
+                  }
+                ],
+                temperature: 0.8,
+                max_tokens: 2500,
+                response_format: { type: 'json_object' }
+              })
+            });
+
+            if (!response.ok) {
+              const errorData = await response.json().catch(() => ({ error: { message: 'Failed to generate presentation' } }));
+              const errorMsg = errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`;
+              throw new Error(errorMsg);
+            }
+
+            const data = await response.json();
+            if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+              throw new Error('Invalid response format from API');
+            }
+
+            const content = data.choices[0].message.content.trim();
+            
+            // Extract JSON from response
+            let jsonMatch = content.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+              const parsed = JSON.parse(jsonMatch[0]);
+              if (parsed.slides && Array.isArray(parsed.slides)) {
+                return parsed;
+              }
+            }
+            
+            // Try direct parse
+            const parsed = JSON.parse(content);
+            if (parsed.slides && Array.isArray(parsed.slides)) {
+              return parsed;
+            }
+            
+            throw new Error('Invalid response format: missing slides array');
+          } catch (error) {
+            if (error.message.includes('CORS') || error.message.includes('Failed to fetch')) {
+              throw new Error('Network error. Please check your internet connection.');
+            }
+            if (error instanceof SyntaxError) {
+              throw new Error('Failed to parse AI response. Please try again.');
+            }
+            throw error;
+          }
+        }
+
+        function convertAISlidesToEditorFormat(aiPresentation, title, theme, description) {
+          const colors = getThemeColors(theme);
+          const slides = [];
+
+          // Title slide
+          const titleSlide = createEmptySlide();
+          titleSlide.title = 'Title';
+          titleSlide.backgroundColor = colors.backgroundGradient || colors.background;
+          titleSlide.elements = [
+            createTextElement(title, 100, 300, 800, 56, 700, colors.primary)
+          ];
+          slides.push(titleSlide);
+
+          // Convert AI slides to editor format
+          const aiSlides = aiPresentation.slides || [];
+          
+          // Debug: Log the AI response to see what we're getting
+          console.log('AI Presentation Response:', aiPresentation);
+          console.log('AI Slides:', aiSlides);
+          
+          if (aiSlides.length === 0) {
+            console.error('No slides found in AI response');
+            // Fallback: create slides from description
+            return generateSlidesFromDescription(description, title, theme);
+          }
+          
+          aiSlides.forEach((aiSlide, index) => {
+            const slide = createEmptySlide();
+            slide.title = aiSlide.title || `Slide ${index + 1}`;
+            
+            // Alternate backgrounds
+            const useAltBackground = (index + 1) % 2 === 0;
+            slide.backgroundColor = useAltBackground 
+              ? (colors.backgroundAlt || colors.background)
+              : (colors.backgroundGradient || colors.background);
+
+            const elements = [];
+            
+            // Add title with proper spacing (moved up to leave room for content)
+            elements.push(createTextElement(slide.title, 100, 50, 800, 40, 700, colors.primary));
+
+            // Add bullet points - handle different possible formats
+            let points = [];
+            if (Array.isArray(aiSlide.points)) {
+              points = aiSlide.points;
+            } else if (aiSlide.content && Array.isArray(aiSlide.content)) {
+              points = aiSlide.content;
+            } else if (aiSlide.bullets && Array.isArray(aiSlide.bullets)) {
+              points = aiSlide.bullets;
+            } else if (typeof aiSlide.points === 'string') {
+              points = [aiSlide.points];
+            } else if (typeof aiSlide.content === 'string') {
+              // Split content into sentences for bullet points
+              points = aiSlide.content.split(/[.!?]+/).filter(p => p.trim().length > 10).slice(0, 5);
+            }
+            
+            // If still no points, create some default content
+            if (points.length === 0) {
+              points = [
+                `Key information about ${slide.title}`,
+                'Important details and insights',
+                'Relevant data and findings',
+                'Action items and next steps'
+              ];
+            }
+            
+            console.log(`Slide ${index + 1} (${slide.title}) has ${points.length} points:`, points);
+            
+            // Add bullet points with proper spacing
+            if (points.length === 0) {
+              console.warn(`No points found for slide "${slide.title}", using fallback content`);
+              // Generate content from description if no points
+              const descSentences = description.split(/[.!?]+/).filter(s => s.trim().length > 15);
+              if (descSentences.length > 0) {
+                points = descSentences.slice(0, 4).map(s => s.trim());
+              } else {
+                points = [
+                  `Overview of ${slide.title}`,
+                  'Key insights and information',
+                  'Important details to consider',
+                  'Next steps and recommendations'
+                ];
+              }
+            }
+            
+            // Calculate proper spacing for bullet points
+            const titleHeight = 50; // Space for title (title is at y=50, height ~40px)
+            const startY = 120; // Start position after title with proper gap
+            const lineSpacing = 70; // Increased spacing between bullet points to prevent overlap
+            
+            points.forEach((point, pIndex) => {
+              const pointText = typeof point === 'string' ? point.trim() : String(point).trim();
+              if (pointText && pointText.length > 0) {
+                const bulletColor = pIndex === 0 ? colors.accent : colors.text;
+                const bulletSize = pIndex === 0 ? 20 : 18;
+                const yPosition = startY + (pIndex * lineSpacing);
+                const bulletElement = createBulletPoint(pointText, 120, yPosition, 760, bulletSize, bulletColor);
+                elements.push(bulletElement);
+                console.log(`Added bullet ${pIndex + 1} to slide "${slide.title}":`, pointText);
+              }
+            });
+
+            // Ensure we have at least the title element
+            if (elements.length === 1) {
+              console.warn(`Slide "${slide.title}" only has title, adding default content`);
+              const defaultPoints = [
+                'Key information and insights',
+                'Important details and data',
+                'Actionable recommendations'
+              ];
+              const startY = 120;
+              const lineSpacing = 70;
+              defaultPoints.forEach((point, pIndex) => {
+                const bulletColor = pIndex === 0 ? colors.accent : colors.text;
+                const bulletSize = pIndex === 0 ? 20 : 18;
+                const yPosition = startY + (pIndex * lineSpacing);
+                elements.push(createBulletPoint(point, 120, yPosition, 760, bulletSize, bulletColor));
+              });
+            }
+
+            console.log(`Final slide "${slide.title}" has ${elements.length} elements`);
+            slide.elements = elements;
+            slides.push(slide);
+          });
+
+          return slides;
+        }
+
+        form.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          
+          const description = descriptionInput.value.trim();
+          let title = titleInput.value.trim();
+          
+          // If no title provided, generate one from description
+          if (!title) {
+            title = generateTitleFromDescription(description);
+            if (!title) {
+              title = 'Untitled Presentation';
+            }
+            titleInput.value = title;
+          }
+
+          const theme = document.querySelector('input[name="theme"]:checked').value;
+
+          if (!description) {
+            errorMessage.textContent = 'Please describe your presentation.';
+            errorMessage.classList.add('active');
+            return;
+          }
+
+          // Show loading state
+          generateBtn.disabled = true;
+          loadingState.classList.add('active');
+          errorMessage.classList.remove('active');
+
+          try {
+            // Generate presentation using AI
+            const aiPresentation = await generatePresentationWithAI(description, title, theme);
+            
+            // Debug: Log the AI response
+            console.log('AI Presentation received:', aiPresentation);
+            console.log('AI Slides count:', aiPresentation.slides?.length || 0);
+            
+            // Convert AI slides to editor format
+            const slides = convertAISlidesToEditorFormat(aiPresentation, title, theme, description);
+            
+            // Validate slides
+            if (!slides || slides.length === 0) {
+              throw new Error('No slides were generated. Please try again with a more detailed description.');
+            }
+            
+            // Validate each slide has elements
+            slides.forEach((slide, idx) => {
+              if (!slide.elements || slide.elements.length === 0) {
+                console.warn(`Slide ${idx + 1} has no elements, adding default content`);
+                slide.elements = [
+                  createTextElement(slide.title || `Slide ${idx + 1}`, 100, 70, 800, 44, 700, getThemeColors(theme).primary),
+                  createBulletPoint('Content will be added here', 140, 150, 740, 18, getThemeColors(theme).text)
+                ];
+              }
+              console.log(`Slide ${idx + 1} "${slide.title}" validated with ${slide.elements.length} elements`);
+            });
+            
+            const colors = getThemeColors(theme);
+            const now = Date.now();
+            
+            // Generate presentation ID
+            const presentationId = generatePresentationId();
+
+            const presentationState = {
+              slides: slides,
+              activeSlideIndex: 0,
+              presentationName: title,
+              createdAt: now,
+              updatedAt: now,
+              preview: {
+                backgroundColor: colors.background,
+                accentColor: colors.primary,
+                title: title,
+                snippet: description.substring(0, 100)
+              }
+            };
+            
+            console.log('Presentation state prepared:', {
+              slideCount: slides.length,
+              totalElements: slides.reduce((sum, s) => sum + (s.elements?.length || 0), 0)
+            });
+
+            // Save to localStorage
+            const PRESENTATION_STORAGE_PREFIX = 'lumen-presentation-';
+            const PRESENTATIONS_INDEX_KEY = 'lumen-presentations-index';
+            
+            localStorage.setItem(`${PRESENTATION_STORAGE_PREFIX}${presentationId}`, JSON.stringify(presentationState));
+
+              // Update index
+              try {
+                const rawIndex = localStorage.getItem(PRESENTATIONS_INDEX_KEY);
+                const parsedIndex = rawIndex ? JSON.parse(rawIndex) : [];
+                const index = Array.isArray(parsedIndex) ? parsedIndex.filter(item => item && typeof item.id === 'string') : [];
+                
+                const existingIdx = index.findIndex((item) => item.id === presentationId);
+                if (existingIdx >= 0) {
+                  index[existingIdx] = {
+                    id: presentationId,
+                    name: title,
+                    createdAt: now,
+                    updatedAt: now,
+                    preview: presentationState.preview,
+                    url: `slide-editor.html?id=${presentationId}`
+                  };
+                } else {
+                  index.unshift({
+                    id: presentationId,
+                    name: title,
+                    createdAt: now,
+                    updatedAt: now,
+                    preview: presentationState.preview,
+                    url: `slide-editor.html?id=${presentationId}`
+                  });
+                }
+                
+                // Keep only last 20
+                const sorted = index.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+                localStorage.setItem(PRESENTATIONS_INDEX_KEY, JSON.stringify(sorted.slice(0, 20)));
+              } catch (err) {
+                console.warn('Failed to update index', err);
+              }
+
+              // Redirect to editor
+              const editorUrl = `slide-editor.html?id=${presentationId}`;
+              if (window.fadeNavigate) {
+                window.fadeNavigate(editorUrl);
+              } else {
+                window.location.href = editorUrl;
+              }
+          } catch (error) {
+            console.error('Error generating presentation:', error);
+            let errorMsg = 'Failed to generate presentation. ';
+            if (error.message.includes('API key') || error.message.includes('401')) {
+              errorMsg += 'API authentication error. Please check API configuration.';
+            } else if (error.message.includes('Network')) {
+              errorMsg += 'Please check your internet connection.';
+            } else {
+              errorMsg += error.message || 'Please try again.';
+            }
+            errorMessage.textContent = errorMsg;
+            errorMessage.classList.add('active');
+            generateBtn.disabled = false;
+            loadingState.classList.remove('active');
+          }
+        });
+      })();
+    </script>
+    
+    <!-- Chatbot Component -->
+    <div id="chatbot">
+      <button id="chatbotToggle" aria-label="Open chatbot">
+        <svg class="robot-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <rect class="robot-head" x="20" y="15" width="60" height="50" rx="8"/>
+          <circle class="robot-eye" cx="35" cy="35" r="5"/>
+          <circle class="robot-eye" cx="65" cy="35" r="5"/>
+          <rect class="robot-body" x="25" y="70" width="50" height="25" rx="5"/>
+          <rect x="30" y="75" width="15" height="8" rx="2" fill="#ffffff" opacity="0.6"/>
+          <rect x="55" y="75" width="15" height="8" rx="2" fill="#ffffff" opacity="0.6"/>
+        </svg>
+      </button>
+      <div id="chatbotWindow">
+        <div class="chatbot-header">
+          <div class="chatbot-header-left">
+            <div>
+              <h3 class="chatbot-header-title">🤖 AI Assistant</h3>
+              <p class="chatbot-header-subtitle">How can I help you?</p>
+            </div>
+          </div>
+          <div class="chatbot-header-actions">
+            <button id="chatbotMinimize" class="chatbot-header-btn" aria-label="Minimize">−</button>
+            <button id="chatbotClose" class="chatbot-header-btn" aria-label="Close">×</button>
+          </div>
+        </div>
+        <div id="chatbotMessages"></div>
+        <div class="chatbot-input-area">
+          <div class="chatbot-input-wrapper">
+            <textarea id="chatbotInput" placeholder="Type your message..." rows="1"></textarea>
+          </div>
+          <div class="chatbot-input-actions">
+            <button id="chatbotVoice" class="chatbot-action-btn" aria-label="Voice input">
+              <span class="voice-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                  <line x1="12" y1="19" x2="12" y2="23"></line>
+                  <line x1="8" y1="23" x2="16" y2="23"></line>
+                </svg>
+              </span>
+            </button>
+            <button id="chatbotSend" class="chatbot-action-btn" aria-label="Send message">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="./scripts/chatbot.js"></script>
+  </body>
+</html>
+
