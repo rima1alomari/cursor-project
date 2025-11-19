@@ -408,6 +408,52 @@
     .btn-danger:hover {
       background: #dc2626;
     }
+    .templates-list {
+      margin-bottom: 1.5rem;
+    }
+    .template-option {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 0.75rem;
+    }
+    .template-option:hover {
+      border-color: #004c97;
+      background: #f8fafc;
+    }
+    .template-option.selected {
+      border-color: #004c97;
+      background: #f0f9ff;
+    }
+    .template-option-preview {
+      flex-shrink: 0;
+      width: 60px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f8fafc;
+      border-radius: 8px;
+    }
+    .template-option-info {
+      flex: 1;
+    }
+    .template-option-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #1e293b;
+      margin: 0 0 0.25rem 0;
+    }
+    .template-option-description {
+      font-size: 0.875rem;
+      color: #64748b;
+      margin: 0;
+    }
     @media (max-width: 1024px) {
       .projects-container {
         padding: 40px 60px;
@@ -473,13 +519,12 @@
         </svg>
       </a>
     </div>
-    <nav class="site-nav site-nav--centered" aria-label="Primary">
-      <a href="home.html" class="nav-link">Home</a>
-      <a href="projects.html" class="nav-link nav-link--current" aria-current="page">Projects</a>
-      <a href="teams.html" class="nav-link">Teams</a>
-      <a href="templates.html" class="nav-link">Templates</a>
-      <a href="about.html" class="nav-link">About</a>
-    </nav>
+      <nav class="site-nav site-nav--centered" aria-label="Primary">
+        <a href="home.html" class="nav-link">Home</a>
+        <a href="projects.html" class="nav-link nav-link--current" aria-current="page">Projects</a>
+        <a href="teams.html" class="nav-link">Teams</a>
+        <a href="about.html" class="nav-link">About</a>
+      </nav>
     <div class="header-right">
       <div class="account-display" id="accountDisplay">
         <button class="account-button" id="accountButton" aria-label="Account menu">
@@ -558,23 +603,37 @@
     </div>
   </main>
 
-  <!-- New Project Modal -->
-  <div id="newProjectModal" class="modal">
+  <!-- Template Selection Modal -->
+  <div id="templateSelectionModal" class="modal">
     <div class="modal-content">
       <div class="modal-header">
-        <h2 class="modal-title">New Project</h2>
-        <button class="modal-close" id="closeNewProjectModal">×</button>
+        <h2 class="modal-title">Choose a Template (Optional)</h2>
+        <button class="modal-close" id="closeTemplateModal">×</button>
       </div>
-      <form id="newProjectForm">
-        <div class="form-group">
-          <label class="form-label" for="projectNameInput">Project Name</label>
-          <input type="text" id="projectNameInput" class="form-input" placeholder="Enter project name" required autofocus />
+      <p style="color: #64748b; margin-bottom: 1.5rem; font-size: 0.95rem;">
+        If you skip, the project will start with a blank slide.
+      </p>
+      <div class="templates-list">
+        <div class="template-option" data-template="business">
+          <div class="template-option-preview">
+            <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+              <rect x="8" y="8" width="24" height="16" rx="2" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="1.5"/>
+              <rect x="12" y="12" width="16" height="2" rx="1" fill="#94a3b8"/>
+              <rect x="12" y="16" width="12" height="2" rx="1" fill="#cbd5e1"/>
+              <rect x="12" y="20" width="10" height="2" rx="1" fill="#cbd5e1"/>
+            </svg>
+          </div>
+          <div class="template-option-info">
+            <h3 class="template-option-title">Business Template</h3>
+            <p class="template-option-description">A structured layout for professional slides.</p>
+          </div>
         </div>
-        <div class="modal-actions">
-          <button type="button" class="btn btn-outline" id="cancelNewProject">Cancel</button>
-          <button type="submit" class="btn btn-primary">Create Project</button>
-        </div>
-      </form>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-outline" id="cancelTemplate">Cancel</button>
+        <button type="button" class="btn btn-outline" id="skipTemplate">Skip (Blank Project)</button>
+        <button type="button" class="btn btn-primary" id="useTemplate">Use Template</button>
+      </div>
     </div>
   </div>
 
@@ -1190,63 +1249,101 @@
       searchProjects(searchQuery);
     });
 
-    // New project
+    // Template selection state
+    let selectedTemplate = null;
+
+    // New project - show template selection modal
     document.getElementById('newProjectBtn').addEventListener('click', () => {
-      document.getElementById('newProjectModal').classList.add('active');
-      document.getElementById('projectNameInput').value = '';
-      setTimeout(() => document.getElementById('projectNameInput').focus(), 100);
+      selectedTemplate = null;
+      document.querySelectorAll('.template-option').forEach(opt => {
+        opt.classList.remove('selected');
+      });
+      document.getElementById('templateSelectionModal').classList.add('active');
     });
 
-    document.getElementById('closeNewProjectModal').addEventListener('click', () => {
-      document.getElementById('newProjectModal').classList.remove('active');
+    // Close template modal
+    document.getElementById('closeTemplateModal').addEventListener('click', () => {
+      document.getElementById('templateSelectionModal').classList.remove('active');
     });
 
-    document.getElementById('cancelNewProject').addEventListener('click', () => {
-      document.getElementById('newProjectModal').classList.remove('active');
+    document.getElementById('cancelTemplate').addEventListener('click', () => {
+      document.getElementById('templateSelectionModal').classList.remove('active');
     });
 
-    document.getElementById('newProjectForm').addEventListener('submit', (e) => {
-      e.preventDefault();
-      const projectName = document.getElementById('projectNameInput').value.trim();
-      if (!projectName) return;
+    // Template option selection
+    document.querySelectorAll('.template-option').forEach(option => {
+      option.addEventListener('click', () => {
+        document.querySelectorAll('.template-option').forEach(opt => {
+          opt.classList.remove('selected');
+        });
+        option.classList.add('selected');
+        selectedTemplate = option.dataset.template;
+      });
+    });
 
-      // Create new project
-      const newProjectId = crypto.randomUUID ? crypto.randomUUID() : `project-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    // Use Template button
+    document.getElementById('useTemplate').addEventListener('click', () => {
+      if (!selectedTemplate) {
+        // If no template selected, select the business template by default
+        selectedTemplate = 'business';
+      }
+      createProjectWithTemplate(selectedTemplate);
+    });
+
+    // Skip Template button (create blank project)
+    document.getElementById('skipTemplate').addEventListener('click', () => {
+      createProjectWithTemplate(null);
+    });
+
+    // Create project with template
+    function createProjectWithTemplate(templateName) {
       const now = Date.now();
 
-      // Create project data
-      const projectData = {
-        id: newProjectId,
-        name: projectName,
-        slides: [{
-          id: crypto.randomUUID ? crypto.randomUUID() : `slide-${Date.now()}`,
-          title: 'Slide 1',
-          elements: [],
-          backgroundColor: '#ffffff'
-        }],
-        createdAt: now,
-        updatedAt: now,
-        important: false
-      };
+      if (templateName) {
+        // For templates: let slide-editor create the project with template
+        localStorage.setItem('selectedTemplate', templateName);
+        localStorage.setItem('forceNewPresentation', 'true');
+        // Close modal and redirect (no ID needed, slide-editor will generate one)
+        document.getElementById('templateSelectionModal').classList.remove('active');
+        window.location.href = 'slide-editor.html';
+      } else {
+        // For blank projects: create project data immediately
+        const projectName = 'Untitled Project';
+        const newProjectId = crypto.randomUUID ? crypto.randomUUID() : `project-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
-      // Save project
-      localStorage.setItem(PRESENTATION_STORAGE_PREFIX + newProjectId, JSON.stringify(projectData));
+        const projectData = {
+          id: newProjectId,
+          name: projectName,
+          slides: [{
+            id: crypto.randomUUID ? crypto.randomUUID() : `slide-${Date.now()}`,
+            title: 'Slide 1',
+            elements: [],
+            backgroundColor: '#ffffff'
+          }],
+          createdAt: now,
+          updatedAt: now,
+          important: false
+        };
 
-      // Add to index
-      const index = allProjects;
-      index.push({
-        id: newProjectId,
-        name: projectName,
-        createdAt: now,
-        updatedAt: now,
-        important: false
-      });
-      localStorage.setItem(PRESENTATIONS_INDEX_KEY, JSON.stringify(index));
+        // Save project
+        localStorage.setItem(PRESENTATION_STORAGE_PREFIX + newProjectId, JSON.stringify(projectData));
 
-      // Close modal and redirect
-      document.getElementById('newProjectModal').classList.remove('active');
-      window.location.href = `slide-editor.html?id=${encodeURIComponent(newProjectId)}`;
-    });
+        // Add to index
+        const index = allProjects;
+        index.push({
+          id: newProjectId,
+          name: projectName,
+          createdAt: now,
+          updatedAt: now,
+          important: false
+        });
+        localStorage.setItem(PRESENTATIONS_INDEX_KEY, JSON.stringify(index));
+
+        // Close modal and redirect
+        document.getElementById('templateSelectionModal').classList.remove('active');
+        window.location.href = `slide-editor.html?id=${encodeURIComponent(newProjectId)}`;
+      }
+    }
 
     // Rename project
     document.getElementById('closeRenameModal').addEventListener('click', () => {

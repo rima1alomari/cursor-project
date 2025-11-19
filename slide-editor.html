@@ -1497,10 +1497,33 @@
     const newSession = typeof window !== 'undefined' && localStorage.getItem('forceNewPresentation') === 'true';
     if (newSession) {
       localStorage.removeItem('forceNewPresentation');
-      // Remove ALL local presentation data before init
-      Object.keys(localStorage).forEach((key) => {
-        if (key.includes('presentation') || key.includes('SYNC') || key.includes('slides') || key.includes('autosave') || key.includes('slide-editor')) {
+      // Remove only autosave/sync data, NOT project storage
+      // This preserves existing projects while clearing temporary editor state
+      const keysToRemove = [
+        'slide-editor-autosave-v1',
+        'slide-editor-autosave-v1-sync',
+        'currentPresentation',
+        'currentSlide',
+        'currentSlideContent'
+      ];
+      keysToRemove.forEach(key => {
+        try {
           localStorage.removeItem(key);
+        } catch (e) {
+          // Ignore errors
+        }
+      });
+      // Also remove any keys that match autosave patterns but NOT project storage
+      Object.keys(localStorage).forEach((key) => {
+        // Only remove autosave/sync keys, NOT project storage keys
+        if ((key.includes('autosave') || key.includes('SYNC') || key.includes('slide-editor')) && 
+            !key.startsWith('lumen-presentation-') && 
+            key !== 'lumen-presentations-index') {
+          try {
+            localStorage.removeItem(key);
+          } catch (e) {
+            // Ignore errors
+          }
         }
       });
       sessionStorage.clear();
@@ -1529,10 +1552,10 @@
             id: crypto.randomUUID(),
             type: 'image',
             src: './logo.png',
-            left: 920,
+            left: 700,
             top: 40,
-            width: 200,
-            height: 200,
+            width: 240,
+            height: 240,
             aspectRatio: 1,
             fit: 'contain',
             opacity: 1,
@@ -2057,6 +2080,8 @@
         nextUrl.searchParams.set('id', presentationId);
         window.history.replaceState(null, '', nextUrl.toString());
       }
+      // Mark as needing save so template slides are persisted immediately
+      needsAutosave = true;
     }
 
     // Check if this is a brand new presentation (set by home.html) - legacy support
@@ -7900,8 +7925,21 @@
       updateAutosaveStatus('Autosave ready', 'idle');
       // Ensure name input is set for new presentations
       if ((newSession || isNew) && presentationNameInput) {
-        presentationNameInput.value = DEFAULT_PRESENTATION_NAME;
-        loadedPresentationName = DEFAULT_PRESENTATION_NAME;
+        // For template-based presentations, use the template name
+        if (newSession && templatePresentationName && templatePresentationName !== DEFAULT_PRESENTATION_NAME) {
+          presentationNameInput.value = templatePresentationName;
+          loadedPresentationName = templatePresentationName;
+        } else {
+          presentationNameInput.value = DEFAULT_PRESENTATION_NAME;
+          loadedPresentationName = DEFAULT_PRESENTATION_NAME;
+        }
+      }
+      // Trigger initial save for template-based new presentations
+      if (newSession && needsAutosave && slides.length > 0) {
+        // Small delay to ensure everything is initialized
+        setTimeout(() => {
+          scheduleAutosave();
+        }, 500);
       }
       render();
       renderPresenceIndicators();
