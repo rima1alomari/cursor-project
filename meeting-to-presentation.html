@@ -337,6 +337,174 @@
       .status-message.show {
         display: block;
       }
+
+      .recording-section {
+        margin-top: 24px;
+        padding-top: 24px;
+        border-top: 1px solid var(--border);
+      }
+
+      .recording-section h3 {
+        margin: 0 0 16px 0;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text);
+      }
+
+      .recording-controls {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 16px;
+      }
+
+      .record-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 12px 24px;
+        background: #dc2626;
+        color: #ffffff;
+        border: none;
+        border-radius: 10px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .record-btn:hover:not(:disabled) {
+        background: #b91c1c;
+        transform: translateY(-1px);
+      }
+
+      .record-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .record-btn.recording {
+        background: #dc2626;
+        animation: pulse 1.5s ease-in-out infinite;
+      }
+
+      @keyframes pulse {
+        0%, 100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.7;
+        }
+      }
+
+      .stop-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 12px 24px;
+        background: #64748b;
+        color: #ffffff;
+        border: none;
+        border-radius: 10px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .stop-btn:hover:not(:disabled) {
+        background: #475569;
+        transform: translateY(-1px);
+      }
+
+      .stop-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .recording-timer {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #dc2626;
+        font-family: 'Courier New', monospace;
+      }
+
+      .recording-indicator {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        background: #dc2626;
+        border-radius: 50%;
+        margin-right: 8px;
+        animation: blink 1s ease-in-out infinite;
+      }
+
+      @keyframes blink {
+        0%, 100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.3;
+        }
+      }
+
+      .audio-preview {
+        margin-top: 16px;
+        padding: 16px;
+        background: #f8fafc;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        display: none;
+      }
+
+      .audio-preview.show {
+        display: block;
+      }
+
+      .audio-preview audio {
+        width: 100%;
+        margin-top: 8px;
+      }
+
+      .audio-preview-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .use-recording-btn {
+        padding: 8px 16px;
+        background: var(--green);
+        color: #ffffff;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .use-recording-btn:hover {
+        opacity: 0.9;
+      }
+
+      .discard-recording-btn {
+        padding: 8px 16px;
+        background: #f3f4f6;
+        color: var(--text);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .discard-recording-btn:hover {
+        background: #e5e7eb;
+      }
     </style>
   </head>
   <body class="bg-white bg-modern bg-corner-dots">
@@ -346,9 +514,9 @@
       </div>
       <nav class="site-nav site-nav--centered" aria-label="Primary">
         <a href="home.html" class="nav-link">Home</a>
-        <a href="about.html" class="nav-link">About</a>
         <a href="meeting-to-presentation.html" class="nav-link nav-link--current" aria-current="page">Meeting to Presentation</a>
         <a href="ai-assistant.html" class="nav-link">AI Assistant</a>
+        <a href="about.html" class="nav-link">About</a>
       </nav>
       <div class="header-right">
         <img class="site-logo site-logo--mark" src="./logo.png" alt="Aramco Digital logo" />
@@ -374,6 +542,36 @@
               accept=".mp3,.wav,.m4a,.mp4,.webm,.ogg"
             />
             <p class="file-name" id="fileName"></p>
+          </div>
+
+          <div class="recording-section">
+            <h3>Or record directly</h3>
+            <div class="recording-controls">
+              <button class="record-btn" id="recordBtn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <circle cx="12" cy="12" r="8"/>
+                </svg>
+                Start Recording
+              </button>
+              <button class="stop-btn" id="stopBtn" style="display: none;" disabled>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <rect x="6" y="6" width="12" height="12" rx="2"/>
+                </svg>
+                Stop Recording
+              </button>
+              <div class="recording-timer" id="recordingTimer" style="display: none;">
+                <span class="recording-indicator"></span>
+                <span id="timerText">00:00</span>
+              </div>
+            </div>
+            <div class="audio-preview" id="audioPreview">
+              <p style="margin: 0 0 8px 0; font-size: 0.9rem; color: var(--muted);">Recording preview:</p>
+              <audio id="audioPlayer" controls></audio>
+              <div class="audio-preview-actions">
+                <button class="use-recording-btn" id="useRecordingBtn">Use This Recording</button>
+                <button class="discard-recording-btn" id="discardRecordingBtn">Discard</button>
+              </div>
+            </div>
           </div>
 
           <button class="generate-btn" id="generateBtn" disabled>
@@ -402,10 +600,17 @@
 
     <footer class="credits">Made by: Reema Alomari, Abdullah Alqahtani, Yara AlSardi</footer>
 
+    <!-- Load config.js for API keys -->
+    <script src="./config.js"></script>
+    
     <script>
-      // OpenAI API Key - In production, this should be stored securely on the backend
-      // Replace 'YOUR_API_KEY_HERE' with your actual API key or load it from a secure backend service
-      const API_KEY = 'YOUR_API_KEY_HERE';
+      // OpenAI API Key - Load from config.js
+      const API_KEY = window.OPENAI_API_KEY || 'YOUR_OPENAI_API_KEY_HERE';
+      
+      // Validate API key on page load
+      if (!API_KEY || API_KEY === 'YOUR_OPENAI_API_KEY_HERE' || API_KEY === 'YOUR_API_KEY_HERE') {
+        console.error('OpenAI API key not configured. Please set your API key in config.js');
+      }
       const audioFileInput = document.getElementById('audioFile');
       const fileName = document.getElementById('fileName');
       const generateBtn = document.getElementById('generateBtn');
@@ -416,6 +621,24 @@
       const exportCard = document.getElementById('exportCard');
       const exportToEditorBtn = document.getElementById('exportToEditorBtn');
       
+      // Recording elements
+      const recordBtn = document.getElementById('recordBtn');
+      const stopBtn = document.getElementById('stopBtn');
+      const recordingTimer = document.getElementById('recordingTimer');
+      const timerText = document.getElementById('timerText');
+      const audioPreview = document.getElementById('audioPreview');
+      const audioPlayer = document.getElementById('audioPlayer');
+      const useRecordingBtn = document.getElementById('useRecordingBtn');
+      const discardRecordingBtn = document.getElementById('discardRecordingBtn');
+      
+      // Recording state
+      let mediaRecorder = null;
+      let audioChunks = [];
+      let recordingStream = null;
+      let recordingStartTime = null;
+      let timerInterval = null;
+      let recordedBlob = null;
+      
       // Store slides data for editing
       let slidesData = [];
 
@@ -423,6 +646,9 @@
       audioFileInput.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (file) {
+          // Clear any recording when file is selected
+          clearRecording();
+          
           // Validate file type
           const validTypes = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/x-wav', 'audio/mp4', 'audio/m4a', 'audio/x-m4a', 'audio/webm', 'audio/ogg'];
           const validExtensions = ['.mp3', '.wav', '.m4a', '.mp4', '.webm', '.ogg'];
@@ -454,8 +680,159 @@
           hideError();
         } else {
           fileName.classList.remove('show');
+          if (!recordedBlob) {
+            generateBtn.disabled = true;
+          }
+        }
+      });
+
+      // Recording functionality
+      async function startRecording() {
+        try {
+          // Request microphone access
+          recordingStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          
+          // Create MediaRecorder
+          const options = { mimeType: 'audio/webm' };
+          if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+            options.mimeType = 'audio/webm;codecs=opus';
+            if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+              options.mimeType = ''; // Let browser choose
+            }
+          }
+          
+          mediaRecorder = new MediaRecorder(recordingStream, options);
+          audioChunks = [];
+          
+          mediaRecorder.ondataavailable = (event) => {
+            if (event.data.size > 0) {
+              audioChunks.push(event.data);
+            }
+          };
+          
+          mediaRecorder.onstop = () => {
+            recordedBlob = new Blob(audioChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
+            const audioUrl = URL.createObjectURL(recordedBlob);
+            audioPlayer.src = audioUrl;
+            audioPreview.classList.add('show');
+            
+            // Update file name display
+            const fileSizeMB = (recordedBlob.size / (1024 * 1024)).toFixed(2);
+            fileName.textContent = `Recorded audio (${fileSizeMB} MB)`;
+            fileName.classList.add('show');
+            
+            // Automatically make recording ready for use
+            audioFileInput.value = '';
+            generateBtn.disabled = false;
+            hideError();
+            
+            // Show success message
+            showStatus('Recording completed! You can now generate your presentation.');
+          };
+          
+          // Start recording
+          mediaRecorder.start();
+          recordingStartTime = Date.now();
+          
+          // Update UI
+          recordBtn.style.display = 'none';
+          stopBtn.style.display = 'flex';
+          stopBtn.disabled = false;
+          recordingTimer.style.display = 'flex';
+          recordBtn.classList.add('recording');
+          
+          // Start timer
+          startTimer();
+          
+          hideError();
+        } catch (error) {
+          console.error('Error starting recording:', error);
+          if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+            showError('Microphone access denied. Please allow microphone access and try again.');
+          } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+            showError('No microphone found. Please connect a microphone and try again.');
+          } else {
+            showError('Failed to start recording. Please try again.');
+          }
+        }
+      }
+      
+      function stopRecording() {
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+          mediaRecorder.stop();
+        }
+        
+        // Stop all tracks
+        if (recordingStream) {
+          recordingStream.getTracks().forEach(track => track.stop());
+          recordingStream = null;
+        }
+        
+        // Update UI
+        recordBtn.style.display = 'flex';
+        recordBtn.classList.remove('recording');
+        stopBtn.style.display = 'none';
+        stopBtn.disabled = true;
+        recordingTimer.style.display = 'none';
+        
+        // Stop timer
+        stopTimer();
+      }
+      
+      function startTimer() {
+        timerInterval = setInterval(() => {
+          if (recordingStartTime) {
+            const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
+            const minutes = Math.floor(elapsed / 60);
+            const seconds = elapsed % 60;
+            timerText.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+          }
+        }, 1000);
+      }
+      
+      function stopTimer() {
+        if (timerInterval) {
+          clearInterval(timerInterval);
+          timerInterval = null;
+        }
+        recordingStartTime = null;
+        timerText.textContent = '00:00';
+      }
+      
+      function clearRecording() {
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+          stopRecording();
+        }
+        
+        recordedBlob = null;
+        audioChunks = [];
+        audioPreview.classList.remove('show');
+        audioPlayer.src = '';
+        
+        if (!audioFileInput.files[0]) {
+          fileName.classList.remove('show');
           generateBtn.disabled = true;
         }
+      }
+      
+      // Event listeners for recording
+      recordBtn.addEventListener('click', startRecording);
+      stopBtn.addEventListener('click', stopRecording);
+      
+      useRecordingBtn.addEventListener('click', () => {
+        if (recordedBlob) {
+          // Clear file input
+          audioFileInput.value = '';
+          hideError();
+          // Recording is already set up, just ensure button is enabled
+          generateBtn.disabled = false;
+          hideStatus();
+        }
+      });
+      
+      discardRecordingBtn.addEventListener('click', () => {
+        clearRecording();
+        hideStatus();
       });
 
       function showStatus(message) {
@@ -996,9 +1373,22 @@ ${truncatedTranscript}`;
 
       // Handle generate button click
       generateBtn.addEventListener('click', async function() {
-        const file = audioFileInput.files[0];
+        // Check if API key is configured
+        if (!API_KEY || API_KEY === 'YOUR_OPENAI_API_KEY_HERE' || API_KEY === 'YOUR_API_KEY_HERE') {
+          showError('OpenAI API key not configured. Please set your API key in config.js file. See config.example.js for instructions.');
+          return;
+        }
+        
+        let file = audioFileInput.files[0];
+        
+        // Use recorded audio if available, otherwise use uploaded file
+        if (!file && recordedBlob) {
+          // Convert recorded blob to File object
+          file = new File([recordedBlob], 'recording.webm', { type: recordedBlob.type || 'audio/webm' });
+        }
+        
         if (!file) {
-          showError('Please select an audio file first.');
+          showError('Please select an audio file or record audio first.');
           return;
         }
 

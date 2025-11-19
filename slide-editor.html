@@ -625,6 +625,68 @@
     .presenter-overlay--fullscreen .presenter-header h2 {
       font-weight: 600;
     }
+    #presenterRecordBtn.recording {
+      background-color: rgba(239, 68, 68, 0.2);
+      border-color: #ef4444;
+      color: #ef4444;
+      animation: pulse-record 1.5s ease-in-out infinite;
+    }
+    #presenterRecordBtn.recording #recordIcon circle {
+      fill: #ef4444;
+      stroke: #ef4444;
+    }
+    @keyframes pulse-record {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.6;
+      }
+    }
+    #transcriptionModal {
+      direction: ltr;
+    }
+    #transcriptionContent ul {
+      list-style-type: disc;
+      padding-left: 1.5rem;
+      margin: 1rem 0;
+    }
+    #transcriptionContent li {
+      margin: 0.5rem 0;
+    }
+    #liveTranscriptionBox {
+      min-width: 350px;
+      max-width: 450px;
+    }
+    #liveTranscriptionContent {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.1);
+    }
+    #liveTranscriptionContent::-webkit-scrollbar {
+      width: 6px;
+    }
+    #liveTranscriptionContent::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+    }
+    #liveTranscriptionContent::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 10px;
+    }
+    #liveTranscriptionContent::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.5);
+    }
+    @media (max-width: 1024px) {
+      .presenter-body {
+        flex-direction: column !important;
+      }
+      #liveTranscriptionBox {
+        max-width: 100%;
+        width: 100%;
+        min-width: auto;
+      }
+    }
     @media (max-width: 768px) {
       .presenter-overlay--fullscreen .presenter-header {
         width: calc(100vw - 2rem);
@@ -1478,16 +1540,87 @@
       </div>
       <div class="flex items-center gap-3 text-sm">
         <span class="rounded-full bg-slate-800/80 px-3 py-1.5">Tips: ← → to navigate · Esc to exit</span>
+        <button id="presenterRecordBtn" class="rounded-full border border-white/40 px-4 py-2 text-sm hover:bg-white/10 flex items-center gap-2">
+          <svg id="recordIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" fill="none"></circle>
+          </svg>
+          <span id="recordText">Record / تسجيل صوت</span>
+        </button>
         <button id="presenterFullscreenBtn" class="rounded-full border border-white/40 px-4 py-2 text-sm hover:bg-white/10">Enter Fullscreen</button>
         <button id="presenterExitBtn" class="rounded-full border border-white/40 px-4 py-2 text-sm hover:bg-white/10">Exit</button>
       </div>
     </div>
-    <div class="presenter-body flex flex-1 flex-col items-center justify-center gap-8 px-8 pb-12">
-      <div id="presenterCanvas" class="w-full max-w-5xl rounded-3xl bg-white shadow-2xl"></div>
-      <div class="presenter-controls flex items-center gap-4 text-sm">
-        <button id="presenterPrevBtn" class="rounded-full border border-white/40 px-4 py-2 hover:bg-white/10">Previous</button>
-        <button id="presenterNextBtn" class="rounded-full border border-white/40 px-4 py-2 hover:bg-white/10">Next</button>
-        <span id="presenterProgress" class="text-xs uppercase tracking-[0.4em] text-slate-300">1 / 1</span>
+    <div class="presenter-body flex flex-1 flex-row items-center justify-center gap-6 px-8 pb-12">
+      <div class="flex flex-col items-center gap-8 flex-1">
+        <div id="presenterCanvas" class="w-full max-w-5xl rounded-3xl bg-white shadow-2xl"></div>
+        <div class="presenter-controls flex items-center gap-4 text-sm">
+          <button id="presenterPrevBtn" class="rounded-full border border-white/40 px-4 py-2 hover:bg-white/10">Previous</button>
+          <button id="presenterNextBtn" class="rounded-full border border-white/40 px-4 py-2 hover:bg-white/10">Next</button>
+          <span id="presenterProgress" class="text-xs uppercase tracking-[0.4em] text-slate-300">1 / 1</span>
+        </div>
+      </div>
+      <!-- Live Transcription Display -->
+      <div id="liveTranscriptionBox" class="w-full max-w-md hidden flex-shrink-0">
+        <div class="bg-slate-800/95 backdrop-blur-sm rounded-xl border-2 border-white/30 p-4 shadow-2xl h-full">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-base font-bold text-white uppercase tracking-wider flex items-center gap-2">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                <line x1="12" y1="19" x2="12" y2="23"></line>
+                <line x1="8" y1="23" x2="16" y2="23"></line>
+              </svg>
+              Live Transcription / النسخ المباشر
+            </h3>
+            <button id="clearTranscriptionBtn" class="text-xs text-white hover:bg-white/20 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition">Clear / مسح</button>
+          </div>
+          <div id="liveTranscriptionContent" class="text-white text-sm leading-relaxed whitespace-pre-wrap overflow-y-auto min-h-[400px] max-h-[600px] p-4 bg-slate-900/70 rounded-lg border border-white/10">
+            <!-- Transcription will appear here -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Transcription Modal -->
+  <div id="transcriptionModal" class="fixed inset-0 z-[60] hidden flex items-center justify-center bg-black/60 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col m-4">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200">
+        <h2 class="text-2xl font-semibold text-slate-900">Transcription</h2>
+        <button id="transcriptionCloseBtn" class="text-slate-400 hover:text-slate-600">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="flex-1 overflow-y-auto p-6">
+        <div class="mb-4 flex items-center gap-3 flex-wrap">
+          <label class="flex items-center gap-2 text-slate-700">
+            <input type="radio" name="transcriptionFormat" value="exact" checked class="accent-blue-600">
+            <span>Full Text</span>
+          </label>
+          <label class="flex items-center gap-2 text-slate-700">
+            <input type="radio" name="transcriptionFormat" value="bullets" class="accent-blue-600">
+            <span>Bullet Points</span>
+          </label>
+        </div>
+        <div id="transcriptionContent" class="prose max-w-none text-slate-800 whitespace-pre-wrap min-h-[500px] p-6 bg-slate-50 rounded-lg border border-slate-200">
+          <!-- Transcription will appear here -->
+        </div>
+      </div>
+      <div class="flex items-center justify-between px-6 py-4 border-t border-slate-200 gap-3">
+        <div class="flex gap-2">
+          <button id="transcriptionCopyBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+            Copy
+          </button>
+          <button id="transcriptionPrintBtn" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition">
+            Print
+          </button>
+        </div>
+        <button id="transcriptionSaveBtn" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+          Save
+        </button>
       </div>
     </div>
   </div>
@@ -2522,6 +2655,30 @@
     const presenterPrevBtn = document.getElementById('presenterPrevBtn');
     const presenterNextBtn = document.getElementById('presenterNextBtn');
     const presenterFullscreenBtn = document.getElementById('presenterFullscreenBtn');
+    const presenterRecordBtn = document.getElementById('presenterRecordBtn');
+    const recordIcon = document.getElementById('recordIcon');
+    const recordText = document.getElementById('recordText');
+    
+    const liveTranscriptionBox = document.getElementById('liveTranscriptionBox');
+    const liveTranscriptionContent = document.getElementById('liveTranscriptionContent');
+    const clearTranscriptionBtn = document.getElementById('clearTranscriptionBtn');
+    
+    const transcriptionModal = document.getElementById('transcriptionModal');
+    const transcriptionCloseBtn = document.getElementById('transcriptionCloseBtn');
+    const transcriptionContent = document.getElementById('transcriptionContent');
+    const transcriptionCopyBtn = document.getElementById('transcriptionCopyBtn');
+    const transcriptionPrintBtn = document.getElementById('transcriptionPrintBtn');
+    const transcriptionSaveBtn = document.getElementById('transcriptionSaveBtn');
+    const transcriptionFormatRadios = document.querySelectorAll('input[name="transcriptionFormat"]');
+    
+    let recognition = null;
+    let recognitionAR = null; // Arabic recognition
+    let recognitionEN = null; // English recognition
+    let isRecording = false;
+    let transcriptionText = '';
+    let currentTranscriptionFormat = 'exact';
+    let currentRecognitionLang = 'en'; // 'en' or 'ar'
+    let recognitionSwitchInterval = null;
 
     const chartInstances = new Map();
     const chartPalettes = {
@@ -3551,14 +3708,435 @@
 
     function closePresenterMode() {
       if (!presenterOverlay) return;
+      if (isRecording) {
+        stopRecording();
+      }
       if (isPresenterFullscreen()) {
         exitFullscreen();
+      }
+      // Hide live transcription box when closing presenter mode
+      if (liveTranscriptionBox) {
+        liveTranscriptionBox.classList.add('hidden');
       }
       presenterOverlay.classList.add('hidden');
       document.body.classList.remove('overflow-hidden');
       if (presenterKeyHandler) {
         document.removeEventListener('keydown', presenterKeyHandler);
         presenterKeyHandler = null;
+      }
+    }
+    
+    // Speech Recognition Functions
+    function createRecognition(lang, langCode) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const rec = new SpeechRecognition();
+      rec.continuous = true;
+      rec.interimResults = true;
+      rec.lang = langCode;
+      
+      rec.onstart = () => {
+        if (!isRecording) return;
+        currentRecognitionLang = lang;
+      };
+      
+      rec.onresult = (event) => {
+        if (!isRecording) return;
+        
+        let interimTranscript = '';
+        let finalTranscript = '';
+        
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTranscript += transcript + ' ';
+          } else {
+            interimTranscript += transcript;
+          }
+        }
+        
+        if (finalTranscript) {
+          transcriptionText += finalTranscript;
+        }
+        
+        // Update live transcription display (show all final text + current interim text)
+        updateLiveTranscription(interimTranscript);
+      };
+      
+      rec.onerror = (event) => {
+        console.error(`Speech recognition error (${lang}):`, event.error);
+        if (event.error === 'no-speech') {
+          // User stopped speaking, continue listening
+          return;
+        }
+        if (event.error === 'not-allowed') {
+          alert('Please allow microphone access / الرجاء السماح بالوصول إلى الميكروفون');
+          stopRecording();
+        }
+      };
+      
+      rec.onend = () => {
+        if (isRecording) {
+          // Continue listening if still recording
+          try {
+            if (lang === currentRecognitionLang) {
+              rec.start();
+            }
+          } catch (e) {
+            console.error(`Failed to restart recognition (${lang}):`, e);
+            // Try switching to other language
+            if (lang === 'ar' && recognitionEN) {
+              try {
+                recognitionEN.start();
+                currentRecognitionLang = 'en';
+              } catch (e2) {
+                stopRecording();
+              }
+            } else if (lang === 'en' && recognitionAR) {
+              try {
+                recognitionAR.start();
+                currentRecognitionLang = 'ar';
+              } catch (e2) {
+                stopRecording();
+              }
+            } else {
+              stopRecording();
+            }
+          }
+        }
+      };
+      
+      return rec;
+    }
+    
+    function initSpeechRecognition() {
+      if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        console.warn('Speech recognition not supported in this browser');
+        if (presenterRecordBtn) {
+          presenterRecordBtn.disabled = true;
+          presenterRecordBtn.title = 'Speech recognition not supported';
+        }
+        return false;
+      }
+      
+      // Create recognition instances for both languages
+      recognitionEN = createRecognition('en', 'en-US');
+      recognitionAR = createRecognition('ar', 'ar-SA');
+      recognition = recognitionEN; // Default to English
+      
+      return true;
+    }
+    
+    function switchRecognitionLanguage() {
+      if (!isRecording) return;
+      
+      try {
+        // Stop current recognition
+        if (recognition && recognition.abort) {
+          recognition.abort();
+        }
+        
+        // Switch to other language
+        if (currentRecognitionLang === 'en' && recognitionAR) {
+          recognition = recognitionAR;
+          currentRecognitionLang = 'ar';
+          recognition.start();
+        } else if (currentRecognitionLang === 'ar' && recognitionEN) {
+          recognition = recognitionEN;
+          currentRecognitionLang = 'en';
+          recognition.start();
+        }
+      } catch (e) {
+        console.error('Failed to switch language:', e);
+      }
+    }
+    
+    function startRecording() {
+      if (!recognition && !initSpeechRecognition()) {
+        alert('Voice recording is not available in this browser / تسجيل الصوت غير متاح في هذا المتصفح');
+        return;
+      }
+      
+      if (!recognition) return;
+      
+      transcriptionText = '';
+      currentRecognitionLang = 'en'; // Start with English
+      recognition = recognitionEN;
+      
+      // Clear live transcription display
+      if (liveTranscriptionContent) {
+        liveTranscriptionContent.textContent = '';
+      }
+      
+      isRecording = true;
+      if (presenterRecordBtn) {
+        presenterRecordBtn.classList.add('recording');
+        if (recordText) recordText.textContent = 'Stop Recording / إيقاف التسجيل';
+      }
+      // Show live transcription box
+      if (liveTranscriptionBox) {
+        liveTranscriptionBox.classList.remove('hidden');
+      }
+      
+      try {
+        recognition.start();
+        
+        // Switch between languages every 3 seconds to catch both languages
+        recognitionSwitchInterval = setInterval(() => {
+          if (isRecording) {
+            switchRecognitionLanguage();
+          }
+        }, 3000); // Switch every 3 seconds to support both Arabic and English
+      } catch (e) {
+        console.error('Failed to start recognition:', e);
+        if (e.name === 'InvalidStateError') {
+          // Already started, just update UI
+          if (presenterRecordBtn) {
+            presenterRecordBtn.classList.add('recording');
+            if (recordText) recordText.textContent = 'Stop Recording / إيقاف التسجيل';
+          }
+          if (liveTranscriptionBox) {
+            liveTranscriptionBox.classList.remove('hidden');
+          }
+        } else {
+          isRecording = false;
+          if (presenterRecordBtn) {
+            presenterRecordBtn.classList.remove('recording');
+            if (recordText) recordText.textContent = 'Record / تسجيل صوت';
+          }
+        }
+      }
+    }
+    
+    function stopRecording() {
+      isRecording = false;
+      
+      // Clear switching interval
+      if (recognitionSwitchInterval) {
+        clearInterval(recognitionSwitchInterval);
+        recognitionSwitchInterval = null;
+      }
+      
+      // Stop all recognitions
+      if (recognitionEN) {
+        try {
+          recognitionEN.stop();
+        } catch (e) {
+          console.error('Failed to stop EN recognition:', e);
+        }
+      }
+      if (recognitionAR) {
+        try {
+          recognitionAR.stop();
+        } catch (e) {
+          console.error('Failed to stop AR recognition:', e);
+        }
+      }
+      if (recognition) {
+        try {
+          recognition.stop();
+        } catch (e) {
+          console.error('Failed to stop recognition:', e);
+        }
+      }
+      
+      if (presenterRecordBtn) {
+        presenterRecordBtn.classList.remove('recording');
+        if (recordText) recordText.textContent = 'Record / تسجيل صوت';
+      }
+      
+      // Update live transcription with final text
+      if (liveTranscriptionContent && transcriptionText.trim()) {
+        liveTranscriptionContent.textContent = transcriptionText;
+        // Scroll to bottom
+        liveTranscriptionContent.scrollTop = liveTranscriptionContent.scrollHeight;
+      }
+      
+      if (transcriptionText.trim()) {
+        showTranscriptionModal();
+      }
+    }
+    
+    function updateLiveTranscription(interimText) {
+      if (!liveTranscriptionContent) return;
+      
+      // Update the live transcription with all final transcription text + current interim text
+      const displayText = transcriptionText + (interimText || '');
+      liveTranscriptionContent.textContent = displayText;
+      
+      // Scroll to bottom to show latest text
+      setTimeout(() => {
+        liveTranscriptionContent.scrollTop = liveTranscriptionContent.scrollHeight;
+      }, 100);
+    }
+    
+    function clearLiveTranscription() {
+      if (liveTranscriptionContent) {
+        liveTranscriptionContent.textContent = '';
+      }
+      transcriptionText = '';
+      if (liveTranscriptionBox) {
+        liveTranscriptionBox.classList.add('hidden');
+      }
+    }
+    
+    function toggleRecording() {
+      if (isRecording) {
+        stopRecording();
+      } else {
+        startRecording();
+      }
+    }
+    
+    function convertToBullets(text) {
+      // Split text into sentences
+      const sentences = text
+        .split(/[.!?]\s+/)
+        .map(s => s.trim())
+        .filter(s => s.length > 0);
+      
+      if (sentences.length === 0) return text;
+      
+      // Create bullet list HTML
+      let bulletHTML = '<ul>';
+      sentences.forEach(sentence => {
+        bulletHTML += `<li>${sentence}</li>`;
+      });
+      bulletHTML += '</ul>';
+      
+      return bulletHTML;
+    }
+    
+    function updateTranscriptionDisplay() {
+      if (!transcriptionContent) return;
+      
+      if (currentTranscriptionFormat === 'bullets') {
+        transcriptionContent.innerHTML = convertToBullets(transcriptionText);
+      } else {
+        transcriptionContent.textContent = transcriptionText;
+      }
+    }
+    
+    function showTranscriptionModal() {
+      if (!transcriptionModal) return;
+      currentTranscriptionFormat = 'exact';
+      transcriptionFormatRadios.forEach(radio => {
+        radio.checked = radio.value === 'exact';
+      });
+      updateTranscriptionDisplay();
+      transcriptionModal.classList.remove('hidden');
+    }
+    
+    function closeTranscriptionModal() {
+      if (!transcriptionModal) return;
+      transcriptionModal.classList.add('hidden');
+    }
+    
+    function copyTranscription() {
+      if (!transcriptionText.trim()) return;
+      
+      let textToCopy = transcriptionText;
+      
+      if (currentTranscriptionFormat === 'bullets') {
+        // Convert to bullet text format for copying
+        const sentences = transcriptionText
+          .split(/[.!?]\s+/)
+          .map(s => s.trim())
+          .filter(s => s.length > 0);
+        textToCopy = sentences.map(s => `• ${s}`).join('\n');
+      }
+      
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(textToCopy).then(() => {
+          if (transcriptionCopyBtn) {
+            transcriptionCopyBtn.textContent = 'Copied!';
+            setTimeout(() => {
+              transcriptionCopyBtn.textContent = 'Copy';
+            }, 2000);
+          }
+        }).catch(err => {
+          console.error('Failed to copy:', err);
+          alert('Failed to copy. Please try again.');
+        });
+      } else {
+        // Fallback for older browsers
+        const textarea = document.createElement('textarea');
+        textarea.value = textToCopy;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+          document.execCommand('copy');
+          if (transcriptionCopyBtn) {
+            transcriptionCopyBtn.textContent = 'Copied!';
+            setTimeout(() => {
+              transcriptionCopyBtn.textContent = 'Copy';
+            }, 2000);
+          }
+        } catch (err) {
+          alert('Failed to copy. Please try again.');
+        }
+        document.body.removeChild(textarea);
+      }
+    }
+    
+    function printTranscription() {
+      if (!transcriptionText.trim()) return;
+      
+      const printWindow = window.open('', '_blank');
+      const content = currentTranscriptionFormat === 'bullets'
+        ? convertToBullets(transcriptionText)
+        : `<pre style="white-space: pre-wrap; font-family: Arial, sans-serif; direction: ltr; text-align: left;">${transcriptionText}</pre>`;
+      
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html dir="ltr">
+        <head>
+          <title>Transcription</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; direction: ltr; }
+            ul { list-style-type: disc; padding-left: 1.5rem; }
+            li { margin: 0.5rem 0; }
+          </style>
+        </head>
+        <body>
+          ${content}
+        </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.print();
+    }
+    
+    function saveTranscription() {
+      if (!transcriptionText.trim()) return;
+      
+      let textToSave = transcriptionText;
+      
+      if (currentTranscriptionFormat === 'bullets') {
+        // Convert to bullet text format for saving
+        const sentences = transcriptionText
+          .split(/[.!?]\s+/)
+          .map(s => s.trim())
+          .filter(s => s.length > 0);
+        textToSave = sentences.map(s => `• ${s}`).join('\n');
+      }
+      
+      const blob = new Blob([textToSave], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `transcription-${new Date().toISOString().slice(0, 10)}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      if (transcriptionSaveBtn) {
+        transcriptionSaveBtn.textContent = 'Saved!';
+        setTimeout(() => {
+          transcriptionSaveBtn.textContent = 'Save';
+        }, 2000);
       }
     }
 
@@ -7595,6 +8173,53 @@
     }
     if (presenterNextBtn) {
       presenterNextBtn.addEventListener('click', () => navigatePresenter(1));
+    }
+    
+    // Recording functionality
+    if (presenterRecordBtn) {
+      presenterRecordBtn.addEventListener('click', toggleRecording);
+    }
+    
+    // Clear transcription button
+    if (clearTranscriptionBtn) {
+      clearTranscriptionBtn.addEventListener('click', clearLiveTranscription);
+    }
+    
+    // Initialize speech recognition on page load
+    initSpeechRecognition();
+    
+    // Transcription modal functionality
+    if (transcriptionCloseBtn) {
+      transcriptionCloseBtn.addEventListener('click', closeTranscriptionModal);
+    }
+    
+    if (transcriptionModal) {
+      transcriptionModal.addEventListener('click', (event) => {
+        if (event.target === transcriptionModal) {
+          closeTranscriptionModal();
+        }
+      });
+    }
+    
+    if (transcriptionCopyBtn) {
+      transcriptionCopyBtn.addEventListener('click', copyTranscription);
+    }
+    
+    if (transcriptionPrintBtn) {
+      transcriptionPrintBtn.addEventListener('click', printTranscription);
+    }
+    
+    if (transcriptionSaveBtn) {
+      transcriptionSaveBtn.addEventListener('click', saveTranscription);
+    }
+    
+    if (transcriptionFormatRadios) {
+      transcriptionFormatRadios.forEach(radio => {
+        radio.addEventListener('change', (e) => {
+          currentTranscriptionFormat = e.target.value;
+          updateTranscriptionDisplay();
+        });
+      });
     }
 
     // Export modal functionality
