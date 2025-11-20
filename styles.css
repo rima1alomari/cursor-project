@@ -354,6 +354,15 @@ body.fade-out {
   animation: glow-pulse 2s ease-in-out infinite;
 }
 
+/* Restricted links (for guests) */
+.nav-link.nav-link--restricted {
+  color: #dc2626 !important; /* red */
+}
+.nav-link.nav-link--restricted:hover,
+.nav-link.nav-link--restricted:focus-visible {
+  color: #b91c1c !important;
+}
+
 @keyframes glow-pulse {
   0%, 100% {
     box-shadow: 0 0 8px rgba(59, 130, 246, 0.5), 0 0 12px rgba(16, 185, 129, 0.4);
@@ -1359,16 +1368,17 @@ body.fade-out {
   right: 0;
   bottom: 0;
   background: rgba(15, 23, 42, 0.6);
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(2px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  animation: fadeIn 0.3s ease-out;
+  animation: fadeIn 0.22s ease-out;
+  will-change: opacity;
 }
 
 .modal-overlay.closing {
-  animation: fadeIn 0.2s ease-out reverse;
+  animation: fadeIn 0.18s ease-out reverse;
 }
 
 .modal-content {
@@ -1378,13 +1388,14 @@ body.fade-out {
   max-width: 480px;
   width: 90%;
   box-shadow: 0 20px 40px rgba(15, 23, 42, 0.2);
-  animation: scaleIn 0.3s ease-out;
+  animation: scaleIn 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
   text-align: center;
   transform-origin: center;
+  will-change: transform, opacity;
 }
 
 .modal-overlay.closing .modal-content {
-  animation: scaleIn 0.2s ease-out reverse;
+  animation: scaleIn 0.18s ease-out reverse;
 }
 
 .modal-title {

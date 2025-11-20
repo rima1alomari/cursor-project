@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
+    <script src="./scripts/global.js"></script>
     <style>
       .meeting-container {
         max-width: 800px;
@@ -510,15 +511,61 @@
   <body class="bg-white bg-modern bg-corner-dots">
     <header class="site-header">
       <div class="header-left">
-        <img class="site-logo site-logo--banner" src="./Screenshot 2025-11-06 at 1.14.39 PM.png" alt="Aramco Digital banner" onerror="this.remove(); var b=document.querySelector('.site-brand'); if(b){ b.textContent='Aramco Digital'; }" />
+        <img class="site-logo site-logo--banner" 
+             src="./lumen-logo.png" 
+             alt="Aramco Digital banner"
+             onerror="this.remove(); var b=document.querySelector('.site-brand'); if(b){ b.textContent='Aramco Digital'; }" />
+    
+        <a href="./index.html" class="home-icon-link" title="Home">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+          </svg>
+        </a>
       </div>
+    
       <nav class="site-nav site-nav--centered" aria-label="Primary">
         <a href="home.html" class="nav-link">Home</a>
-        <a href="meeting-to-presentation.html" class="nav-link nav-link--current" aria-current="page">Meeting to Presentation</a>
-        <a href="ai-assistant.html" class="nav-link">AI Assistant</a>
+        <a href="templates.html" class="nav-link">Templates</a>
+        <a href="projects.html" class="nav-link" id="projectsNavLink">Projects</a>
+        <a href="teams.html" class="nav-link">Teams</a>
+        <a href="meeting-to-presentation.html" class="nav-link nav-link--current" data-no-fade> Meeting to Presentation </a>
+        <a href="ai-assistant.html" class="nav-link" data-no-fade>AI Assistant</a>
         <a href="about.html" class="nav-link">About</a>
       </nav>
+    
       <div class="header-right">
+        <div class="account-display" id="accountDisplay">
+          <button class="account-button" id="accountButton" aria-label="Account menu">
+            <span class="account-greeting" id="accountGreeting"></span>
+            <img class="account-avatar" id="accountAvatar" style="width:32px;height:32px;border-radius:50%;object-fit:cover;display:none;" />
+            <svg class="account-icon" id="accountIcon" width="32" height="32" viewBox="0 0 32 32" fill="none">
+              <circle cx="16" cy="16" r="14" stroke="currentColor" stroke-width="2"/>
+              <circle cx="16" cy="12" r="5" fill="currentColor"/>
+              <path d="M6 26c0-5.5 4.5-10 10-10s10 4.5 10 10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
+    
+          <div class="account-dropdown" id="accountDropdown" style="display: none;">
+            <a href="profile.html" class="dropdown-item">
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+              Profile
+            </a>
+    
+            <button class="dropdown-item dropdown-item--logout" id="logoutButton">
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+              </svg>
+              Logout
+            </button>
+          </div>
+        </div>
+    
         <img class="site-logo site-logo--mark" src="./logo.png" alt="Aramco Digital logo" />
       </div>
     </header>
@@ -601,6 +648,9 @@
     <footer class="credits">Made by: Reema Alomari, Abdullah Alqahtani, Yara AlSardi</footer>
 
     <!-- Load config.js for API keys -->
+    <script src="./scripts/auth.js"></script>
+    <script src="./scripts/profile.js"></script>
+    <script src="./scripts/account-display.js"></script>
     <script src="./config.js"></script>
     
     <script>

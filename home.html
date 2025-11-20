@@ -14,7 +14,7 @@
   <body class="bg-white bg-modern bg-corner-dots">
     <header class="site-header">
       <div class="header-left">
-        <img class="site-logo site-logo--banner" src="./Screenshot 2025-11-06 at 1.14.39 PM.png" alt="Aramco Digital banner" onerror="this.remove(); var b=document.querySelector('.site-brand'); if(b){ b.textContent='Aramco Digital'; }" />
+        <img class="site-logo site-logo--banner" src="./lumen-logo.png" alt="Aramco Digital banner" onerror="this.remove(); var b=document.querySelector('.site-brand'); if(b){ b.textContent='Aramco Digital'; }" />
         <a href="./index.html" class="home-icon-link" title="Home">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
@@ -25,6 +25,7 @@
       </div>
       <nav class="site-nav site-nav--centered" aria-label="Primary">
         <a href="home.html" class="nav-link nav-link--current" aria-current="page">Home</a>
+        <a href="templates.html" class="nav-link">Templates</a>
         <a href="projects.html" class="nav-link" id="projectsNavLink">Projects</a>
         <a href="teams.html" class="nav-link">Teams</a>
         <a href="meeting-to-presentation.html" class="nav-link">Meeting to Presentation</a>
@@ -97,18 +98,6 @@
     <script src="./scripts/profile.js"></script>
     <script src="./scripts/account-display.js"></script>
     <script>
-      // Show/hide Projects tab based on login status
-      (function() {
-        const projectsNavLink = document.getElementById('projectsNavLink');
-        const currentUser = getCurrentUser();
-        if (projectsNavLink) {
-          if (currentUser) {
-            projectsNavLink.style.display = '';
-          } else {
-            projectsNavLink.style.display = 'none';
-          }
-        }
-      })();
       // Disable save/export features for guests
       (function() {
         const isGuest = isGuestMode();
@@ -296,24 +285,7 @@
           }
         }
         
-        const createSlideLink = document.getElementById('createSlideLink');
-        if (createSlideLink) {
-          createSlideLink.addEventListener('click', (event) => {
-            if (event.defaultPrevented) return;
-            if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
-              return;
-            }
-            event.preventDefault();
-            
-            // Redirect to projects page instead of directly to slide editor
-            const targetUrl = 'projects.html';
-            if (window.fadeNavigate) {
-              window.fadeNavigate(targetUrl);
-            } else {
-              window.location.href = targetUrl;
-            }
-          });
-        }
+        // "Create a Slide" should open the slide editor directly; no override needed.
         const listEl = document.getElementById('recentPresentationsList');
         const emptyEl = document.querySelector('.recent-empty');
         if (!listEl) return;
