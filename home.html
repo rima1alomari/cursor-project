@@ -94,9 +94,13 @@
 
     <footer class="credits">Made by: Reema Alomari, Abdullah Alqahtani, Yara AlSardi</footer>
 
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"></script>
     <script src="./scripts/auth.js"></script>
     <script src="./scripts/profile.js"></script>
     <script src="./scripts/account-display.js"></script>
+    <script src="./scripts/firebase.js"></script>
     <script>
       // Disable save/export features for guests
       (function() {
@@ -113,7 +117,7 @@
       })();
     </script>
     <script>
-      (function () {
+      (async function () {
         const INDEX_KEY = 'lumen-presentations-index';
         const PRESENTATION_STORAGE_PREFIX = 'lumen-presentation-';
         
@@ -316,12 +320,32 @@
         }
 
         try {
-          const raw = localStorage.getItem(INDEX_KEY);
-          const parsed = raw ? JSON.parse(raw) : [];
-          const MAX_RECENT = 2; // Show only 1-2 most recent projects on home page
-          const allProjects = Array.isArray(parsed)
-            ? parsed.filter((item) => item && item.id && item.name)
-            : [];
+          // Load projects from Firestore (user-specific: users/{uid}/projects)
+          let allProjects = [];
+          
+          if (typeof loadAllUserProjectsFromFirestore === 'function') {
+            try {
+              allProjects = await loadAllUserProjectsFromFirestore();
+              console.log('Loaded projects from Firestore for home page');
+            } catch (error) {
+              console.warn('Failed to load from Firestore, using localStorage fallback:', error);
+              // Fallback to localStorage
+              const raw = localStorage.getItem(INDEX_KEY);
+              const parsed = raw ? JSON.parse(raw) : [];
+              allProjects = Array.isArray(parsed)
+                ? parsed.filter((item) => item && item.id && item.name)
+                : [];
+            }
+          } else {
+            // Fallback to localStorage if Firestore functions not available
+            const raw = localStorage.getItem(INDEX_KEY);
+            const parsed = raw ? JSON.parse(raw) : [];
+            allProjects = Array.isArray(parsed)
+              ? parsed.filter((item) => item && item.id && item.name)
+              : [];
+          }
+          
+          const MAX_RECENT = 2; // Show only 2 most recent projects on home page
           // Sort: important projects first, then by updatedAt (most recent first)
           const sorted = allProjects.sort((a, b) => {
             const aImportant = a.important === true;
@@ -448,7 +472,9 @@
         } catch (error) {
           console.warn('Failed to load recent presentations', error);
         }
-      })();
+      })().catch(error => {
+        console.error('Error loading recent presentations:', error);
+      });
     </script>
     <script>
       // Green dot scroll-following effect with bottom limit

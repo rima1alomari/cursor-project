@@ -2255,51 +2255,121 @@
       }
       presentationStorageKey = `${PRESENTATION_STORAGE_PREFIX}${presentationId}`;
       
+      // Load project data asynchronously
+      (async () => {
+        try {
+          // Skip loading stored data if this is a brand new presentation (already initialized above)
+          if (!newSession && !isNew) {
+            // Try loading from Firestore first (user-specific path: users/{uid}/projects/{projectId})
+            let storedState = null;
+            
+            if (typeof loadProjectFromFirestore === 'function') {
+              try {
+                storedState = await loadProjectFromFirestore(presentationId);
+                if (storedState) {
+                  console.log('Loaded project from Firestore:', presentationId);
+                }
+              } catch (error) {
+                console.warn('Failed to load from Firestore, trying localStorage:', error);
+              }
+            }
+            
+            // Fallback to localStorage if Firestore didn't return data
+            if (!storedState) {
+              const storedRaw = localStorage.getItem(presentationStorageKey);
+              if (storedRaw) {
+                storedState = JSON.parse(storedRaw);
+                console.log('Loaded project from localStorage (fallback):', presentationId);
+              }
+            }
+            
+            if (storedState) {
+              loadedExistingPresentation = true;
+              // CRITICAL: If we successfully loaded existing data, this is NOT a new presentation
+              isNewPresentation = false;
+              
+              if (storedState && Array.isArray(storedState.slides)) {
+                slides = storedState.slides;
+              }
+              if (typeof storedState?.activeSlideIndex === 'number') {
+                activeSlideIndex = Math.min(Math.max(storedState.activeSlideIndex, 0), Math.max(slides.length - 1, 0));
+              }
+              if (typeof storedState?.createdAt === 'number') {
+                presentationCreatedAt = storedState.createdAt;
+              }
+              if (typeof storedState?.updatedAt === 'number') {
+                presentationUpdatedAt = storedState.updatedAt;
+              }
+              if (storedState?.presentationName) {
+                loadedPresentationName = storedState.presentationName;
+              }
+              if (storedState?.preview) {
+                presentationPreview = normalizePreview(storedState.preview);
+              }
+            }
+            
+            // Also check the presentations index for the name (in case it's stored there but not in project data)
+            if (!loadedPresentationName || loadedPresentationName === DEFAULT_PRESENTATION_NAME) {
+              try {
+                // Try loading from Firestore projects list
+                if (typeof loadAllUserProjectsFromFirestore === 'function') {
+                  const allProjects = await loadAllUserProjectsFromFirestore();
+                  const projectEntry = allProjects.find(p => p.id === presentationId);
+                  if (projectEntry && projectEntry.name && projectEntry.name.trim() && projectEntry.name.toLowerCase() !== DEFAULT_PRESENTATION_NAME.toLowerCase()) {
+                    loadedPresentationName = projectEntry.name.trim();
+                  }
+                }
+                
+                // Fallback to localStorage index
+                if (!loadedPresentationName || loadedPresentationName === DEFAULT_PRESENTATION_NAME) {
+                  const indexRaw = localStorage.getItem(PRESENTATIONS_INDEX_KEY);
+                  if (indexRaw) {
+                    const index = JSON.parse(indexRaw);
+                    if (Array.isArray(index)) {
+                      const indexEntry = index.find(item => item && item.id === presentationId);
+                      if (indexEntry && indexEntry.name && indexEntry.name.trim() && indexEntry.name.toLowerCase() !== DEFAULT_PRESENTATION_NAME.toLowerCase()) {
+                        loadedPresentationName = indexEntry.name.trim();
+                      }
+                    }
+                  }
+                }
+              } catch (e) {
+                // Ignore errors when loading from index
+              }
+            }
+          }
+        } catch (error) {
+          console.warn('Failed to load presentation state', error);
+        }
+      })();
+      
       try {
         // Skip loading stored data if this is a brand new presentation (already initialized above)
         if (!newSession && !isNew) {
-        const storedRaw = localStorage.getItem(presentationStorageKey);
-        if (storedRaw) {
-          const storedState = JSON.parse(storedRaw);
-          loadedExistingPresentation = true;
-          // CRITICAL: If we successfully loaded existing data, this is NOT a new presentation
-          isNewPresentation = false;
-          
-          if (storedState && Array.isArray(storedState.slides)) {
-            slides = storedState.slides;
-          }
-          if (typeof storedState?.activeSlideIndex === 'number') {
-            activeSlideIndex = Math.min(Math.max(storedState.activeSlideIndex, 0), Math.max(slides.length - 1, 0));
-          }
-          if (typeof storedState?.createdAt === 'number') {
-            presentationCreatedAt = storedState.createdAt;
-          }
-          if (typeof storedState?.updatedAt === 'number') {
-            presentationUpdatedAt = storedState.updatedAt;
-          }
-          if (storedState?.presentationName) {
-            loadedPresentationName = storedState.presentationName;
-          }
-          if (storedState?.preview) {
-            presentationPreview = normalizePreview(storedState.preview);
+          // Synchronous fallback for immediate loading
+          const storedRaw = localStorage.getItem(presentationStorageKey);
+          if (storedRaw) {
+            const storedState = JSON.parse(storedRaw);
+            loadedExistingPresentation = true;
+            isNewPresentation = false;
+            
+            if (storedState && Array.isArray(storedState.slides)) {
+              slides = storedState.slides;
             }
-          }
-          
-          // Also check the presentations index for the name (in case it's stored there but not in project data)
-          if (!loadedPresentationName || loadedPresentationName === DEFAULT_PRESENTATION_NAME) {
-            try {
-              const indexRaw = localStorage.getItem(PRESENTATIONS_INDEX_KEY);
-              if (indexRaw) {
-                const index = JSON.parse(indexRaw);
-                if (Array.isArray(index)) {
-                  const indexEntry = index.find(item => item && item.id === presentationId);
-                  if (indexEntry && indexEntry.name && indexEntry.name.trim() && indexEntry.name.toLowerCase() !== DEFAULT_PRESENTATION_NAME.toLowerCase()) {
-                    loadedPresentationName = indexEntry.name.trim();
-                  }
-                }
-              }
-            } catch (e) {
-              // Ignore errors when loading from index
+            if (typeof storedState?.activeSlideIndex === 'number') {
+              activeSlideIndex = Math.min(Math.max(storedState.activeSlideIndex, 0), Math.max(slides.length - 1, 0));
+            }
+            if (typeof storedState?.createdAt === 'number') {
+              presentationCreatedAt = storedState.createdAt;
+            }
+            if (typeof storedState?.updatedAt === 'number') {
+              presentationUpdatedAt = storedState.updatedAt;
+            }
+            if (storedState?.presentationName) {
+              loadedPresentationName = storedState.presentationName;
+            }
+            if (storedState?.preview) {
+              presentationPreview = normalizePreview(storedState.preview);
             }
           }
         }
@@ -3353,7 +3423,7 @@
       autosaveTimeout = window.setTimeout(runAutosave, AUTOSAVE_DEBOUNCE_MS);
     }
 
-    function runAutosave() {
+    async function runAutosave() {
       if (!needsAutosave) return;
       try {
         const rawName = presentationNameInput ? presentationNameInput.value : loadedPresentationName;
@@ -3373,12 +3443,19 @@
         // Always save to autosave key (legacy support)
         localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(presentationState));
         
-        // CRITICAL: Always save to project storage if presentationId exists
-        // This ensures changes are saved even if the project name is "Untitled"
+        // CRITICAL: Save to Firestore using user-specific path: users/{uid}/projects/{projectId}
         if (presentationId) {
-          const projectStorageKey = `${PRESENTATION_STORAGE_PREFIX}${presentationId}`;
-          localStorage.setItem(projectStorageKey, JSON.stringify(presentationState));
-          console.log('Autosave: Saved to', projectStorageKey, 'with', slides.length, 'slides');
+          // Save to Firestore
+          const saveResult = await saveProjectToFirestore(presentationId, presentationState);
+          if (saveResult.success) {
+            console.log('Autosave: Saved to Firestore users/{uid}/projects/', presentationId, 'with', slides.length, 'slides');
+          } else {
+            console.warn('Autosave: Failed to save to Firestore:', saveResult.error);
+            // Fallback to localStorage
+            const projectStorageKey = `${PRESENTATION_STORAGE_PREFIX}${presentationId}`;
+            localStorage.setItem(projectStorageKey, JSON.stringify(presentationState));
+            console.log('Autosave: Fallback saved to localStorage:', projectStorageKey);
+          }
         } else {
           console.warn('Autosave: No presentationId available, cannot save to project storage');
         }
@@ -8998,9 +9075,13 @@
       box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
     }
   </style>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"></script>
   <script src="./scripts/auth.js"></script>
   <script src="./scripts/profile.js"></script>
   <script src="./scripts/teams.js"></script>
+  <script src="./scripts/firebase.js"></script>
   
   <!-- Chatbot Component -->
   <div id="chatbot">

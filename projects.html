@@ -671,9 +671,13 @@
 
   <footer class="credits">Made by: Reema Alomari, Abdullah Alqahtani, Yara AlSardi</footer>
 
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"></script>
   <script src="./scripts/auth.js"></script>
   <script src="./scripts/profile.js"></script>
   <script src="./scripts/account-display.js"></script>
+  <script src="./scripts/firebase.js"></script>
   <script>
     const PRESENTATIONS_INDEX_KEY = 'lumen-presentations-index';
     const PRESENTATION_STORAGE_PREFIX = 'lumen-presentation-';
@@ -690,11 +694,37 @@
     // Generate thumbnail from first slide
     async function generateThumbnailFromSlide(projectId) {
       try {
-        const projectDataKey = PRESENTATION_STORAGE_PREFIX + projectId;
-        const projectDataRaw = localStorage.getItem(projectDataKey);
-        if (!projectDataRaw) return null;
+        // Try loading from Firestore first
+        let projectData = null;
+        if (typeof loadProjectFromFirestore === 'function') {
+          projectData = await loadProjectFromFirestore(projectId);
+        }
         
-        const projectData = JSON.parse(projectDataRaw);
+        // Fallback to localStorage with user-specific key
+        if (!projectData) {
+          const currentUser = getCurrentUser();
+          if (currentUser && currentUser.id) {
+            const userKey = `${PRESENTATION_STORAGE_PREFIX}${currentUser.id}-${projectId}`;
+            const projectDataRaw = localStorage.getItem(userKey);
+            if (projectDataRaw) {
+              projectData = JSON.parse(projectDataRaw);
+            }
+          }
+          // Try legacy key as last resort
+          if (!projectData) {
+            const legacyKey = PRESENTATION_STORAGE_PREFIX + projectId;
+            const projectDataRaw = localStorage.getItem(legacyKey);
+            if (projectDataRaw) {
+              const legacyData = JSON.parse(projectDataRaw);
+              // Only use if it belongs to current user or has no userId
+              if (!legacyData.userId || legacyData.userId === (getCurrentUser()?.id)) {
+                projectData = legacyData;
+              }
+            }
+          }
+        }
+        
+        if (!projectData) return null;
         if (!projectData.slides || !Array.isArray(projectData.slides) || projectData.slides.length === 0) {
           return null;
         }
@@ -833,14 +863,20 @@
           
           // Update project data with thumbnail
           projectData.thumbnail = thumbnailDataUrl;
-          localStorage.setItem(projectDataKey, JSON.stringify(projectData));
-          
-          // Update index
-          const index = allProjects;
-          const projectIndex = index.findIndex(p => p.id === projectId);
-          if (projectIndex >= 0) {
-            index[projectIndex].thumbnail = thumbnailDataUrl;
-            localStorage.setItem(PRESENTATIONS_INDEX_KEY, JSON.stringify(index));
+          const currentUser = getCurrentUser();
+          if (currentUser && currentUser.id) {
+            projectData.userId = currentUser.id;
+            const userKey = `${PRESENTATION_STORAGE_PREFIX}${currentUser.id}-${projectId}`;
+            localStorage.setItem(userKey, JSON.stringify(projectData));
+            
+            // Update index (user-specific)
+            const userIndexKey = `${PRESENTATIONS_INDEX_KEY}-${currentUser.id}`;
+            const index = allProjects;
+            const projectIndex = index.findIndex(p => p.id === projectId);
+            if (projectIndex >= 0) {
+              index[projectIndex].thumbnail = thumbnailDataUrl;
+              localStorage.setItem(userIndexKey, JSON.stringify(index));
+            }
           }
           
           return thumbnailDataUrl;
@@ -854,12 +890,28 @@
       }
     }
 
-    // Load projects
-    function loadProjects() {
+    // Load projects from Firestore (user-specific: users/{uid}/projects)
+    async function loadProjects() {
       try {
-        const raw = localStorage.getItem(PRESENTATIONS_INDEX_KEY);
-        const parsed = raw ? JSON.parse(raw) : [];
-        allProjects = Array.isArray(parsed) ? parsed.filter(p => p && p.id) : [];
+        // Load from Firestore first
+        if (typeof loadAllUserProjectsFromFirestore === 'function') {
+          try {
+            allProjects = await loadAllUserProjectsFromFirestore();
+            console.log('Loaded projects from Firestore:', allProjects.length);
+          } catch (error) {
+            console.warn('Failed to load from Firestore, using localStorage fallback:', error);
+            // Fallback to localStorage
+            const raw = localStorage.getItem(PRESENTATIONS_INDEX_KEY);
+            const parsed = raw ? JSON.parse(raw) : [];
+            allProjects = Array.isArray(parsed) ? parsed.filter(p => p && p.id) : [];
+          }
+        } else {
+          // Fallback to localStorage if Firestore functions not available
+          const raw = localStorage.getItem(PRESENTATIONS_INDEX_KEY);
+          const parsed = raw ? JSON.parse(raw) : [];
+          allProjects = Array.isArray(parsed) ? parsed.filter(p => p && p.id) : [];
+        }
+        
         filteredProjects = [...allProjects];
         // Debug log to verify all projects are loaded
         console.log("Loaded projects:", allProjects);
@@ -1020,7 +1072,7 @@
     }
 
     // Toggle important status
-    function toggleImportant(projectId) {
+    async function toggleImportant(projectId) {
       try {
         // Find project in allProjects
         const projectIndex = allProjects.findIndex(p => p.id === projectId);
@@ -1038,24 +1090,52 @@
           filteredProjects[filteredIndex].important = newImportantStatus;
         }
         
-        // Update in index
-        const indexRaw = localStorage.getItem(PRESENTATIONS_INDEX_KEY);
-        if (indexRaw) {
-          const index = JSON.parse(indexRaw);
-          const indexProjectIndex = index.findIndex(p => p && p.id === projectId);
-          if (indexProjectIndex >= 0) {
-            index[indexProjectIndex].important = newImportantStatus;
-            localStorage.setItem(PRESENTATIONS_INDEX_KEY, JSON.stringify(index));
+        // Update in index (user-specific)
+        const currentUser = getCurrentUser();
+        if (currentUser && currentUser.id) {
+          const userIndexKey = `${PRESENTATIONS_INDEX_KEY}-${currentUser.id}`;
+          const indexRaw = localStorage.getItem(userIndexKey);
+          if (indexRaw) {
+            const index = JSON.parse(indexRaw);
+            const indexProjectIndex = index.findIndex(p => p && p.id === projectId);
+            if (indexProjectIndex >= 0) {
+              index[indexProjectIndex].important = newImportantStatus;
+              localStorage.setItem(userIndexKey, JSON.stringify(index));
+            }
           }
         }
         
-        // Update in project storage
-        const projectDataKey = PRESENTATION_STORAGE_PREFIX + projectId;
-        const projectDataRaw = localStorage.getItem(projectDataKey);
-        if (projectDataRaw) {
-          const projectData = JSON.parse(projectDataRaw);
-          projectData.important = newImportantStatus;
-          localStorage.setItem(projectDataKey, JSON.stringify(projectData));
+        // Update in Firestore
+        if (typeof updateProjectMetadataInFirestore === 'function') {
+          const updateResult = await updateProjectMetadataInFirestore(projectId, { important: newImportantStatus });
+          if (!updateResult.success) {
+            console.warn('Failed to update in Firestore, using localStorage:', updateResult.error);
+            // Fallback to localStorage (user-specific)
+            const currentUser = getCurrentUser();
+            if (currentUser && currentUser.id) {
+              const userKey = `${PRESENTATION_STORAGE_PREFIX}${currentUser.id}-${projectId}`;
+              const projectDataRaw = localStorage.getItem(userKey);
+              if (projectDataRaw) {
+                const projectData = JSON.parse(projectDataRaw);
+                projectData.important = newImportantStatus;
+                projectData.userId = currentUser.id;
+                localStorage.setItem(userKey, JSON.stringify(projectData));
+              }
+            }
+          }
+        } else {
+          // Fallback to localStorage (user-specific)
+          const currentUser = getCurrentUser();
+          if (currentUser && currentUser.id) {
+            const userKey = `${PRESENTATION_STORAGE_PREFIX}${currentUser.id}-${projectId}`;
+            const projectDataRaw = localStorage.getItem(userKey);
+            if (projectDataRaw) {
+              const projectData = JSON.parse(projectDataRaw);
+              projectData.important = newImportantStatus;
+              projectData.userId = currentUser.id;
+              localStorage.setItem(userKey, JSON.stringify(projectData));
+            }
+          }
         }
         
         // Re-sort and re-render
@@ -1082,20 +1162,65 @@
     }
 
     // Duplicate project
-    function duplicateProject(projectId) {
+    async function duplicateProject(projectId) {
       try {
         const project = allProjects.find(p => p.id === projectId);
         if (!project) return;
 
-        // Load full project data
-        const projectDataKey = PRESENTATION_STORAGE_PREFIX + projectId;
-        const projectDataRaw = localStorage.getItem(projectDataKey);
-        if (!projectDataRaw) {
-          alert('Failed to load project data');
-          return;
+        // Load full project data from Firestore
+        let projectData = null;
+        
+        if (typeof loadProjectFromFirestore === 'function') {
+          try {
+            projectData = await loadProjectFromFirestore(projectId);
+            if (!projectData) {
+              // Fallback to localStorage (user-specific)
+              const currentUser = getCurrentUser();
+              if (currentUser && currentUser.id) {
+                const userKey = `${PRESENTATION_STORAGE_PREFIX}${currentUser.id}-${projectId}`;
+                const projectDataRaw = localStorage.getItem(userKey);
+                if (!projectDataRaw) {
+                  alert('Failed to load project data');
+                  return;
+                }
+                projectData = JSON.parse(projectDataRaw);
+              } else {
+                alert('Failed to load project data: No user logged in');
+                return;
+              }
+            }
+          } catch (error) {
+            console.warn('Failed to load from Firestore, using localStorage:', error);
+            const currentUser = getCurrentUser();
+            if (currentUser && currentUser.id) {
+              const userKey = `${PRESENTATION_STORAGE_PREFIX}${currentUser.id}-${projectId}`;
+              const projectDataRaw = localStorage.getItem(userKey);
+              if (!projectDataRaw) {
+                alert('Failed to load project data');
+                return;
+              }
+              projectData = JSON.parse(projectDataRaw);
+            } else {
+              alert('Failed to load project data: No user logged in');
+              return;
+            }
+          }
+        } else {
+          // Fallback to localStorage (user-specific)
+          const currentUser = getCurrentUser();
+          if (currentUser && currentUser.id) {
+            const userKey = `${PRESENTATION_STORAGE_PREFIX}${currentUser.id}-${projectId}`;
+            const projectDataRaw = localStorage.getItem(userKey);
+            if (!projectDataRaw) {
+              alert('Failed to load project data');
+              return;
+            }
+            projectData = JSON.parse(projectDataRaw);
+          } else {
+            alert('Failed to load project data: No user logged in');
+            return;
+          }
         }
-
-        const projectData = JSON.parse(projectDataRaw);
         const newProjectId = crypto.randomUUID ? crypto.randomUUID() : `project-${Date.now()}-${Math.random().toString(36).slice(2)}`;
         const newProjectName = `${project.name || 'Untitled'} (Copy)`;
 
@@ -1109,12 +1234,31 @@
           important: false
         };
 
-        // Save duplicate
-        localStorage.setItem(PRESENTATION_STORAGE_PREFIX + newProjectId, JSON.stringify(duplicateData));
+        // Save duplicate to Firestore
+        if (typeof saveProjectToFirestore === 'function') {
+          const saveResult = await saveProjectToFirestore(newProjectId, duplicateData);
+          if (!saveResult.success) {
+            console.warn('Failed to save duplicate to Firestore, using localStorage:', saveResult.error);
+            // Fallback to localStorage with user-specific key
+            const currentUser = getCurrentUser();
+            if (currentUser && currentUser.id) {
+              duplicateData.userId = currentUser.id;
+              const userKey = `${PRESENTATION_STORAGE_PREFIX}${currentUser.id}-${newProjectId}`;
+              localStorage.setItem(userKey, JSON.stringify(duplicateData));
+            }
+          }
+        } else {
+          // Fallback to localStorage with user-specific key
+          const currentUser = getCurrentUser();
+          if (currentUser && currentUser.id) {
+            duplicateData.userId = currentUser.id;
+            const userKey = `${PRESENTATION_STORAGE_PREFIX}${currentUser.id}-${newProjectId}`;
+            localStorage.setItem(userKey, JSON.stringify(duplicateData));
+          }
+        }
 
-        // Add to index
-        const index = allProjects;
-        index.push({
+        // Add to local array
+        allProjects.push({
           id: newProjectId,
           name: newProjectName,
           createdAt: Date.now(),
@@ -1123,7 +1267,12 @@
           important: false
         });
 
-        localStorage.setItem(PRESENTATIONS_INDEX_KEY, JSON.stringify(index));
+        // Update localStorage index as fallback (user-specific)
+        const currentUser = getCurrentUser();
+        if (currentUser && currentUser.id) {
+          const userIndexKey = `${PRESENTATIONS_INDEX_KEY}-${currentUser.id}`;
+          localStorage.setItem(userIndexKey, JSON.stringify(allProjects));
+        }
         loadProjects();
       } catch (err) {
         console.error('Failed to duplicate project', err);
@@ -1132,18 +1281,38 @@
     }
 
     // Delete project
-    function deleteProject(projectId) {
+    async function deleteProject(projectId) {
       if (!confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
         return;
       }
 
       try {
-        // Remove from index
-        const index = allProjects.filter(p => p.id !== projectId);
-        localStorage.setItem(PRESENTATIONS_INDEX_KEY, JSON.stringify(index));
+        // Delete from Firestore
+        if (typeof deleteProjectFromFirestore === 'function') {
+          const deleteResult = await deleteProjectFromFirestore(projectId);
+          if (!deleteResult.success) {
+            console.warn('Failed to delete from Firestore, using localStorage:', deleteResult.error);
+            // Fallback to localStorage
+            localStorage.removeItem(PRESENTATION_STORAGE_PREFIX + projectId);
+          }
+        } else {
+          // Fallback to localStorage (user-specific)
+          const currentUser = getCurrentUser();
+          if (currentUser && currentUser.id) {
+            localStorage.removeItem(`${PRESENTATION_STORAGE_PREFIX}${currentUser.id}-${projectId}`);
+            // Also remove legacy key if it exists
+            localStorage.removeItem(PRESENTATION_STORAGE_PREFIX + projectId);
+          }
+        }
 
-        // Remove project data
-        localStorage.removeItem(PRESENTATION_STORAGE_PREFIX + projectId);
+        // Remove from local array
+        allProjects = allProjects.filter(p => p.id !== projectId);
+        // Update localStorage index (user-specific)
+        const currentUser = getCurrentUser();
+        if (currentUser && currentUser.id) {
+          const userIndexKey = `${PRESENTATIONS_INDEX_KEY}-${currentUser.id}`;
+          localStorage.setItem(userIndexKey, JSON.stringify(allProjects));
+        }
 
         loadProjects();
       } catch (err) {
@@ -1308,7 +1477,7 @@
     });
 
     // Create project with template
-    function createProjectWithTemplate(templateName) {
+    async function createProjectWithTemplate(templateName) {
       const now = Date.now();
 
       if (templateName) {
@@ -1337,19 +1506,43 @@
           important: false
         };
 
-        // Save project
-        localStorage.setItem(PRESENTATION_STORAGE_PREFIX + newProjectId, JSON.stringify(projectData));
+        // Save project to Firestore
+        if (typeof saveProjectToFirestore === 'function') {
+          const saveResult = await saveProjectToFirestore(newProjectId, projectData);
+          if (!saveResult.success) {
+            console.warn('Failed to save to Firestore, using localStorage:', saveResult.error);
+            // Fallback to localStorage with user-specific key
+            const currentUser = getCurrentUser();
+            if (currentUser && currentUser.id) {
+              projectData.userId = currentUser.id;
+              const userKey = `${PRESENTATION_STORAGE_PREFIX}${currentUser.id}-${newProjectId}`;
+              localStorage.setItem(userKey, JSON.stringify(projectData));
+            }
+          }
+        } else {
+          // Fallback to localStorage with user-specific key
+          const currentUser = getCurrentUser();
+          if (currentUser && currentUser.id) {
+            projectData.userId = currentUser.id;
+            const userKey = `${PRESENTATION_STORAGE_PREFIX}${currentUser.id}-${newProjectId}`;
+            localStorage.setItem(userKey, JSON.stringify(projectData));
+          }
+        }
 
-        // Add to index
-        const index = allProjects;
-        index.push({
+        // Add to local array
+        allProjects.push({
           id: newProjectId,
           name: projectName,
           createdAt: now,
           updatedAt: now,
           important: false
         });
-        localStorage.setItem(PRESENTATIONS_INDEX_KEY, JSON.stringify(index));
+        // Update localStorage index as fallback (user-specific)
+        const currentUser = getCurrentUser();
+        if (currentUser && currentUser.id) {
+          const userIndexKey = `${PRESENTATIONS_INDEX_KEY}-${currentUser.id}`;
+          localStorage.setItem(userIndexKey, JSON.stringify(allProjects));
+        }
 
         // Close modal and redirect
         document.getElementById('templateSelectionModal').classList.remove('active');
@@ -1366,27 +1559,53 @@
       document.getElementById('renameProjectModal').classList.remove('active');
     });
 
-    document.getElementById('renameProjectForm').addEventListener('submit', (e) => {
+    document.getElementById('renameProjectForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const newName = document.getElementById('renameInput').value.trim();
       if (!newName || !currentProjectId) return;
 
       try {
-        // Update in index
+        // Update in local array
         const project = allProjects.find(p => p.id === currentProjectId);
         if (project) {
           project.name = newName;
           project.updatedAt = Date.now();
-          localStorage.setItem(PRESENTATIONS_INDEX_KEY, JSON.stringify(allProjects));
+          // Update localStorage index (user-specific)
+          const currentUser = getCurrentUser();
+          if (currentUser && currentUser.id) {
+            const userIndexKey = `${PRESENTATIONS_INDEX_KEY}-${currentUser.id}`;
+            localStorage.setItem(userIndexKey, JSON.stringify(allProjects));
+          }
 
-          // Update in project data
-          const projectDataKey = PRESENTATION_STORAGE_PREFIX + currentProjectId;
-          const projectDataRaw = localStorage.getItem(projectDataKey);
-          if (projectDataRaw) {
-            const projectData = JSON.parse(projectDataRaw);
-            projectData.name = newName;
-            projectData.updatedAt = Date.now();
-            localStorage.setItem(projectDataKey, JSON.stringify(projectData));
+          // Update in Firestore
+          if (typeof updateProjectMetadataInFirestore === 'function') {
+            const updateResult = await updateProjectMetadataInFirestore(currentProjectId, { name: newName });
+            if (!updateResult.success) {
+              console.warn('Failed to update in Firestore, using localStorage:', updateResult.error);
+              // Fallback to localStorage
+              const projectDataKey = PRESENTATION_STORAGE_PREFIX + currentProjectId;
+              const projectDataRaw = localStorage.getItem(projectDataKey);
+              if (projectDataRaw) {
+                const projectData = JSON.parse(projectDataRaw);
+                projectData.name = newName;
+                projectData.updatedAt = Date.now();
+                localStorage.setItem(projectDataKey, JSON.stringify(projectData));
+              }
+            }
+          } else {
+            // Fallback to localStorage (user-specific)
+            const currentUser = getCurrentUser();
+            if (currentUser && currentUser.id) {
+              const userKey = `${PRESENTATION_STORAGE_PREFIX}${currentUser.id}-${currentProjectId}`;
+              const projectDataRaw = localStorage.getItem(userKey);
+              if (projectDataRaw) {
+                const projectData = JSON.parse(projectDataRaw);
+                projectData.name = newName;
+                projectData.updatedAt = Date.now();
+                projectData.userId = currentUser.id;
+                localStorage.setItem(userKey, JSON.stringify(projectData));
+              }
+            }
           }
 
           loadProjects();
