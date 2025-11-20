@@ -25,7 +25,6 @@
       </div>
       <nav class="site-nav site-nav--centered" aria-label="Primary">
         <a href="home.html" class="nav-link nav-link--current" aria-current="page">Home</a>
-        <a href="templates.html" class="nav-link">Templates</a>
         <a href="projects.html" class="nav-link" id="projectsNavLink">Projects</a>
         <a href="teams.html" class="nav-link">Teams</a>
         <a href="meeting-to-presentation.html" class="nav-link">Meeting to Presentation</a>
@@ -74,7 +73,7 @@
         <h1 class="title title--xxl animate-fade-in animate-delay-2">Create Slides with Confidence</h1>
         <p class="subtitle animate-fade-in animate-delay-2">LumenSlides pairs smart automation with polished templates so your team can plan, design, and present ideas in minutes.</p>
         <div class="hero-actions animate-fade-in animate-delay-3">
-          <a href="slide-editor.html" class="btn btn-primary" id="createSlideLink" data-custom-nav="true">Create a Slide</a>
+          <a href="projects.html" class="btn btn-primary" id="createSlideLink" data-custom-nav="true">Create a Slide</a>
           <a href="ai-assistant.html" class="btn btn-primary">AI Assistant</a>
         </div>
         <ul class="hero-bullets animate-fade-in animate-delay-3">
@@ -289,7 +288,7 @@
           }
         }
         
-        // "Create a Slide" should open the slide editor directly; no override needed.
+        // "Create a Slide" button redirects to projects page
         const listEl = document.getElementById('recentPresentationsList');
         const emptyEl = document.querySelector('.recent-empty');
         if (!listEl) return;
