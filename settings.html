@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LumenSlides · Settings</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="./scripts/global.js"></script>
+  </head>
+  <body class="bg-white bg-modern bg-corner-dots">
+    <header class="site-header">
+      <div class="header-left">
+        <img class="site-logo site-logo--banner" src="./lumen-logo.png" alt="LumenSlides logo" />
+        <a href="./index.html" class="home-icon-link" title="Home">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+          </svg>
+        </a>
+      </div>
+      <nav class="site-nav site-nav--centered" aria-label="Primary">
+        <a href="home.html" class="nav-link">Home</a>
+        <a href="templates.html" class="nav-link">Templates</a>
+        <a href="projects.html" class="nav-link">Projects</a>
+        <a href="teams.html" class="nav-link">Teams</a>
+        <a href="meeting-to-presentation.html" class="nav-link">Meeting to Presentation</a>
+        <a href="ai-assistant.html" class="nav-link">AI Assistant</a>
+        <a href="about.html" class="nav-link">About</a>
+      </nav>
+      <div class="header-right">
+        <div class="account-display" id="accountDisplay">
+          <button class="account-button" id="accountButton" aria-label="Account menu">
+            <span class="account-greeting" id="accountGreeting"></span>
+            <img class="account-avatar" id="accountAvatar" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; display: none;" />
+            <svg class="account-icon" id="accountIcon" width="32" height="32" viewBox="0 0 32 32" fill="none">
+              <circle cx="16" cy="16" r="14" stroke="currentColor" stroke-width="2"/>
+              <circle cx="16" cy="12" r="5" fill="currentColor"/>
+              <path d="M6 26c0-5.5 4.5-10 10-10s10 4.5 10 10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
+          <div class="account-dropdown" id="accountDropdown" style="display: none;"></div>
+        </div>
+        <img class="site-logo site-logo--mark" src="./logo.png" alt="LumenSlides logo" />
+      </div>
+    </header>
+
+    <main class="center-wrapper center-wrapper--top page-fade-in">
+      <div class="card" style="max-width:720px;width:100%;">
+        <h1 class="title">Settings</h1>
+        <p class="subtitle">These settings apply to both guests and signed-in users.</p>
+        <div style="display:grid;gap:16px;margin-top:16px;">
+          <div style="border:1px solid var(--border);border-radius:12px;padding:16px;">
+            <h3 style="margin:0 0 8px 0;">General</h3>
+            <label style="display:flex;align-items:center;gap:10px;">
+              <input type="checkbox" id="prefAnimations" />
+              <span>Enable animations</span>
+            </label>
+          </div>
+          <div style="border:1px solid var(--border);border-radius:12px;padding:16px;">
+            <h3 style="margin:0 0 8px 0;">Theme</h3>
+            <select id="prefTheme" class="input" style="max-width:220px;">
+              <option value="system">System default</option>
+              <option value="light">Light</option>
+              <option value="dark">Dark</option>
+            </select>
+          </div>
+          <div style="border:1px solid var(--border);border-radius:12px;padding:16px;">
+            <h3 style="margin:0 0 8px 0;">Language</h3>
+            <select id="prefLanguage" class="input" style="max-width:220px;">
+              <option value="en">English</option>
+              <option value="ar">العربية (Arabic)</option>
+            </select>
+            
+          </div>
+          <button class="btn btn-primary" id="saveSettingsBtn" style="max-width:180px;">Save Settings</button>
+          <div id="settingsSavedMsg" class="notice-banner" style="display:none;">Settings saved</div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="credits">Made by: Reema Alomari, Abdullah Alqahtani, Yara AlSardi</footer>
+
+    <script src="./scripts/auth.js"></script>
+    <script src="./scripts/profile.js"></script>
+    <script src="./scripts/account-display.js"></script>
+    <script>
+      (function(){
+        const KEY = 'lumen-settings';
+        function load() {
+          try {
+            const raw = localStorage.getItem(KEY);
+            return raw ? JSON.parse(raw) : {};
+          } catch (_) { return {}; }
+        }
+        function save(val) {
+          try { localStorage.setItem(KEY, JSON.stringify(val)); } catch(_){}
+        }
+        const s = load();
+        document.getElementById('prefAnimations').checked = s.animations !== false;
+        document.getElementById('prefTheme').value = s.theme || 'system';
+        document.getElementById('prefLanguage').value = s.language || 'en';
+        document.getElementById('saveSettingsBtn').addEventListener('click', () => {
+          const val = {
+            animations: document.getElementById('prefAnimations').checked,
+            theme: document.getElementById('prefTheme').value,
+            language: document.getElementById('prefLanguage').value
+          };
+          save(val);
+          const msg = document.getElementById('settingsSavedMsg');
+          msg.style.display = 'flex';
+          setTimeout(() => { msg.style.display = 'none'; }, 2000);
+        });
+      })();
+    </script>
+  </body>
+  </html>
+

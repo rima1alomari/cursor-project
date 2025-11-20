@@ -30,16 +30,7 @@
               <path d="M6 26c0-5.5 4.5-10 10-10s10 4.5 10 10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
             </svg>
           </button>
-          <div class="account-dropdown" id="accountDropdown" style="display: none;">
-            <button class="dropdown-item dropdown-item--logout" id="logoutButton">
-              <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                <polyline points="16 17 21 12 16 7"></polyline>
-                <line x1="21" y1="12" x2="9" y2="12"></line>
-              </svg>
-              Logout
-            </button>
-          </div>
+          <div class="account-dropdown" id="accountDropdown" style="display: none;"></div>
         </div>
         <img class="site-logo site-logo--mark" src="./logo.png" alt="Aramco Digital logo" onerror="this.remove();" />
       </div>
@@ -71,6 +62,8 @@
     
     <footer class="credits">Made by: Reema Alomari, Abdullah Alqahtani, Yara AlSardi</footer>
     <script src="./scripts/auth.js"></script>
+    <script src="./scripts/profile.js"></script>
+    <script src="./scripts/account-display.js"></script>
     <script>
       (function() {
         const headerAuthButtons = document.getElementById('headerAuthButtons');
@@ -78,7 +71,6 @@
         const accountButton = document.getElementById('accountButton');
         const accountGreeting = document.getElementById('accountGreeting');
         const accountDropdown = document.getElementById('accountDropdown');
-        const logoutButton = document.getElementById('logoutButton');
         const startButton = document.getElementById('startButton');
         const guestButton = document.getElementById('guestButton');
         
@@ -94,34 +86,6 @@
           if (accountDisplay && accountGreeting) {
             accountGreeting.textContent = `Hello, ${currentUser.username}`;
             accountDisplay.style.display = 'flex';
-            
-            // Toggle dropdown
-            if (accountButton) {
-              accountButton.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const isVisible = accountDropdown.style.display === 'block';
-                accountDropdown.style.display = isVisible ? 'none' : 'block';
-              });
-            }
-            
-            // Close dropdown when clicking outside
-            document.addEventListener('click', (e) => {
-              if (accountDisplay && !accountDisplay.contains(e.target)) {
-                if (accountDropdown) accountDropdown.style.display = 'none';
-              }
-            });
-            
-            // Logout functionality
-            if (logoutButton) {
-              logoutButton.addEventListener('click', () => {
-                logout();
-                if (window.fadeNavigate) {
-                  window.fadeNavigate('./login.html');
-                } else {
-                  window.location.href = './login.html';
-                }
-              });
-            }
           }
           // Make Start button go directly to home
           if (startButton) startButton.href = './home.html';

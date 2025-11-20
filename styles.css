@@ -354,6 +354,26 @@ body.fade-out {
   animation: glow-pulse 2s ease-in-out infinite;
 }
 
+/* Show pointer cursor on hover for interactive elements */
+button:hover,
+a[href]:hover,
+.btn:hover,
+.dropdown-item:hover,
+.account-button:hover,
+.home-icon-link:hover,
+.nav-link:hover,
+.recent-card:hover,
+.project-card:hover,
+[role="button"]:hover,
+input[type="button"]:hover,
+input[type="submit"]:hover,
+input[type="checkbox"]:hover,
+input[type="radio"]:hover,
+select:hover,
+label[for]:hover {
+  cursor: pointer;
+}
+
 /* Restricted links (for guests) */
 .nav-link.nav-link--restricted {
   color: #dc2626 !important; /* red */
@@ -361,6 +381,23 @@ body.fade-out {
 .nav-link.nav-link--restricted:hover,
 .nav-link.nav-link--restricted:focus-visible {
   color: #b91c1c !important;
+}
+
+/* Pointer cursor for interactive elements on hover */
+a:hover,
+button:hover,
+[role="button"]:hover,
+input[type="button"]:hover,
+input[type="submit"]:hover,
+.btn:hover,
+.dropdown-item:hover,
+.home-icon-link:hover,
+.project-card:hover,
+.recent-card:hover,
+.project-menu-btn:hover,
+.project-menu-item:hover,
+.clickable:hover {
+  cursor: pointer;
 }
 
 @keyframes glow-pulse {

@@ -96,81 +96,8 @@
     </main>
 
     <script src="./scripts/auth.js"></script>
-    <script>
-      // Account display and logout functionality
-      (function() {
-        const accountDisplay = document.getElementById('accountDisplay');
-        const accountButton = document.getElementById('accountButton');
-        const accountGreeting = document.getElementById('accountGreeting');
-        const accountDropdown = document.getElementById('accountDropdown');
-        const logoutButton = document.getElementById('logoutButton');
-
-        function updateAccountDisplay() {
-          const currentUser = getCurrentUser();
-          const isGuest = isGuestMode();
-
-          if (!accountDisplay) return;
-
-          if (currentUser) {
-            accountGreeting.textContent = `Hello, ${currentUser.username}`;
-            accountDisplay.style.display = 'flex';
-            // Show dropdown for logged-in users
-            if (accountDropdown) accountDropdown.style.display = 'none';
-            
-            // Toggle dropdown for logged-in users only
-            if (accountButton) {
-              accountButton.style.cursor = 'pointer';
-              accountButton.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const isVisible = accountDropdown.style.display === 'block';
-                accountDropdown.style.display = isVisible ? 'none' : 'block';
-              });
-            }
-          } else if (isGuest) {
-            accountGreeting.textContent = 'Hello, Guest!';
-            accountDisplay.style.display = 'flex';
-            // Hide dropdown for guests - never show it
-            if (accountDropdown) accountDropdown.style.display = 'none';
-            // Make button non-clickable for guests
-            if (accountButton) {
-              accountButton.style.cursor = 'default';
-              accountButton.onclick = null;
-            }
-          } else {
-            // Not logged in and not guest - redirect to login
-            if (window.fadeNavigate) {
-              window.fadeNavigate('./login.html');
-            } else {
-              window.location.href = './login.html';
-            }
-            return;
-          }
-
-          // Close dropdown when clicking outside (only for logged-in users)
-          if (currentUser) {
-            document.addEventListener('click', (e) => {
-              if (accountDisplay && !accountDisplay.contains(e.target)) {
-                if (accountDropdown) accountDropdown.style.display = 'none';
-              }
-            });
-          }
-
-          // Logout functionality (only for logged-in users)
-          if (logoutButton && currentUser) {
-            logoutButton.addEventListener('click', () => {
-              logout(); // This clears both currentUser and isGuest
-              if (window.fadeNavigate) {
-                window.fadeNavigate('./login.html');
-              } else {
-                window.location.href = './login.html';
-              }
-            });
-          }
-        }
-
-        updateAccountDisplay();
-      })();
-    </script>
+    <script src="./scripts/profile.js"></script>
+    <script src="./scripts/account-display.js"></script>
     <script src="scripts/templates.js"></script>
     
     <!-- Chatbot Component -->

@@ -19,6 +19,47 @@ function initAccountDisplay() {
     const currentUser = getCurrentUser();
     const isGuest = isGuestMode();
 
+    // Helper to render dropdown content
+    function renderDropdownForUser(isLoggedIn) {
+      if (!accountDropdown) return;
+      if (isLoggedIn) {
+        accountDropdown.innerHTML = `
+          <a href="profile.html" class="dropdown-item">
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            Profile
+          </a>
+          <a href="settings.html" class="dropdown-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0A1.65 1.65 0 0 0 9 3.09V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0A1.65 1.65 0 0 0 21 11h.09a2 2 0 1 1 0 4H21a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+            Settings
+          </a>
+          <button class="dropdown-item dropdown-item--logout" id="logoutButton">
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+            Logout
+          </button>
+        `;
+      } else {
+        accountDropdown.innerHTML = `
+          <a href="settings.html" class="dropdown-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0A1.65 1.65 0 0 0 9 3.09V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0A1.65 1.65 0 0 0 21 11h.09a2 2 0 1 1 0 4H21a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+            Settings
+          </a>
+        `;
+      }
+    }
+
     if (currentUser) {
       let userName = currentUser.username || currentUser.email || 'User';
       let profilePicture = null;
@@ -50,8 +91,11 @@ function initAccountDisplay() {
         }
       }
       
-      // Show dropdown for logged-in users
-      if (accountDropdown) accountDropdown.style.display = 'none';
+      // Render dropdown for logged-in users
+      if (accountDropdown) {
+        renderDropdownForUser(true);
+        accountDropdown.style.display = 'none';
+      }
       
       // Toggle dropdown or navigate to profile
       if (accountButton) {
@@ -77,23 +121,60 @@ function initAccountDisplay() {
       accountDisplay.style.display = 'flex';
       if (accountAvatar) accountAvatar.style.display = 'none';
       if (accountIcon) accountIcon.style.display = 'block';
-      if (accountDropdown) accountDropdown.style.display = 'none';
+      if (accountDropdown) {
+        renderDropdownForUser(false); // Settings only
+        accountDropdown.style.display = 'none';
+      }
       if (accountButton) {
-        accountButton.style.cursor = 'default';
-        accountButton.onclick = null;
+        accountButton.style.cursor = 'pointer';
+        accountButton.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (accountDropdown) {
+            const isVisible = accountDropdown.style.display === 'block';
+            accountDropdown.style.display = isVisible ? 'none' : 'block';
+          }
+        });
       }
     } else {
-      // Not logged in and not guest - redirect to login
-      if (window.fadeNavigate) {
-        window.fadeNavigate('./login.html');
-      } else {
-        window.location.href = './login.html';
+      // Not logged in and not explicitly in guest mode
+      // Only redirect on truly protected pages; otherwise behave as guest
+      try {
+        const path = (window.location.pathname || '').toLowerCase();
+        const page = path.split('/').pop() || 'index.html';
+        const PROTECTED_PAGES = ['profile.html'];
+        if (PROTECTED_PAGES.includes(page)) {
+          if (window.fadeNavigate) {
+            window.fadeNavigate('./login.html');
+          } else {
+            window.location.href = './login.html';
+          }
+          return;
+        }
+      } catch (_) {}
+      
+      // Treat as guest UI without persisting guest mode
+      accountGreeting.textContent = 'Hello, Guest!';
+      accountDisplay.style.display = 'flex';
+      if (accountAvatar) accountAvatar.style.display = 'none';
+      if (accountIcon) accountIcon.style.display = 'block';
+      if (accountDropdown) {
+        renderDropdownForUser(false); // Settings only
+        accountDropdown.style.display = 'none';
       }
-      return;
+      if (accountButton) {
+        accountButton.style.cursor = 'pointer';
+        accountButton.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (accountDropdown) {
+            const isVisible = accountDropdown.style.display === 'block';
+            accountDropdown.style.display = isVisible ? 'none' : 'block';
+          }
+        });
+      }
     }
 
     // Close dropdown when clicking outside (only for logged-in users)
-    if (currentUser && accountDropdown) {
+    if ((currentUser || isGuest) && accountDropdown) {
       document.addEventListener('click', (e) => {
         if (accountDisplay && !accountDisplay.contains(e.target)) {
           accountDropdown.style.display = 'none';
@@ -114,8 +195,9 @@ function initAccountDisplay() {
     }
 
     // Logout functionality (only for logged-in users)
-    if (logoutButton && currentUser) {
-      logoutButton.addEventListener('click', () => {
+    const logoutBtnEl = document.getElementById('logoutButton');
+    if (logoutBtnEl && currentUser) {
+      logoutBtnEl.addEventListener('click', () => {
         logout();
         if (window.fadeNavigate) {
           window.fadeNavigate('./index.html');

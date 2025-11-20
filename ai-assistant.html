@@ -482,74 +482,9 @@
     <footer class="credits">Made by: Reema Alomari, Abdullah Alqahtani, Yara AlSardi</footer>
 
     <script src="./scripts/auth.js"></script>
+    <script src="./scripts/profile.js"></script>
+    <script src="./scripts/account-display.js"></script>
     <script>
-      // Account display and logout functionality
-      (function() {
-        const accountDisplay = document.getElementById('accountDisplay');
-        const accountButton = document.getElementById('accountButton');
-        const accountGreeting = document.getElementById('accountGreeting');
-        const accountDropdown = document.getElementById('accountDropdown');
-        const logoutButton = document.getElementById('logoutButton');
-
-        function updateAccountDisplay() {
-          const currentUser = getCurrentUser();
-          const isGuest = isGuestMode();
-
-          if (!accountDisplay) return;
-
-          if (currentUser) {
-            accountGreeting.textContent = `Hello, ${currentUser.username}`;
-            accountDisplay.style.display = 'flex';
-            if (accountDropdown) accountDropdown.style.display = 'none';
-            
-            if (accountButton) {
-              accountButton.style.cursor = 'pointer';
-              accountButton.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const isVisible = accountDropdown.style.display === 'block';
-                accountDropdown.style.display = isVisible ? 'none' : 'block';
-              });
-            }
-          } else if (isGuest) {
-            accountGreeting.textContent = 'Hello, Guest!';
-            accountDisplay.style.display = 'flex';
-            if (accountDropdown) accountDropdown.style.display = 'none';
-            if (accountButton) {
-              accountButton.style.cursor = 'default';
-              accountButton.onclick = null;
-            }
-          } else {
-            if (window.fadeNavigate) {
-              window.fadeNavigate('./login.html');
-            } else {
-              window.location.href = './login.html';
-            }
-            return;
-          }
-
-          if (currentUser) {
-            document.addEventListener('click', (e) => {
-              if (accountDisplay && !accountDisplay.contains(e.target)) {
-                if (accountDropdown) accountDropdown.style.display = 'none';
-              }
-            });
-          }
-
-          if (logoutButton && currentUser) {
-            logoutButton.addEventListener('click', () => {
-              logout();
-              if (window.fadeNavigate) {
-                window.fadeNavigate('./login.html');
-              } else {
-                window.location.href = './login.html';
-              }
-            });
-          }
-        }
-
-        updateAccountDisplay();
-      })();
-
       // AI Presentation Generation
       (function() {
         const form = document.getElementById('aiForm');
