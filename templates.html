@@ -121,6 +121,25 @@
             </div>
           </div>
           <div class="chatbot-header-actions">
+            <button id="chatbotResize" class="chatbot-header-btn" aria-label="Expand" onclick="
+              const win = document.getElementById('chatbotWindow');
+              if (win) {
+                const isExp = win.classList.contains('expanded');
+                if (isExp) {
+                  win.style.width = '380px';
+                  win.style.height = '500px';
+                  win.classList.remove('expanded');
+                  this.textContent = '⊞';
+                } else {
+                  win.style.width = '800px';
+                  win.style.height = '900px';
+                  win.classList.add('expanded');
+                  this.textContent = '⊟';
+                }
+                localStorage.setItem('chatbot_expanded', !isExp ? 'true' : 'false');
+              }
+              return false;
+            ">⊞</button>
             <button id="chatbotMinimize" class="chatbot-header-btn" aria-label="Minimize">−</button>
             <button id="chatbotClose" class="chatbot-header-btn" aria-label="Close">×</button>
           </div>
@@ -153,5 +172,23 @@
     </div>
     <script src="./config.js"></script>
     <script src="./scripts/chatbot.js"></script>
+    <script>
+      // Additional test to ensure resize button works
+      setTimeout(function() {
+        const resizeBtn = document.getElementById('chatbotResize');
+        if (resizeBtn) {
+          console.log('✅ Resize button found in HTML');
+          // Add one more click handler as final backup
+          resizeBtn.addEventListener('click', function(e) {
+            console.log('🔴 FINAL BACKUP HANDLER FIRED!');
+            if (window.toggleChatbotSize) {
+              window.toggleChatbotSize();
+            }
+          }, true);
+        } else {
+          console.error('❌ Resize button still not found after 1 second');
+        }
+      }, 1000);
+    </script>
   </body>
 </html>

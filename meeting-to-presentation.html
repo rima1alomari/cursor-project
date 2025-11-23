@@ -1264,17 +1264,23 @@ ${truncatedTranscript}`;
           elements.push({
             id: `${slideId}-title`,
             type: 'text',
-            content: slide.title || `Slide ${index + 1}`,
-            x: 100,
-            y: index === 0 ? 280 : 70,
+            text: slide.title || `Slide ${index + 1}`,
+            left: 100,
+            top: index === 0 ? 280 : 70,
             width: 800,
-            height: 80,
             fontSize: index === 0 ? 64 : 44,
             fontWeight: 700,
             color: colors.primary,
-            fontFamily: 'Inter',
-            textAlign: 'left',
-            zIndex: 1
+            fontFamily: 'Inter, sans-serif',
+            align: 'left',
+            bold: true,
+            italic: false,
+            underline: false,
+            lineHeight: 1.2,
+            letterSpacing: 0,
+            textTransform: 'none',
+            backgroundColor: null,
+            animation: { type: 'none', duration: 600, delay: 0 }
           });
 
           // Add bullet points with creative styling
@@ -1287,17 +1293,23 @@ ${truncatedTranscript}`;
             elements.push({
               id: `${slideId}-point-${pIndex}`,
               type: 'text',
-              content: `• ${point}`,
-              x: 140,
-              y: yPos,
+              text: `• ${point}`,
+              left: 140,
+              top: yPos,
               width: 740,
-              height: 40,
               fontSize: bulletSize,
               fontWeight: 400,
               color: bulletColor,
-              fontFamily: 'Inter',
-              textAlign: 'left',
-              zIndex: 1
+              fontFamily: 'Inter, sans-serif',
+              align: 'left',
+              bold: false,
+              italic: false,
+              underline: false,
+              lineHeight: 1.5,
+              letterSpacing: 0,
+              textTransform: 'none',
+              backgroundColor: null,
+              animation: { type: 'none', duration: 600, delay: 0 }
             });
           });
 
@@ -1353,10 +1365,24 @@ ${truncatedTranscript}`;
             };
 
             // Store the full presentation
+            const storageKey = `${PRESENTATION_STORAGE_PREFIX}${presentationId}`;
+            console.log('Saving presentation to:', storageKey);
+            console.log('Presentation state:', presentationState);
+            console.log('Slides count:', presentationState.slides.length);
+            
             localStorage.setItem(
-              `${PRESENTATION_STORAGE_PREFIX}${presentationId}`,
+              storageKey,
               JSON.stringify(presentationState)
             );
+
+            // Verify the data was saved correctly
+            const verifyData = localStorage.getItem(storageKey);
+            if (!verifyData) {
+              throw new Error('Failed to save presentation data to localStorage');
+            }
+            
+            const parsedVerify = JSON.parse(verifyData);
+            console.log('Verified saved data - slides count:', parsedVerify.slides?.length);
 
             // Also store as autosave (as backup)
             localStorage.setItem(
@@ -1398,15 +1424,40 @@ ${truncatedTranscript}`;
 
             // Clear the forceNewPresentation flag so editor doesn't reset
             localStorage.removeItem('forceNewPresentation');
-            localStorage.removeItem('isNewPresentation');
+            // DO NOT remove isNewPresentation - let editor load the data we just saved
+            
+            // Double-check the data exists before navigating
+            const finalCheck = localStorage.getItem(storageKey);
+            if (!finalCheck) {
+              throw new Error('Presentation data was not saved correctly');
+            }
+            
+            const finalParsed = JSON.parse(finalCheck);
+            if (!finalParsed.slides || !Array.isArray(finalParsed.slides) || finalParsed.slides.length === 0) {
+              throw new Error('Presentation slides were not saved correctly');
+            }
+            
+            console.log('Final verification - slides count:', finalParsed.slides.length);
+            console.log('Navigating to editor with ID:', presentationId);
 
+            // Longer delay to ensure localStorage is fully written and browser has processed it
             // Navigate to slide editor
             const editorUrl = `slide-editor.html?id=${presentationId}`;
-            if (window.fadeNavigate) {
-              window.fadeNavigate(editorUrl);
-            } else {
-              window.location.href = editorUrl;
-            }
+            setTimeout(() => {
+              // One more verification before navigation
+              const preNavCheck = localStorage.getItem(storageKey);
+              if (preNavCheck) {
+                console.log('Pre-navigation check passed, navigating...');
+                if (window.fadeNavigate) {
+                  window.fadeNavigate(editorUrl);
+                } else {
+                  window.location.href = editorUrl;
+                }
+              } else {
+                console.error('Pre-navigation check failed - data missing!');
+                showError('Failed to save presentation data. Please try again.');
+              }
+            }, 300);
           } catch (error) {
             console.error('Failed to export to editor', error);
             showError('Failed to export to editor. Please try again.');
@@ -1495,6 +1546,25 @@ ${truncatedTranscript}`;
             </div>
           </div>
           <div class="chatbot-header-actions">
+            <button id="chatbotResize" class="chatbot-header-btn" aria-label="Expand" onclick="
+              const win = document.getElementById('chatbotWindow');
+              if (win) {
+                const isExp = win.classList.contains('expanded');
+                if (isExp) {
+                  win.style.width = '380px';
+                  win.style.height = '500px';
+                  win.classList.remove('expanded');
+                  this.textContent = '⊞';
+                } else {
+                  win.style.width = '800px';
+                  win.style.height = '900px';
+                  win.classList.add('expanded');
+                  this.textContent = '⊟';
+                }
+                localStorage.setItem('chatbot_expanded', !isExp ? 'true' : 'false');
+              }
+              return false;
+            ">⊞</button>
             <button id="chatbotMinimize" class="chatbot-header-btn" aria-label="Minimize">−</button>
             <button id="chatbotClose" class="chatbot-header-btn" aria-label="Close">×</button>
           </div>

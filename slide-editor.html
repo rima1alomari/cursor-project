@@ -2144,6 +2144,10 @@
     let presentationUpdatedAt = presentationCreatedAt;
     let slides = [];
     let activeSlideIndex = 0;
+    
+    // Expose to window for chatbot access
+    window.slides = slides;
+    window.activeSlideIndex = activeSlideIndex;
     let selectedElementId = null; // currently selected element on canvas
     let editingTextElementId = null; // track text element being edited
     let loadedPresentationName = DEFAULT_PRESENTATION_NAME;
@@ -3404,6 +3408,9 @@
     }
 
     function markDirty() {
+      // Expose to window for chatbot access
+      window.markDirty = markDirty;
+      
       if (!isApplyingHistory && historyCaptureReady && lastSnapshot) {
         undoStack.push(cloneSnapshot(lastSnapshot));
         if (undoStack.length > HISTORY_LIMIT) {
@@ -3812,6 +3819,7 @@
       rec.lang = langCode;
       
       rec.onstart = () => {
+        console.log(`Speech recognition started for ${lang}`);
         if (!isRecording) return;
         currentRecognitionLang = lang;
       };
@@ -3822,63 +3830,94 @@
         let interimTranscript = '';
         let finalTranscript = '';
         
+        // Process all results from the current index
         for (let i = event.resultIndex; i < event.results.length; i++) {
-          const transcript = event.results[i][0].transcript;
-          if (event.results[i].isFinal) {
+          const result = event.results[i];
+          const transcript = result[0].transcript;
+          
+          if (result.isFinal) {
             finalTranscript += transcript + ' ';
           } else {
-            interimTranscript += transcript;
+            interimTranscript += transcript + ' ';
           }
         }
         
-        if (finalTranscript) {
+        // Add final transcript to accumulated text
+        if (finalTranscript.trim()) {
           transcriptionText += finalTranscript;
+          console.log('Final transcript added:', finalTranscript);
         }
         
-        // Update live transcription display (show all final text + current interim text)
-        updateLiveTranscription(interimTranscript);
+        // Always update display - show accumulated final text + current interim text
+        // Update even if we only have interim text (so user sees something immediately)
+        if (finalTranscript.trim() || interimTranscript.trim()) {
+          updateLiveTranscription(interimTranscript || '');
+          console.log('Display updated - Final text length:', transcriptionText.length, 'Interim:', interimTranscript);
+        } else {
+          // Still update to clear any placeholder
+          updateLiveTranscription('');
+        }
       };
       
       rec.onerror = (event) => {
-        console.error(`Speech recognition error (${lang}):`, event.error);
+        console.error(`Speech recognition error (${lang}):`, event.error, event);
         if (event.error === 'no-speech') {
-          // User stopped speaking, continue listening
+          // User stopped speaking, continue listening - don't stop
+          console.log('No speech detected, continuing to listen...');
           return;
         }
         if (event.error === 'not-allowed') {
           alert('Please allow microphone access / الرجاء السماح بالوصول إلى الميكروفون');
           stopRecording();
+        } else if (event.error === 'audio-capture') {
+          alert('No microphone found / لم يتم العثور على ميكروفون');
+          stopRecording();
+        } else if (event.error === 'network') {
+          console.error('Network error in speech recognition');
+        } else {
+          console.error('Other speech recognition error:', event.error);
         }
       };
       
       rec.onend = () => {
+        console.log(`Recognition ended for ${lang}, isRecording:`, isRecording);
         if (isRecording) {
           // Continue listening if still recording
-          try {
-            if (lang === currentRecognitionLang) {
-              rec.start();
-            }
-          } catch (e) {
-            console.error(`Failed to restart recognition (${lang}):`, e);
-            // Try switching to other language
-            if (lang === 'ar' && recognitionEN) {
-              try {
-                recognitionEN.start();
-                currentRecognitionLang = 'en';
-              } catch (e2) {
-                stopRecording();
+          // Wait a bit before restarting to avoid rapid restarts
+          setTimeout(() => {
+            if (!isRecording) return; // Check again after timeout
+            
+            try {
+              if (lang === currentRecognitionLang) {
+                console.log(`Restarting recognition for ${lang}`);
+                rec.start();
               }
-            } else if (lang === 'en' && recognitionAR) {
-              try {
-                recognitionAR.start();
-                currentRecognitionLang = 'ar';
-              } catch (e2) {
-                stopRecording();
+            } catch (e) {
+              console.error(`Failed to restart recognition (${lang}):`, e);
+              // Try switching to other language as fallback
+              if (lang === 'ar' && recognitionEN && isRecording) {
+                try {
+                  console.log('Trying to switch to English recognition');
+                  recognitionEN.start();
+                  currentRecognitionLang = 'en';
+                  recognition = recognitionEN;
+                } catch (e2) {
+                  console.error('Failed to switch to English:', e2);
+                  // Don't stop recording, just log the error
+                }
+              } else if (lang === 'en' && recognitionAR && isRecording) {
+                try {
+                  console.log('Trying to switch to Arabic recognition');
+                  recognitionAR.start();
+                  currentRecognitionLang = 'ar';
+                  recognition = recognitionAR;
+                } catch (e2) {
+                  console.error('Failed to switch to Arabic:', e2);
+                  // Don't stop recording, just log the error
+                }
               }
-            } else {
-              stopRecording();
             }
-          }
+          }, 100); // Small delay before restarting
         }
       };
       
@@ -3888,19 +3927,67 @@
     function initSpeechRecognition() {
       if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
         console.warn('Speech recognition not supported in this browser');
+        const errorMsg = 'Speech recognition is not supported in this browser. Please use Chrome, Edge, or Safari. / التعرف على الكلام غير مدعوم في هذا المتصفح. يرجى استخدام Chrome أو Edge أو Safari.';
         if (presenterRecordBtn) {
           presenterRecordBtn.disabled = true;
-          presenterRecordBtn.title = 'Speech recognition not supported';
+          presenterRecordBtn.title = errorMsg;
         }
+        alert(errorMsg);
         return false;
       }
       
-      // Create recognition instances for both languages
-      recognitionEN = createRecognition('en', 'en-US');
-      recognitionAR = createRecognition('ar', 'ar-SA');
-      recognition = recognitionEN; // Default to English
+      // Check if we're on HTTPS or localhost (required for speech recognition)
+      const isSecure = window.location.protocol === 'https:' || 
+                       window.location.hostname === 'localhost' || 
+                       window.location.hostname === '127.0.0.1' ||
+                       window.location.hostname === '';
       
-      return true;
+      if (!isSecure) {
+        console.warn('Speech recognition requires HTTPS or localhost');
+        const currentUrl = window.location.href;
+        const errorMsg = `Speech recognition requires a local server.\n\n` +
+                        `Current URL: ${currentUrl}\n\n` +
+                        `To fix this:\n` +
+                        `1. Open Terminal\n` +
+                        `2. Run: cd "${window.location.pathname.split('/').slice(0, -1).join('/') || '.'}"\n` +
+                        `3. Run: python3 server.py\n` +
+                        `4. Open: http://localhost:8000/slide-editor.html\n\n` +
+                        `Or see README-SERVER.md for more options.\n\n` +
+                        `التعرف على الكلام يتطلب خادم محلي.\n` +
+                        `شغّل: python3 server.py ثم افتح: http://localhost:8000/slide-editor.html`;
+        if (presenterRecordBtn) {
+          presenterRecordBtn.disabled = true;
+          presenterRecordBtn.title = 'Requires local server - see console for instructions';
+        }
+        alert(errorMsg);
+        console.error('='.repeat(60));
+        console.error('SPEECH RECOGNITION SETUP REQUIRED');
+        console.error('='.repeat(60));
+        console.error('Current URL:', currentUrl);
+        console.error('');
+        console.error('To enable speech recognition:');
+        console.error('1. Open Terminal');
+        console.error('2. Navigate to your project folder');
+        console.error('3. Run: python3 server.py');
+        console.error('4. Open: http://localhost:8000/slide-editor.html');
+        console.error('');
+        console.error('See README-SERVER.md for more details');
+        console.error('='.repeat(60));
+        return false;
+      }
+      
+      try {
+        // Create recognition instances for both languages
+        recognitionEN = createRecognition('en', 'en-US');
+        recognitionAR = createRecognition('ar', 'ar-SA');
+        recognition = recognitionEN; // Default to English
+        console.log('Speech recognition initialized successfully');
+        return true;
+      } catch (e) {
+        console.error('Failed to initialize speech recognition:', e);
+        alert('Failed to initialize speech recognition. Please refresh the page. / فشل تهيئة التعرف على الكلام. يرجى تحديث الصفحة.');
+        return false;
+      }
     }
     
     function switchRecognitionLanguage() {
@@ -3928,20 +4015,30 @@
     }
     
     function startRecording() {
-      if (!recognition && !initSpeechRecognition()) {
-        alert('Voice recording is not available in this browser / تسجيل الصوت غير متاح في هذا المتصفح');
-        return;
+      // Initialize speech recognition if not already done
+      if (!recognitionEN || !recognitionAR) {
+        if (!initSpeechRecognition()) {
+          alert('Voice recording is not available in this browser / تسجيل الصوت غير متاح في هذا المتصفح');
+          return;
+        }
       }
       
-      if (!recognition) return;
+      // Ensure we have recognition instances
+      if (!recognitionEN) {
+        console.error('English recognition not initialized');
+        return;
+      }
       
       transcriptionText = '';
       currentRecognitionLang = 'en'; // Start with English
       recognition = recognitionEN;
       
       // Clear live transcription display
-      if (liveTranscriptionContent) {
-        liveTranscriptionContent.textContent = '';
+      const contentEl = document.getElementById('liveTranscriptionContent');
+      if (contentEl) {
+        contentEl.textContent = '';
+        // Add a placeholder to show it's listening
+        contentEl.textContent = 'Listening... / جاري الاستماع...';
       }
       
       isRecording = true;
@@ -3955,18 +4052,49 @@
       }
       
       try {
-        recognition.start();
+        console.log('Starting speech recognition...');
+        console.log('Recognition instance:', recognition);
+        console.log('Recognition state before start:', recognition.state);
         
-        // Switch between languages every 3 seconds to catch both languages
+        recognition.start();
+        console.log('Speech recognition started successfully');
+        console.log('Recognition state after start:', recognition.state);
+        
+        // Update placeholder after a moment
+        setTimeout(() => {
+          const contentEl = document.getElementById('liveTranscriptionContent');
+          if (contentEl && contentEl.textContent === 'Listening... / جاري الاستماع...' && transcriptionText.length === 0) {
+            contentEl.textContent = 'Speak now... / تحدث الآن...';
+          }
+        }, 2000);
+        
+        // Use a longer interval for language switching to avoid interrupting recognition
+        // Only switch if we haven't received any results in a while
+        let lastResultTime = Date.now();
         recognitionSwitchInterval = setInterval(() => {
           if (isRecording) {
-            switchRecognitionLanguage();
+            const timeSinceLastResult = Date.now() - lastResultTime;
+            // Only switch if no results for 8 seconds (less aggressive)
+            if (timeSinceLastResult > 8000) {
+              console.log('Switching recognition language (no results for 8s)...');
+              switchRecognitionLanguage();
+              lastResultTime = Date.now();
+            }
           }
-        }, 3000); // Switch every 3 seconds to support both Arabic and English
+        }, 10000); // Check every 10 seconds
       } catch (e) {
         console.error('Failed to start recognition:', e);
         if (e.name === 'InvalidStateError') {
-          // Already started, just update UI
+          // Already started, try to stop and restart
+          try {
+            recognition.stop();
+            setTimeout(() => {
+              recognition.start();
+            }, 100);
+          } catch (e2) {
+            console.error('Failed to restart recognition:', e2);
+          }
+          // Update UI anyway
           if (presenterRecordBtn) {
             presenterRecordBtn.classList.add('recording');
             if (recordText) recordText.textContent = 'Stop Recording / إيقاف التسجيل';
@@ -3976,6 +4104,7 @@
           }
         } else {
           isRecording = false;
+          alert('Failed to start recording. Please check microphone permissions. / فشل بدء التسجيل. يرجى التحقق من أذونات الميكروفون.');
           if (presenterRecordBtn) {
             presenterRecordBtn.classList.remove('recording');
             if (recordText) recordText.textContent = 'Record / تسجيل صوت';
@@ -4034,16 +4163,32 @@
     }
     
     function updateLiveTranscription(interimText) {
-      if (!liveTranscriptionContent) return;
+      // Ensure element exists
+      const contentElement = document.getElementById('liveTranscriptionContent');
+      if (!contentElement) {
+        console.warn('Live transcription content element not found');
+        return;
+      }
       
       // Update the live transcription with all final transcription text + current interim text
       const displayText = transcriptionText + (interimText || '');
-      liveTranscriptionContent.textContent = displayText;
+      
+      // Always update, even if empty (to show interim results immediately)
+      contentElement.textContent = displayText;
+      console.log('Live transcription updated. Length:', displayText.length, 'Final:', transcriptionText.length, 'Interim:', interimText ? interimText.length : 0);
+      
+      // Ensure the box is visible when recording
+      const boxElement = document.getElementById('liveTranscriptionBox');
+      if (boxElement && isRecording) {
+        boxElement.classList.remove('hidden');
+      }
       
       // Scroll to bottom to show latest text
-      setTimeout(() => {
-        liveTranscriptionContent.scrollTop = liveTranscriptionContent.scrollHeight;
-      }, 100);
+      requestAnimationFrame(() => {
+        if (contentElement) {
+          contentElement.scrollTop = contentElement.scrollHeight;
+        }
+      });
     }
     
     function clearLiveTranscription() {
@@ -5562,6 +5707,11 @@
     }
 
     function render() {
+      // Expose to window for chatbot access
+      window.slides = slides;
+      window.activeSlideIndex = activeSlideIndex;
+      window.render = render;
+      
       // Counters
       slideIndexLabelEl.textContent = String(activeSlideIndex + 1);
       slideCountLabelEl.textContent = String(slides.length);
@@ -9104,6 +9254,25 @@
           </div>
         </div>
         <div class="chatbot-header-actions">
+          <button id="chatbotResize" class="chatbot-header-btn" aria-label="Expand" onclick="
+              const win = document.getElementById('chatbotWindow');
+              if (win) {
+                const isExp = win.classList.contains('expanded');
+                if (isExp) {
+                  win.style.width = '380px';
+                  win.style.height = '500px';
+                  win.classList.remove('expanded');
+                  this.textContent = '⊞';
+                } else {
+                  win.style.width = '800px';
+                  win.style.height = '900px';
+                  win.classList.add('expanded');
+                  this.textContent = '⊟';
+                }
+                localStorage.setItem('chatbot_expanded', !isExp ? 'true' : 'false');
+              }
+              return false;
+            ">⊞</button>
           <button id="chatbotMinimize" class="chatbot-header-btn" aria-label="Minimize">−</button>
           <button id="chatbotClose" class="chatbot-header-btn" aria-label="Close">×</button>
         </div>
@@ -9134,6 +9303,7 @@
       </div>
     </div>
   </div>
+  <script src="./config.js"></script>
   <script src="./scripts/chatbot.js"></script>
   <link rel="stylesheet" href="styles.css" />
 </body>

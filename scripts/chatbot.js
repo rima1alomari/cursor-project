@@ -5,6 +5,7 @@
   // Check if chatbot should be hidden (user preference)
   const CHATBOT_HIDDEN_KEY = 'chatbot_hidden';
   const CHATBOT_LANGUAGE_KEY = 'chatbot_language';
+  const CHATBOT_EXPANDED_KEY = 'chatbot_expanded';
   
   // OpenAI API Configuration
   // IMPORTANT: Set your OpenAI API key here or use environment variable
@@ -22,6 +23,8 @@
       subtitle: 'How can I help you?',
       minimize: 'Minimize',
       close: 'Close',
+      expand: 'Expand',
+      shrink: 'Shrink',
       speak: 'Speak',
       listeningLabel: 'Listening...',
       stopListening: 'Stop listening',
@@ -35,6 +38,8 @@
       subtitle: 'كيف يمكنني مساعدتك؟',
       minimize: 'تصغير',
       close: 'إغلاق',
+      expand: 'تكبير',
+      shrink: 'تصغير',
       speak: 'تحدث',
       listeningLabel: 'أستمع...',
       stopListening: 'إيقاف الاستماع',
@@ -98,6 +103,7 @@
     const chatbotToggle = document.getElementById('chatbotToggle');
     const chatbotClose = document.getElementById('chatbotClose');
     const chatbotMinimize = document.getElementById('chatbotMinimize');
+    const chatbotResize = document.getElementById('chatbotResize');
     const chatbotWindow = document.getElementById('chatbotWindow');
     const chatbotInput = document.getElementById('chatbotInput');
     const chatbotSend = document.getElementById('chatbotSend');
@@ -185,6 +191,8 @@
         chatbotToggle.classList.toggle('active');
         if (chatbotWindow.classList.contains('active')) {
           chatbotInput.focus();
+          // Ensure resize button state is updated when window opens
+          updateResizeButton();
         }
       });
     }
@@ -209,6 +217,310 @@
       });
     }
 
+    // Chatbot resize functionality
+    let isExpanded = false;
+    
+    function toggleChatbotSize() {
+      console.log('🟢 toggleChatbotSize() called');
+      
+      const window = document.getElementById('chatbotWindow');
+      if (!window) {
+        console.error('❌ Chatbot window not found!');
+        alert('Chatbot window not found! Please refresh the page.');
+        return;
+      }
+      
+      // Toggle expanded state
+      isExpanded = !isExpanded;
+      console.log('🟢 New expanded state:', isExpanded);
+      
+      // Make sure window is visible
+      if (!window.classList.contains('active')) {
+        window.classList.add('active');
+        const toggle = document.getElementById('chatbotToggle');
+        if (toggle) toggle.classList.add('active');
+      }
+      
+      // Apply expanded or normal size directly with !important via setProperty
+      if (isExpanded) {
+        window.style.setProperty('width', '800px', 'important');
+        window.style.setProperty('height', '900px', 'important');
+        window.style.setProperty('max-width', 'calc(100vw - 40px)', 'important');
+        window.style.setProperty('max-height', 'calc(100vh - 120px)', 'important');
+        window.classList.add('expanded');
+        console.log('✅ Applied EXPANDED size: 800x900');
+      } else {
+        window.style.setProperty('width', '380px', 'important');
+        window.style.setProperty('height', '500px', 'important');
+        window.style.removeProperty('max-width');
+        window.style.removeProperty('max-height');
+        window.classList.remove('expanded');
+        console.log('✅ Applied NORMAL size: 380x500');
+      }
+      
+      // Save to localStorage
+      localStorage.setItem(CHATBOT_EXPANDED_KEY, isExpanded ? 'true' : 'false');
+      
+      // Update button text
+      const resizeBtn = document.getElementById('chatbotResize');
+      if (resizeBtn) {
+        resizeBtn.textContent = isExpanded ? '⊟' : '⊞';
+        const lang = getCurrentLanguage();
+        const t = translations[lang];
+        resizeBtn.setAttribute('title', isExpanded ? t.shrink : t.expand);
+        resizeBtn.setAttribute('aria-label', isExpanded ? t.shrink : t.expand);
+        console.log('✅ Button text updated to:', isExpanded ? '⊟' : '⊞');
+      }
+      
+      console.log('🎉 Chatbot resized successfully:', isExpanded ? 'EXPANDED (800x900)' : 'NORMAL (380x500)');
+    }
+    
+    // Expose globally for testing
+    window.toggleChatbotSize = toggleChatbotSize;
+
+    // Initialize resize button - use multiple methods to ensure it works
+    function initResizeButton() {
+      const resizeBtn = document.getElementById('chatbotResize');
+      if (resizeBtn) {
+        // Remove any existing listeners
+        const newBtn = resizeBtn.cloneNode(true);
+        resizeBtn.parentNode.replaceChild(newBtn, resizeBtn);
+        
+        // Add click handler
+        newBtn.onclick = function(e) {
+          e.stopPropagation();
+          e.preventDefault();
+          console.log('🔵 RESIZE BUTTON CLICKED!');
+          toggleChatbotSize();
+          return false;
+        };
+        
+        // Also add event listener
+        newBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          e.preventDefault();
+          console.log('🔵 RESIZE BUTTON CLICKED (addEventListener)!');
+          toggleChatbotSize();
+          return false;
+        }, true); // Use capture phase
+        
+        console.log('✅ Resize button initialized and ready');
+        return true;
+      } else {
+        console.warn('⚠️ Resize button not found, will retry...');
+        return false;
+      }
+    }
+    
+    // Try to initialize immediately
+    if (!initResizeButton()) {
+      // If not found, try again after a delay
+      setTimeout(function() {
+        if (!initResizeButton()) {
+          // Try one more time
+          setTimeout(initResizeButton, 500);
+        }
+      }, 200);
+    }
+    
+    // Also expose globally for testing
+    window.testResizeButton = function() {
+      const btn = document.getElementById('chatbotResize');
+      if (btn) {
+        console.log('Button found!', btn);
+        btn.click();
+      } else {
+        console.error('Button not found!');
+      }
+    };
+
+    // Restore expanded state from localStorage on page load
+    const savedExpanded = localStorage.getItem(CHATBOT_EXPANDED_KEY) === 'true';
+    if (savedExpanded && chatbotWindow) {
+      isExpanded = true;
+      chatbotWindow.classList.add('expanded');
+      chatbotWindow.style.width = '800px';
+      chatbotWindow.style.height = '900px';
+      if (chatbotResize) {
+        chatbotResize.textContent = '⊟';
+      }
+      console.log('✅ Restored expanded state');
+    }
+
+    // Parse slide editor commands
+    function parseSlideCommand(message, lang) {
+      if (!window.location.pathname.includes('slide-editor.html')) {
+        return null;
+      }
+      
+      const lowerMsg = message.toLowerCase().trim();
+      const isArabic = lang === 'ar';
+      
+      // Navigation commands
+      if (isArabic) {
+        // Arabic commands
+        if (lowerMsg.match(/^(اذهب|انتقل|افتح|عرض).*?(\d+)/) || lowerMsg.match(/^(\d+)/)) {
+          const match = lowerMsg.match(/(\d+)/);
+          if (match) {
+            return { type: 'navigate', slideNumber: parseInt(match[1], 10) - 1 };
+          }
+        }
+        if (lowerMsg.includes('التالي') || lowerMsg.includes('التالي')) {
+          return { type: 'next' };
+        }
+        if (lowerMsg.includes('السابق') || lowerMsg.includes('الخلف')) {
+          return { type: 'previous' };
+        }
+        // Text commands
+        if (lowerMsg.match(/^(اكتب|أضف|ضع).*?["'](.+?)["']/) || lowerMsg.match(/^(اكتب|أضف|ضع)\s+(.+)/)) {
+          const match = lowerMsg.match(/["'](.+?)["']/) || lowerMsg.match(/(?:اكتب|أضف|ضع)\s+(.+)/);
+          if (match && match[1]) {
+            return { type: 'addText', text: match[1] };
+          }
+        }
+      } else {
+        // English commands
+        if (lowerMsg.match(/^(go to|navigate to|show|open|slide)\s*(\d+)/) || lowerMsg.match(/^slide\s*(\d+)/) || lowerMsg.match(/^(\d+)$/)) {
+          const match = lowerMsg.match(/(\d+)/);
+          if (match) {
+            return { type: 'navigate', slideNumber: parseInt(match[1], 10) - 1 };
+          }
+        }
+        if (lowerMsg.includes('next slide') || lowerMsg.includes('next')) {
+          return { type: 'next' };
+        }
+        if (lowerMsg.includes('previous slide') || lowerMsg.includes('previous') || lowerMsg.includes('back')) {
+          return { type: 'previous' };
+        }
+        // Text commands
+        if (lowerMsg.match(/^(write|add|put|type)\s+["'](.+?)["']/) || lowerMsg.match(/^(write|add|put|type)\s+(.+)/)) {
+          const match = lowerMsg.match(/["'](.+?)["']/) || lowerMsg.match(/(?:write|add|put|type)\s+(.+)/);
+          if (match && match[1]) {
+            return { type: 'addText', text: match[1] };
+          }
+        }
+      }
+      
+      return null;
+    }
+    
+    // Execute slide editor commands
+    function executeSlideCommand(command, lang) {
+      const isArabic = lang === 'ar';
+      
+      try {
+        // Access slide editor variables (they should be in global scope)
+        if (typeof window.slides === 'undefined' || typeof window.activeSlideIndex === 'undefined') {
+          // Try to access via iframe or find the variables
+          const errorMsg = isArabic 
+            ? '❌ لا يمكن الوصول إلى محرر الشرائح. تأكد من أنك في صفحة محرر الشرائح.'
+            : '❌ Cannot access slide editor. Make sure you are on the slide editor page.';
+          addMessage('bot', errorMsg);
+          return;
+        }
+        
+        const slides = window.slides;
+        let activeSlideIndex = window.activeSlideIndex;
+        
+        if (command.type === 'navigate') {
+          const targetSlide = command.slideNumber;
+          if (targetSlide >= 0 && targetSlide < slides.length) {
+            window.activeSlideIndex = targetSlide;
+            if (typeof window.render === 'function') {
+              window.render();
+            }
+            const successMsg = isArabic
+              ? `✅ تم الانتقال إلى الشريحة ${targetSlide + 1} من ${slides.length}`
+              : `✅ Navigated to slide ${targetSlide + 1} of ${slides.length}`;
+            addMessage('bot', successMsg);
+          } else {
+            const errorMsg = isArabic
+              ? `❌ رقم الشريحة غير صحيح. يجب أن يكون بين 1 و ${slides.length}`
+              : `❌ Invalid slide number. Must be between 1 and ${slides.length}`;
+            addMessage('bot', errorMsg);
+          }
+        } else if (command.type === 'next') {
+          if (activeSlideIndex < slides.length - 1) {
+            window.activeSlideIndex = activeSlideIndex + 1;
+            if (typeof window.render === 'function') {
+              window.render();
+            }
+            const successMsg = isArabic
+              ? `✅ تم الانتقال إلى الشريحة التالية (${activeSlideIndex + 2} من ${slides.length})`
+              : `✅ Moved to next slide (${activeSlideIndex + 2} of ${slides.length})`;
+            addMessage('bot', successMsg);
+          } else {
+            const errorMsg = isArabic
+              ? '❌ أنت بالفعل في آخر شريحة'
+              : '❌ You are already on the last slide';
+            addMessage('bot', errorMsg);
+          }
+        } else if (command.type === 'previous') {
+          if (activeSlideIndex > 0) {
+            window.activeSlideIndex = activeSlideIndex - 1;
+            if (typeof window.render === 'function') {
+              window.render();
+            }
+            const successMsg = isArabic
+              ? `✅ تم الانتقال إلى الشريحة السابقة (${activeSlideIndex} من ${slides.length})`
+              : `✅ Moved to previous slide (${activeSlideIndex} of ${slides.length})`;
+            addMessage('bot', successMsg);
+          } else {
+            const errorMsg = isArabic
+              ? '❌ أنت بالفعل في أول شريحة'
+              : '❌ You are already on the first slide';
+            addMessage('bot', errorMsg);
+          }
+        } else if (command.type === 'addText') {
+          const slide = slides[activeSlideIndex];
+          if (slide && slide.elements) {
+            const textElement = {
+              id: crypto.randomUUID ? crypto.randomUUID() : 'text-' + Date.now(),
+              type: 'text',
+              text: command.text,
+              left: 40,
+              top: 40,
+              width: 360,
+              fontSize: 16,
+              fontFamily: 'Inter, sans-serif',
+              color: '#111827',
+              backgroundColor: null,
+              bold: false,
+              italic: false,
+              underline: false,
+              align: 'left',
+              lineHeight: 1.4,
+              letterSpacing: 0,
+              textTransform: 'none',
+              animation: {}
+            };
+            slide.elements.push(textElement);
+            if (typeof window.markDirty === 'function') {
+              window.markDirty();
+            }
+            if (typeof window.render === 'function') {
+              window.render();
+            }
+            const successMsg = isArabic
+              ? `✅ تمت إضافة النص "${command.text}" إلى الشريحة ${activeSlideIndex + 1}`
+              : `✅ Added text "${command.text}" to slide ${activeSlideIndex + 1}`;
+            addMessage('bot', successMsg);
+          } else {
+            const errorMsg = isArabic
+              ? '❌ لا يمكن الوصول إلى الشريحة الحالية'
+              : '❌ Cannot access current slide';
+            addMessage('bot', errorMsg);
+          }
+        }
+      } catch (error) {
+        console.error('Error executing slide command:', error);
+        const errorMsg = isArabic
+          ? '❌ حدث خطأ أثناء تنفيذ الأمر. تأكد من أنك في صفحة محرر الشرائح.'
+          : '❌ An error occurred executing the command. Make sure you are on the slide editor page.';
+        addMessage('bot', errorMsg);
+      }
+    }
+    
     // Send message
     function sendMessage() {
       const message = chatbotInput.value.trim();
@@ -234,6 +546,14 @@
       
       // Show typing indicator
       const typingIndicator = addTypingIndicator();
+      
+      // Check for slide editor commands first
+      const slideCommand = parseSlideCommand(message, detectedLang);
+      if (slideCommand) {
+        removeTypingIndicator(typingIndicator);
+        executeSlideCommand(slideCommand, detectedLang);
+        return;
+      }
       
       // Always try to get a real answer from OpenAI API first
       getOpenAIResponse(message, detectedLang)
@@ -1028,5 +1348,44 @@ For more accurate and detailed answers, please try asking again or rephrase your
       console.log('Chatbot is now visible!');
     }
   };
+  
+  // Final backup - add handler after everything loads (runs on all pages)
+  setTimeout(function() {
+    const btn = document.getElementById('chatbotResize');
+    if (btn) {
+      console.log('🔵 Adding FINAL backup handler to resize button');
+      // Add visual indicator that button is ready
+      btn.style.boxShadow = '0 0 10px rgba(255, 255, 0, 0.5)';
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        e.preventDefault();
+        console.log('🔴🔴🔴 FINAL BACKUP CLICKED! 🔴🔴🔴');
+        if (window.toggleChatbotSize) {
+          window.toggleChatbotSize();
+        } else {
+          console.error('toggleChatbotSize function not found!');
+          // Fallback: direct resize
+          const window = document.getElementById('chatbotWindow');
+          if (window) {
+            const isExpanded = window.classList.contains('expanded');
+            if (isExpanded) {
+              window.style.width = '380px';
+              window.style.height = '500px';
+              window.classList.remove('expanded');
+              btn.textContent = '⊞';
+            } else {
+              window.style.width = '800px';
+              window.style.height = '900px';
+              window.classList.add('expanded');
+              btn.textContent = '⊟';
+            }
+          }
+        }
+        return false;
+      }, true);
+    } else {
+      console.error('❌ Resize button still not found after 2 seconds');
+    }
+  }, 2000);
 })();
 

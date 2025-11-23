@@ -58,3 +58,4 @@ const GEMINI_API_KEY = 'AIzaSyBxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
 - Don't share your API key with anyone
 - If you don't add the key, the chatbot will use basic fallback responses
 
+

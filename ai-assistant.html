@@ -480,6 +480,7 @@
 
     <footer class="credits">Made by: Reema Alomari, Abdullah Alqahtani, Yara AlSardi</footer>
 
+    <script src="./config.js"></script>
     <script src="./scripts/auth.js"></script>
     <script src="./scripts/profile.js"></script>
     <script src="./scripts/account-display.js"></script>
@@ -1146,9 +1147,13 @@
           return slides;
         }
 
-        // OpenAI API Key - In production, this should be stored securely on the backend
-        // Replace 'YOUR_API_KEY_HERE' with your actual API key or load it from a secure backend service
-        const API_KEY = 'YOUR_API_KEY_HERE';
+        // OpenAI API Key - Load from config.js
+        const API_KEY = window.OPENAI_API_KEY || 'YOUR_OPENAI_API_KEY_HERE';
+        
+        // Validate API key
+        if (!API_KEY || API_KEY === 'YOUR_OPENAI_API_KEY_HERE' || API_KEY === 'YOUR_API_KEY_HERE') {
+          console.error('OpenAI API key not configured. Please set your API key in config.js');
+        }
 
         async function generatePresentationWithAI(description, title, theme) {
           const colors = getThemeColors(theme);
@@ -1554,6 +1559,25 @@ Return ONLY valid JSON, no other text.`;
             </div>
           </div>
           <div class="chatbot-header-actions">
+            <button id="chatbotResize" class="chatbot-header-btn" aria-label="Expand" onclick="
+              const win = document.getElementById('chatbotWindow');
+              if (win) {
+                const isExp = win.classList.contains('expanded');
+                if (isExp) {
+                  win.style.width = '380px';
+                  win.style.height = '500px';
+                  win.classList.remove('expanded');
+                  this.textContent = '⊞';
+                } else {
+                  win.style.width = '800px';
+                  win.style.height = '900px';
+                  win.classList.add('expanded');
+                  this.textContent = '⊟';
+                }
+                localStorage.setItem('chatbot_expanded', !isExp ? 'true' : 'false');
+              }
+              return false;
+            ">⊞</button>
             <button id="chatbotMinimize" class="chatbot-header-btn" aria-label="Minimize">−</button>
             <button id="chatbotClose" class="chatbot-header-btn" aria-label="Close">×</button>
           </div>

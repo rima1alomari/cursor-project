@@ -1618,7 +1618,10 @@ input[type="submit"]:hover,
   opacity: 0;
   transform: translateY(20px) scale(0.95);
   pointer-events: none;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+              height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
 }
 
@@ -1626,6 +1629,28 @@ input[type="submit"]:hover,
   opacity: 1;
   transform: translateY(0) scale(1);
   pointer-events: all;
+}
+
+/* Expanded chatbot state - must come after .active to override */
+#chatbotWindow.expanded {
+  width: 800px !important;
+  height: 900px !important;
+  max-width: calc(100vw - 40px) !important;
+  max-height: calc(100vh - 120px) !important;
+}
+
+#chatbotWindow.active.expanded {
+  width: 800px !important;
+  height: 900px !important;
+  max-width: calc(100vw - 40px) !important;
+  max-height: calc(100vh - 120px) !important;
+}
+
+@media (max-width: 768px) {
+  #chatbotWindow.expanded {
+    width: calc(100vw - 30px) !important;
+    height: calc(100vh - 100px) !important;
+  }
 }
 
 /* Chatbot Header */
@@ -1674,11 +1699,28 @@ input[type="submit"]:hover,
   justify-content: center;
   transition: all 0.2s ease;
   font-size: 1rem;
+  position: relative;
+  z-index: 10;
+  pointer-events: auto;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .chatbot-header-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: scale(1.1);
+  background: rgba(255, 255, 255, 0.4) !important;
+  transform: scale(1.15);
+}
+
+.chatbot-header-btn:active {
+  background: rgba(255, 255, 255, 0.5) !important;
+  transform: scale(1.05);
+}
+
+/* Make resize button more visible */
+#chatbotResize {
+  font-size: 1.2rem !important;
+  font-weight: bold !important;
+  background: rgba(255, 255, 255, 0.25) !important;
 }
 
 /* Chatbot Messages Area */
