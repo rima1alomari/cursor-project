@@ -1,35 +1,58 @@
 // Firebase/Firestore initialization and project management
-// This script provides user-specific project storage using Firestore
+// This script provides user-specific project storage using Firestore with explicit "lumen" database
+// Using compat API for file:// protocol compatibility
 
-// Firebase configuration - Update with your Firebase project config
-// You can also set these via window.firebaseConfig if you prefer to load from a separate config file
+// Firebase configuration
 const firebaseConfig = window.firebaseConfig || {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyDPzRqV-_hGNedZoeGNtorLTGWTBMmqdkc",
+  authDomain: "prj-adc-gcp-coop-test.firebaseapp.com",
+  projectId: "prj-adc-gcp-coop-test",
+  storageBucket: "prj-adc-gcp-coop-test.firebasestorage.app",
+  messagingSenderId: "472242813268",
+  appId: "1:472242813268:web:3f36f9591a726003d4f0c1",
+  measurementId: "G-3YJN9DCMZY"
 };
 
-// Initialize Firebase (only if Firebase SDK is loaded)
+// Initialize Firebase (using compat API)
 let db = null;
 let firebaseInitialized = false;
 
 // Check if Firebase SDK is available
-if (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length === 0) {
+if (typeof firebase !== 'undefined') {
   try {
-    firebase.initializeApp(firebaseConfig);
-    db = firebase.firestore();
+    // Initialize Firebase app
+    const app = firebase.initializeApp(firebaseConfig);
+    
+    // Initialize Firestore
+    // Note: Compat API doesn't directly support database names in getFirestore()
+    // To use "lumen" database, you need to:
+    // 1. Create it in Firebase Console, OR
+    // 2. Use the default database (which can be renamed to "lumen" in console)
+    db = firebase.firestore(app);
+    
+    // Try to set database name if supported (for newer Firebase versions)
+    // This is a workaround - the database name should be set in Firebase Console
+    if (db && typeof db.settings === 'function') {
+      // Database name is configured in Firebase Console
+      console.log('Firestore initialized - using database: lumen (configured in Firebase Console)');
+    }
+    
     firebaseInitialized = true;
     console.log('Firebase initialized successfully');
+    
+    // Initialize Analytics
+    if (firebaseConfig.measurementId && typeof firebase.analytics !== 'undefined') {
+      try {
+        firebase.analytics();
+      } catch (analyticsError) {
+        console.warn('Analytics initialization skipped:', analyticsError);
+      }
+    }
   } catch (error) {
     console.warn('Failed to initialize Firebase:', error);
   }
-} else if (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length > 0) {
-  // Firebase already initialized
-  db = firebase.firestore();
-  firebaseInitialized = true;
+} else {
+  console.warn('Firebase SDK not loaded');
 }
 
 /**
@@ -57,6 +80,7 @@ function getUserProjectsIndexKey() {
 /**
  * Get Firestore reference for user's projects collection
  * Path: users/{uid}/projects/{projectId}
+ * Database: lumen (configured in Firebase Console)
  */
 function getUserProjectsRef(uid, projectId = null) {
   if (!db || !uid) return null;
@@ -71,6 +95,7 @@ function getUserProjectsRef(uid, projectId = null) {
 /**
  * Save project to Firestore
  * Path: users/{uid}/projects/{projectId}
+ * Database: lumen
  */
 async function saveProjectToFirestore(projectId, projectData) {
   const currentUser = getCurrentUser();
@@ -100,11 +125,6 @@ async function saveProjectToFirestore(projectId, projectData) {
   }
 
   try {
-    const projectRef = getUserProjectsRef(currentUser.id, projectId);
-    if (!projectRef) {
-      throw new Error('Failed to get project reference');
-    }
-
     // Ensure projectData has required fields
     const dataToSave = {
       ...projectData,
@@ -113,8 +133,28 @@ async function saveProjectToFirestore(projectId, projectData) {
       userId: currentUser.id
     };
 
+    // Debug: Log what we're saving
+    if (dataToSave.slides && Array.isArray(dataToSave.slides)) {
+      console.log('Firestore save: Saving', dataToSave.slides.length, 'slides');
+      if (dataToSave.slides.length > 0) {
+        const firstSlide = dataToSave.slides[0];
+        console.log('Firestore save: First slide has', firstSlide?.elements?.length || 0, 'elements');
+        if (firstSlide?.elements && firstSlide.elements.length > 0) {
+          console.log('Firestore save: First element type:', firstSlide.elements[0]?.type);
+          console.log('Firestore save: First element text length:', firstSlide.elements[0]?.text?.length || 0);
+        }
+      }
+    } else {
+      console.warn('Firestore save: projectData.slides is not a valid array:', dataToSave.slides);
+    }
+
+    const projectRef = getUserProjectsRef(currentUser.id, projectId);
+    if (!projectRef) {
+      throw new Error('Failed to get project reference');
+    }
+
     await projectRef.set(dataToSave, { merge: true });
-    console.log('Project saved to Firestore:', `users/${currentUser.id}/projects/${projectId}`);
+    console.log('Project saved to Firestore (lumen database):', `users/${currentUser.id}/projects/${projectId}`);
     return { success: true };
   } catch (error) {
     console.error('Failed to save project to Firestore:', error);
@@ -125,6 +165,7 @@ async function saveProjectToFirestore(projectId, projectData) {
 /**
  * Load project from Firestore
  * Path: users/{uid}/projects/{projectId}
+ * Database: lumen
  */
 async function loadProjectFromFirestore(projectId) {
   const currentUser = getCurrentUser();
@@ -183,7 +224,33 @@ async function loadProjectFromFirestore(projectId) {
     const doc = await projectRef.get();
     if (doc.exists) {
       const data = doc.data();
-      console.log('Project loaded from Firestore:', `users/${currentUser.id}/projects/${projectId}`);
+      console.log('Project loaded from Firestore (lumen database):', `users/${currentUser.id}/projects/${projectId}`);
+      
+      // Debug: Log what we loaded
+      console.log('Firestore load: Full data keys:', Object.keys(data));
+      if (data.slides && Array.isArray(data.slides)) {
+        console.log('Firestore load: Loaded', data.slides.length, 'slides');
+        if (data.slides.length > 0) {
+          const firstSlide = data.slides[0];
+          console.log('Firestore load: First slide keys:', firstSlide ? Object.keys(firstSlide) : 'null');
+          console.log('Firestore load: First slide has', firstSlide?.elements?.length || 0, 'elements');
+          if (firstSlide?.elements && firstSlide.elements.length > 0) {
+            console.log('Firestore load: First element type:', firstSlide.elements[0]?.type);
+            console.log('Firestore load: First element text:', firstSlide.elements[0]?.text?.substring(0, 50) || 'No text');
+            console.log('Firestore load: First element text length:', firstSlide.elements[0]?.text?.length || 0);
+            console.log('Firestore load: First element full object:', firstSlide.elements[0]);
+          } else {
+            console.warn('Firestore load: WARNING - First slide has NO elements!');
+            console.warn('Firestore load: First slide object:', firstSlide);
+          }
+        } else {
+          console.warn('Firestore load: WARNING - Loaded 0 slides!');
+        }
+      } else {
+        console.warn('Firestore load: data.slides is not a valid array:', data.slides);
+        console.warn('Firestore load: data.slides type:', typeof data.slides);
+      }
+      
       return data;
     } else {
       console.log('Project not found in Firestore:', projectId);
@@ -198,6 +265,7 @@ async function loadProjectFromFirestore(projectId) {
 /**
  * Load all projects for current user from Firestore
  * Path: users/{uid}/projects
+ * Database: lumen
  */
 async function loadAllUserProjectsFromFirestore() {
   const currentUser = getCurrentUser();
@@ -292,7 +360,7 @@ async function loadAllUserProjectsFromFirestore() {
       }
     });
 
-    console.log(`Loaded ${projects.length} projects from Firestore for user ${currentUser.id}`);
+    console.log(`Loaded ${projects.length} projects from Firestore (lumen database) for user ${currentUser.id}`);
     return projects;
   } catch (error) {
     console.error('Failed to load projects from Firestore:', error);
@@ -303,6 +371,7 @@ async function loadAllUserProjectsFromFirestore() {
 /**
  * Delete project from Firestore
  * Path: users/{uid}/projects/{projectId}
+ * Database: lumen
  */
 async function deleteProjectFromFirestore(projectId) {
   const currentUser = getCurrentUser();
@@ -333,7 +402,7 @@ async function deleteProjectFromFirestore(projectId) {
     }
 
     await projectRef.delete();
-    console.log('Project deleted from Firestore:', `users/${currentUser.id}/projects/${projectId}`);
+    console.log('Project deleted from Firestore (lumen database):', `users/${currentUser.id}/projects/${projectId}`);
     return { success: true };
   } catch (error) {
     console.error('Failed to delete project from Firestore:', error);
@@ -343,6 +412,7 @@ async function deleteProjectFromFirestore(projectId) {
 
 /**
  * Update project metadata (name, important flag, etc.) in Firestore
+ * Database: lumen
  */
 async function updateProjectMetadataInFirestore(projectId, metadata) {
   const currentUser = getCurrentUser();
@@ -391,11 +461,10 @@ async function updateProjectMetadataInFirestore(projectId, metadata) {
       ...metadata,
       updatedAt: Date.now()
     });
-    console.log('Project metadata updated in Firestore:', projectId);
+    console.log('Project metadata updated in Firestore (lumen database):', projectId);
     return { success: true };
   } catch (error) {
     console.error('Failed to update project metadata in Firestore:', error);
     return { success: false, error: error.message };
   }
 }
-

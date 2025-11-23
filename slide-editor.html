@@ -2095,7 +2095,8 @@
     };
     const AUTOSAVE_KEY = 'slide-editor-autosave-v1';
     const SYNC_KEY = `${AUTOSAVE_KEY}-sync`;
-    const AUTOSAVE_DEBOUNCE_MS = 1200;
+    const AUTOSAVE_DEBOUNCE_MS = 800; // Reduced from 1200ms for faster saves
+    const PERIODIC_SAVE_INTERVAL_MS = 30000; // Save every 30 seconds as safety net
     const PRESENTATION_STORAGE_PREFIX = 'lumen-presentation-';
     const PRESENTATIONS_INDEX_KEY = 'lumen-presentations-index';
     const MAX_RECENT_PRESENTATIONS = 20;
@@ -2156,6 +2157,7 @@
     let needsAutosave = false;
     let lastSavedAt = null;
     let savedStatusTimeout = null;
+    let periodicSaveInterval = null;
     let presentationStorageKey = null;
     let presentationPreview = null;
     let isNewPresentation = false;
@@ -2267,23 +2269,59 @@
             // Try loading from Firestore first (user-specific path: users/{uid}/projects/{projectId})
             let storedState = null;
             
+            // Wait a bit for Firebase to initialize if needed
+            let attempts = 0;
+            while (typeof loadProjectFromFirestore !== 'function' && attempts < 20) {
+              await new Promise(resolve => setTimeout(resolve, 100));
+              attempts++;
+            }
+            
             if (typeof loadProjectFromFirestore === 'function') {
               try {
+                console.log('Attempting to load from Firestore for project:', presentationId);
                 storedState = await loadProjectFromFirestore(presentationId);
                 if (storedState) {
                   console.log('Loaded project from Firestore:', presentationId);
+                  console.log('Firestore returned data with keys:', Object.keys(storedState));
+                } else {
+                  console.log('Firestore returned null/undefined for project:', presentationId);
                 }
               } catch (error) {
                 console.warn('Failed to load from Firestore, trying localStorage:', error);
+                console.error('Firestore load error details:', error);
               }
+            } else {
+              console.warn('loadProjectFromFirestore function not available after waiting');
             }
             
             // Fallback to localStorage if Firestore didn't return data
             if (!storedState) {
-              const storedRaw = localStorage.getItem(presentationStorageKey);
-              if (storedRaw) {
-                storedState = JSON.parse(storedRaw);
-                console.log('Loaded project from localStorage (fallback):', presentationId);
+              // Try user-specific localStorage key first
+              const currentUser = getCurrentUser();
+              if (currentUser && currentUser.id) {
+                const userSpecificKey = `lumen-presentation-${currentUser.id}-${presentationId}`;
+                const userStoredRaw = localStorage.getItem(userSpecificKey);
+                if (userStoredRaw) {
+                  try {
+                    storedState = JSON.parse(userStoredRaw);
+                    console.log('Loaded project from localStorage (user-specific):', presentationId);
+                  } catch (e) {
+                    console.warn('Failed to parse user-specific localStorage:', e);
+                  }
+                }
+              }
+              
+              // Fallback to legacy key
+              if (!storedState) {
+                const storedRaw = localStorage.getItem(presentationStorageKey);
+                if (storedRaw) {
+                  try {
+                    storedState = JSON.parse(storedRaw);
+                    console.log('Loaded project from localStorage (legacy):', presentationId);
+                  } catch (e) {
+                    console.warn('Failed to parse legacy localStorage:', e);
+                  }
+                }
               }
             }
             
@@ -2293,7 +2331,27 @@
               isNewPresentation = false;
               
               if (storedState && Array.isArray(storedState.slides)) {
-                slides = storedState.slides;
+                // Deep clone slides to ensure all nested data is preserved
+                slides = JSON.parse(JSON.stringify(storedState.slides));
+                console.log('Loaded', slides.length, 'slides from Firestore');
+                if (slides.length > 0) {
+                  const firstSlide = slides[0];
+                  console.log('First slide has', firstSlide?.elements?.length || 0, 'elements');
+                  console.log('First slide title:', firstSlide?.title || 'No title');
+                  if (firstSlide?.elements && firstSlide.elements.length > 0) {
+                    console.log('First element type:', firstSlide.elements[0]?.type);
+                    console.log('First element text:', firstSlide.elements[0]?.text || 'No text');
+                    console.log('First element text length:', firstSlide.elements[0]?.text?.length || 0);
+                  } else {
+                    console.warn('WARNING: First slide has NO elements!');
+                    console.warn('First slide object:', firstSlide);
+                  }
+                } else {
+                  console.warn('WARNING: Loaded 0 slides!');
+                }
+              } else {
+                console.warn('Loaded state does not have valid slides array:', storedState);
+                console.warn('storedState keys:', storedState ? Object.keys(storedState) : 'null');
               }
               if (typeof storedState?.activeSlideIndex === 'number') {
                 activeSlideIndex = Math.min(Math.max(storedState.activeSlideIndex, 0), Math.max(slides.length - 1, 0));
@@ -2310,6 +2368,39 @@
               if (storedState?.preview) {
                 presentationPreview = normalizePreview(storedState.preview);
               }
+              
+              // CRITICAL: Ensure slides array is valid before rendering
+              if (!Array.isArray(slides) || slides.length === 0) {
+                console.warn('WARNING: slides array is invalid or empty after loading!');
+                console.warn('slides:', slides);
+                console.warn('storedState.slides:', storedState?.slides);
+                // Try to recover by creating at least one empty slide
+                if (!Array.isArray(slides)) {
+                  slides = [];
+                }
+                if (slides.length === 0) {
+                  slides = [createEmptySlide()];
+                  console.log('Created empty slide as fallback');
+                }
+              }
+              
+              // CRITICAL: Re-render after loading data asynchronously
+              render();
+              
+              // Update presentation name input if it exists
+              if (presentationNameInput && loadedPresentationName && loadedPresentationName !== DEFAULT_PRESENTATION_NAME) {
+                presentationNameInput.value = loadedPresentationName;
+              }
+              
+              // Final verification: Check if slides have elements after render
+              setTimeout(() => {
+                if (slides.length > 0 && slides[0]?.elements?.length === 0) {
+                  console.warn('WARNING: After loading and rendering, first slide has 0 elements!');
+                  console.warn('First slide object:', slides[0]);
+                } else if (slides.length > 0 && slides[0]?.elements?.length > 0) {
+                  console.log('SUCCESS: After loading, first slide has', slides[0].elements.length, 'elements');
+                }
+              }, 100);
             }
             
             // Also check the presentations index for the name (in case it's stored there but not in project data)
@@ -2321,6 +2412,10 @@
                   const projectEntry = allProjects.find(p => p.id === presentationId);
                   if (projectEntry && projectEntry.name && projectEntry.name.trim() && projectEntry.name.toLowerCase() !== DEFAULT_PRESENTATION_NAME.toLowerCase()) {
                     loadedPresentationName = projectEntry.name.trim();
+                    // Update input if name was loaded from index
+                    if (presentationNameInput) {
+                      presentationNameInput.value = loadedPresentationName;
+                    }
                   }
                 }
                 
@@ -2333,6 +2428,10 @@
                       const indexEntry = index.find(item => item && item.id === presentationId);
                       if (indexEntry && indexEntry.name && indexEntry.name.trim() && indexEntry.name.toLowerCase() !== DEFAULT_PRESENTATION_NAME.toLowerCase()) {
                         loadedPresentationName = indexEntry.name.trim();
+                        // Update input if name was loaded from index
+                        if (presentationNameInput) {
+                          presentationNameInput.value = loadedPresentationName;
+                        }
                       }
                     }
                   }
@@ -2350,15 +2449,56 @@
       try {
         // Skip loading stored data if this is a brand new presentation (already initialized above)
         if (!newSession && !isNew) {
-          // Synchronous fallback for immediate loading
-          const storedRaw = localStorage.getItem(presentationStorageKey);
-          if (storedRaw) {
-            const storedState = JSON.parse(storedRaw);
+          // Synchronous fallback for immediate loading - try user-specific key first
+          let storedState = null;
+          const currentUser = getCurrentUser();
+          if (currentUser && currentUser.id) {
+            const userSpecificKey = `lumen-presentation-${currentUser.id}-${presentationId}`;
+            const userStoredRaw = localStorage.getItem(userSpecificKey);
+            if (userStoredRaw) {
+              try {
+                storedState = JSON.parse(userStoredRaw);
+                console.log('Sync load: Loaded from user-specific localStorage:', presentationId);
+              } catch (e) {
+                console.warn('Sync load: Failed to parse user-specific localStorage:', e);
+              }
+            }
+          }
+          
+          // Fallback to legacy key
+          if (!storedState) {
+            const storedRaw = localStorage.getItem(presentationStorageKey);
+            if (storedRaw) {
+              try {
+                storedState = JSON.parse(storedRaw);
+                console.log('Sync load: Loaded from legacy localStorage:', presentationId);
+              } catch (e) {
+                console.warn('Sync load: Failed to parse legacy localStorage:', e);
+              }
+            }
+          }
+          
+          if (storedState) {
             loadedExistingPresentation = true;
             isNewPresentation = false;
             
             if (storedState && Array.isArray(storedState.slides)) {
-              slides = storedState.slides;
+              // Deep clone slides to ensure all nested data is preserved
+              slides = JSON.parse(JSON.stringify(storedState.slides));
+              console.log('Loaded', slides.length, 'slides from localStorage (sync)');
+              if (slides.length > 0) {
+                const firstSlide = slides[0];
+                console.log('First slide has', firstSlide?.elements?.length || 0, 'elements');
+                console.log('First slide title:', firstSlide?.title || 'No title');
+                if (firstSlide?.elements && firstSlide.elements.length > 0) {
+                  console.log('First element type:', firstSlide.elements[0]?.type);
+                  console.log('First element text:', firstSlide.elements[0]?.text || 'No text');
+                } else {
+                  console.warn('WARNING: First slide has NO elements!');
+                }
+              }
+            } else {
+              console.warn('Sync load: storedState.slides is not a valid array:', storedState?.slides);
             }
             if (typeof storedState?.activeSlideIndex === 'number') {
               activeSlideIndex = Math.min(Math.max(storedState.activeSlideIndex, 0), Math.max(slides.length - 1, 0));
@@ -2371,6 +2511,10 @@
             }
             if (storedState?.presentationName) {
               loadedPresentationName = storedState.presentationName;
+              // Update presentation name input if it exists
+              if (presentationNameInput && loadedPresentationName !== DEFAULT_PRESENTATION_NAME) {
+                presentationNameInput.value = loadedPresentationName;
+              }
             }
             if (storedState?.preview) {
               presentationPreview = normalizePreview(storedState.preview);
@@ -3438,10 +3582,34 @@
         const now = Date.now();
         const activeSlide = slides[activeSlideIndex] || slides[0];
         presentationPreview = normalizePreview(buildPresentationPreview(activeSlide));
+        // Ensure slides array is valid and has content
+        if (!Array.isArray(slides)) {
+          console.warn('Autosave: slides is not an array, resetting to empty array');
+          slides = [];
+        }
+        
+        // Deep clone slides to ensure all nested data is saved
+        // This ensures elements, animations, and all nested properties are included
+        const slidesToSave = JSON.parse(JSON.stringify(slides));
+        
+        // Debug: Log slide content to verify it's being saved
+        const slidesWithContent = slidesToSave.filter(s => s && (s.elements?.length > 0 || s.title || s.backgroundColor));
+        console.log('Autosave: Saving', slidesToSave.length, 'slides,', slidesWithContent.length, 'with content');
+        if (slidesToSave.length > 0) {
+          const firstSlide = slidesToSave[0];
+          console.log('Autosave: First slide has', firstSlide?.elements?.length || 0, 'elements');
+          console.log('Autosave: First slide title:', firstSlide?.title || 'No title');
+          if (firstSlide?.elements && firstSlide.elements.length > 0) {
+            console.log('Autosave: First element type:', firstSlide.elements[0]?.type);
+            console.log('Autosave: First element text:', firstSlide.elements[0]?.text?.substring(0, 50) || 'No text');
+          }
+        }
+        
         const presentationState = {
-          slides,
+          slides: slidesToSave, // Use deep-cloned slides to ensure all data is saved
           activeSlideIndex,
           presentationName,
+          name: presentationName, // Also save as 'name' for consistency with projects list
           createdAt: presentationCreatedAt,
           updatedAt: now,
           preview: presentationPreview,
@@ -3456,6 +3624,12 @@
           const saveResult = await saveProjectToFirestore(presentationId, presentationState);
           if (saveResult.success) {
             console.log('Autosave: Saved to Firestore users/{uid}/projects/', presentationId, 'with', slides.length, 'slides');
+            // Verify what was saved
+            console.log('Autosave: Saved slides structure:', {
+              totalSlides: slides.length,
+              firstSlideElements: slides[0]?.elements?.length || 0,
+              firstSlideTitle: slides[0]?.title || 'No title'
+            });
           } else {
             console.warn('Autosave: Failed to save to Firestore:', saveResult.error);
             // Fallback to localStorage
@@ -3488,7 +3662,13 @@
         // But the project data itself is always saved above
         const nameIsValid = presentationName && presentationName.trim() && presentationName.toLowerCase() !== DEFAULT_PRESENTATION_NAME.toLowerCase();
         if (nameIsValid) {
-          ensureRecentPresentationEntry({ name: presentationName, createdAt: presentationCreatedAt, updatedAt: presentationUpdatedAt });
+          // Update index entry with current name and metadata
+          ensureRecentPresentationEntry({ 
+            name: presentationName, 
+            createdAt: presentationCreatedAt, 
+            updatedAt: presentationUpdatedAt,
+            preview: presentationPreview
+          });
           // Mark as saved once it has a valid name and is saved to index
           isProjectSaved = true;
           // Clear unsaved project flags once saved
@@ -3627,6 +3807,26 @@
         // DO NOT truncate the index - keep all projects
         // The home page will limit display to 1-2 recent, but all projects should be preserved
         localStorage.setItem(PRESENTATIONS_INDEX_KEY, JSON.stringify(index));
+        
+        // CRITICAL: Also save project metadata to Firestore so name appears in projects list
+        if (typeof updateProjectMetadataInFirestore === 'function') {
+          updateProjectMetadataInFirestore(presentationId, {
+            name: entryName,
+            updatedAt: calculatedUpdatedAt,
+            createdAt: calculatedCreatedAt,
+            preview: normalizedPreview,
+            important: existingImportant || false,
+            url: `slide-editor.html?id=${presentationId}`
+          }).then(result => {
+            if (result.success) {
+              console.log('Project metadata saved to Firestore:', presentationId, 'name:', entryName);
+            } else {
+              console.warn('Failed to save project metadata to Firestore:', result.error);
+            }
+          }).catch(error => {
+            console.warn('Error saving project metadata to Firestore:', error);
+          });
+        }
         
         // Track activity for new project creation
         if (isNewProject) {
@@ -8798,7 +8998,47 @@
       updateShareLink();
       simulateCollaborationTick();
       window.setInterval(simulateCollaborationTick, 8000);
-      window.addEventListener('beforeunload', runAutosave);
+      
+      // Periodic auto-save as safety net (saves every 30 seconds if there are changes)
+      periodicSaveInterval = window.setInterval(() => {
+        if (needsAutosave) {
+          console.log('Periodic autosave: Saving changes...');
+          runAutosave();
+        }
+      }, PERIODIC_SAVE_INTERVAL_MS);
+      
+      // Enhanced beforeunload handler - always save before leaving
+      window.addEventListener('beforeunload', (e) => {
+        // Force immediate save (synchronous if possible)
+        if (needsAutosave) {
+          // Try to save synchronously
+          try {
+            const rawName = presentationNameInput ? presentationNameInput.value : loadedPresentationName;
+            const presentationName = (typeof rawName === 'string' && rawName.trim().length) ? rawName.trim() : DEFAULT_PRESENTATION_NAME;
+            const now = Date.now();
+            const activeSlide = slides[activeSlideIndex] || slides[0];
+            presentationPreview = normalizePreview(buildPresentationPreview(activeSlide));
+            const presentationState = {
+              slides,
+              activeSlideIndex,
+              presentationName,
+              createdAt: presentationCreatedAt,
+              updatedAt: now,
+              preview: presentationPreview,
+            };
+            // Save to localStorage synchronously (always works)
+            localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(presentationState));
+            if (presentationId) {
+              const projectStorageKey = `${PRESENTATION_STORAGE_PREFIX}${presentationId}`;
+              localStorage.setItem(projectStorageKey, JSON.stringify(presentationState));
+            }
+          } catch (error) {
+            console.warn('Failed to save on beforeunload:', error);
+          }
+        }
+        // Also call async save
+        runAutosave();
+      });
     })();
 
     if (presenterExitBtn) {
@@ -8958,35 +9198,47 @@
       // Update presentation name
       if (presentationNameInput) {
         presentationNameInput.value = name;
+        loadedPresentationName = name; // Update loaded name too
         needsAutosave = true;
       }
 
       // Save presentation (this will now save to index since name is valid)
-      runAutosave();
+      // Use async/await to ensure save completes before navigating
+      (async () => {
+        await runAutosave();
+        
+        // Explicitly update index entry with new name
+        ensureRecentPresentationEntry({ 
+          name: name, 
+          createdAt: presentationCreatedAt, 
+          updatedAt: Date.now(),
+          preview: presentationPreview
+        });
+        
+        // Mark as saved
+        isProjectSaved = true;
       
-      // Mark as saved
-      isProjectSaved = true;
-      
-      // Clear unsaved project flags
-      if (typeof window !== 'undefined') {
-        sessionStorage.removeItem('unsavedProjectId');
-        sessionStorage.removeItem('isUnsavedProject');
-      }
-
-      // Close modal
-      const modal = document.getElementById('namePrompt');
-      if (modal) {
-        modal.style.display = 'none';
-      }
-
-      // Navigate home after a short delay to ensure save completes
-      setTimeout(() => {
-        if (window.fadeNavigate) {
-          window.fadeNavigate('home.html');
-        } else {
-          window.location.href = 'home.html';
+        // Clear unsaved project flags
+        if (typeof window !== 'undefined') {
+          sessionStorage.removeItem('unsavedProjectId');
+          sessionStorage.removeItem('isUnsavedProject');
         }
-      }, 200);
+
+        // Close modal
+        const modal = document.getElementById('namePrompt');
+        if (modal) {
+          modal.style.display = 'none';
+        }
+
+        // Navigate home after a short delay to ensure save completes
+        setTimeout(() => {
+          if (window.fadeNavigate) {
+            window.fadeNavigate('home.html');
+          } else {
+            window.location.href = 'home.html';
+          }
+        }, 200);
+      })();
     }
 
     function goBackWithoutSaving() {
@@ -9072,29 +9324,40 @@
             // Update presentation name
             if (presentationNameInput) {
               presentationNameInput.value = name;
+              loadedPresentationName = name; // Update loaded name too
               needsAutosave = true;
             }
 
-            // Save presentation
-            runAutosave();
-            
-            // Mark as saved
-            isProjectSaved = true;
-            
-            // Clear unsaved project flags
-            if (typeof window !== 'undefined') {
-              sessionStorage.removeItem('unsavedProjectId');
-              sessionStorage.removeItem('isUnsavedProject');
-            }
+            // Save presentation and update index
+            (async () => {
+              await runAutosave();
+              
+              // Explicitly update index entry with new name
+              ensureRecentPresentationEntry({ 
+                name: name, 
+                createdAt: presentationCreatedAt, 
+                updatedAt: Date.now(),
+                preview: presentationPreview
+              });
+              
+              // Mark as saved
+              isProjectSaved = true;
+              
+              // Clear unsaved project flags
+              if (typeof window !== 'undefined') {
+                sessionStorage.removeItem('unsavedProjectId');
+                sessionStorage.removeItem('isUnsavedProject');
+              }
 
-            // Close modal
-            const modal = document.getElementById('namePrompt');
-            if (modal) {
-              modal.style.display = 'none';
-            }
-            if (nameInputContainer) {
-              nameInputContainer.style.display = 'none';
-            }
+              // Close modal
+              const modal = document.getElementById('namePrompt');
+              if (modal) {
+                modal.style.display = 'none';
+              }
+              if (nameInputContainer) {
+                nameInputContainer.style.display = 'none';
+              }
+            })();
             
             // Reset button text
             nameAndSaveBtn.textContent = 'Name & Save';
@@ -9225,9 +9488,10 @@
       box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
     }
   </style>
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"></script>
+  <!-- Firebase SDK - Using compat version for file:// protocol compatibility -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics-compat.js"></script>
   <script src="./scripts/auth.js"></script>
   <script src="./scripts/profile.js"></script>
   <script src="./scripts/teams.js"></script>
@@ -9303,6 +9567,7 @@
       </div>
     </div>
   </div>
+  <!-- Load config.js for API keys -->
   <script src="./config.js"></script>
   <script src="./scripts/chatbot.js"></script>
   <link rel="stylesheet" href="styles.css" />

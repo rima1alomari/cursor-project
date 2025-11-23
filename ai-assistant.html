@@ -484,6 +484,8 @@
     <script src="./scripts/auth.js"></script>
     <script src="./scripts/profile.js"></script>
     <script src="./scripts/account-display.js"></script>
+    <!-- Load config.js BEFORE the inline script that uses the API key -->
+    <script src="./config.js"></script>
     <script>
       // AI Presentation Generation
       (function() {
@@ -1150,7 +1152,7 @@
         // OpenAI API Key - Load from config.js
         const API_KEY = window.OPENAI_API_KEY || 'YOUR_OPENAI_API_KEY_HERE';
         
-        // Validate API key
+        // Validate API key on page load
         if (!API_KEY || API_KEY === 'YOUR_OPENAI_API_KEY_HERE' || API_KEY === 'YOUR_API_KEY_HERE') {
           console.error('OpenAI API key not configured. Please set your API key in config.js');
         }
@@ -1608,6 +1610,7 @@ Return ONLY valid JSON, no other text.`;
         </div>
       </div>
     </div>
+    <!-- config.js already loaded in head section -->
     <script src="./scripts/chatbot.js"></script>
   </body>
 </html>
