@@ -961,6 +961,20 @@
               <button id="alignRightBtn" class="rounded-full border border-white/30 px-3 py-1.5 text-sm hover:bg-white/10">Right</button>
             </div>
             <div class="flex items-center gap-2">
+              <label class="text-sm text-white/80">List</label>
+              <select id="listTypeSelect" class="rounded-md border-0 bg-white/20 px-2 py-1.5 text-sm text-white focus:ring-2 focus:ring-white/40">
+                <option value="none">None</option>
+                <option value="disc">Bullet (•)</option>
+                <option value="circle">Circle (○)</option>
+                <option value="square">Square (■)</option>
+                <option value="decimal">Numbered (1, 2, 3)</option>
+                <option value="lower-alpha">Lowercase (a, b, c)</option>
+                <option value="upper-alpha">Uppercase (A, B, C)</option>
+                <option value="lower-roman">Lower Roman (i, ii, iii)</option>
+                <option value="upper-roman">Upper Roman (I, II, III)</option>
+              </select>
+            </div>
+            <div class="flex items-center gap-2">
               <label class="text-sm text-white/80">Line Height</label>
               <select id="lineHeightSelect" class="rounded-md border-0 bg-white/20 px-2 py-1.5 text-sm text-white focus:ring-2 focus:ring-white/40">
                 <option value="1">1.0</option>
@@ -6027,6 +6041,97 @@
           const liveLetterSpacing = typeof el.letterSpacing === 'number' ? el.letterSpacing : 0;
           div.style.letterSpacing = `${liveLetterSpacing}px`;
           div.style.textTransform = el.textTransform || 'none';
+          
+          // Apply list styling
+          const listType = el.listType || 'none';
+          const text = el.text || '';
+          
+          if (listType !== 'none' && text) {
+            // Clear any existing content
+            div.innerHTML = '';
+            div.style.paddingLeft = '0';
+            div.style.marginLeft = '0';
+            
+            // Convert text to list items if it has line breaks
+            const lines = text.split('\n').filter(line => line.trim().length > 0);
+            
+            if (lines.length > 0) {
+              // Create list structure
+              if (listType === 'decimal' || listType === 'lower-alpha' || listType === 'upper-alpha' || 
+                  listType === 'lower-roman' || listType === 'upper-roman') {
+                // Ordered list
+                const ol = document.createElement('ol');
+                ol.style.listStyleType = listType;
+                ol.style.margin = '0';
+                ol.style.paddingLeft = '24px';
+                ol.style.color = el.color || '#111827';
+                ol.style.fontSize = (el.fontSize || 16) + 'px';
+                ol.style.fontFamily = el.fontFamily || 'Inter, sans-serif';
+                ol.style.lineHeight = String(typeof el.lineHeight === 'number' ? el.lineHeight : 1.4);
+                
+                lines.forEach(line => {
+                  const li = document.createElement('li');
+                  li.textContent = line.trim();
+                  li.contentEditable = 'true';
+                  li.style.marginBottom = '4px';
+                  li.style.outline = 'none';
+                  ol.appendChild(li);
+                });
+                
+                div.appendChild(ol);
+              } else {
+                // Unordered list (bullet, circle, square)
+                const ul = document.createElement('ul');
+                ul.style.listStyleType = listType;
+                ul.style.margin = '0';
+                ul.style.paddingLeft = '24px';
+                ul.style.color = el.color || '#111827';
+                ul.style.fontSize = (el.fontSize || 16) + 'px';
+                ul.style.fontFamily = el.fontFamily || 'Inter, sans-serif';
+                ul.style.lineHeight = String(typeof el.lineHeight === 'number' ? el.lineHeight : 1.4);
+                
+                lines.forEach(line => {
+                  const li = document.createElement('li');
+                  li.textContent = line.trim();
+                  li.contentEditable = 'true';
+                  li.style.marginBottom = '4px';
+                  li.style.outline = 'none';
+                  ul.appendChild(li);
+                });
+                
+                div.appendChild(ul);
+              }
+            } else {
+              // Empty text - show placeholder or empty list
+              if (listType === 'decimal' || listType === 'lower-alpha' || listType === 'upper-alpha' || 
+                  listType === 'lower-roman' || listType === 'upper-roman') {
+                const ol = document.createElement('ol');
+                ol.style.listStyleType = listType;
+                ol.style.margin = '0';
+                ol.style.paddingLeft = '24px';
+                const li = document.createElement('li');
+                li.textContent = '';
+                li.contentEditable = 'true';
+                ol.appendChild(li);
+                div.appendChild(ol);
+              } else {
+                const ul = document.createElement('ul');
+                ul.style.listStyleType = listType;
+                ul.style.margin = '0';
+                ul.style.paddingLeft = '24px';
+                const li = document.createElement('li');
+                li.textContent = '';
+                li.contentEditable = 'true';
+                ul.appendChild(li);
+                div.appendChild(ul);
+              }
+            }
+          } else {
+            // No list - regular text
+            div.innerHTML = '';
+            div.textContent = text;
+          }
+          
           div.contentEditable = 'true';
           div.spellcheck = false;
           if (el.backgroundColor) {
@@ -6039,7 +6144,6 @@
             div.style.borderRadius = '0';
           }
           div.dataset.elementId = el.id;
-          div.textContent = el.text || '';
 
           // Selection styles
           if (selectedElementId === el.id) {
@@ -6064,10 +6168,50 @@
             }
           });
 
-          div.addEventListener('input', () => {
-            el.text = div.textContent || '';
+          div.addEventListener('input', (e) => {
+            // Get text from the div, handling list structures
+            let text = '';
+            if (el.listType && el.listType !== 'none') {
+              // Extract text from list items
+              const listItems = div.querySelectorAll('li');
+              if (listItems.length > 0) {
+                text = Array.from(listItems).map(li => li.textContent.trim()).filter(t => t.length > 0).join('\n');
+              } else {
+                text = div.textContent || '';
+              }
+            } else {
+              text = div.textContent || '';
+            }
+            el.text = text;
             markDirty();
           });
+          
+          // Handle Enter key in list items to create new list item
+          if (listType !== 'none') {
+            div.addEventListener('keydown', (e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                const target = e.target;
+                if (target.tagName === 'LI') {
+                  e.preventDefault();
+                  const newLi = document.createElement('li');
+                  newLi.textContent = '';
+                  newLi.contentEditable = 'true';
+                  newLi.style.marginBottom = '4px';
+                  newLi.style.outline = 'none';
+                  if (target.nextSibling) {
+                    target.parentNode.insertBefore(newLi, target.nextSibling);
+                  } else {
+                    target.parentNode.appendChild(newLi);
+                  }
+                  newLi.focus();
+                  // Update element text
+                  const listItems = div.querySelectorAll('li');
+                  el.text = Array.from(listItems).map(li => li.textContent.trim()).filter(t => t.length > 0).join('\n');
+                  markDirty();
+                }
+              }
+            });
+          }
           div.addEventListener('focus', () => {
             editingTextElementId = el.id;
             selectedElementId = el.id;
@@ -6077,7 +6221,20 @@
 
           div.addEventListener('blur', () => {
             const wasSelected = selectedElementId === el.id;
-            el.text = div.textContent || '';
+            // Get text from the div, handling list structures
+            let text = '';
+            if (el.listType && el.listType !== 'none') {
+              // Extract text from list items
+              const listItems = div.querySelectorAll('li');
+              if (listItems.length > 0) {
+                text = Array.from(listItems).map(li => li.textContent.trim()).join('\n');
+              } else {
+                text = div.textContent || '';
+              }
+            } else {
+              text = div.textContent || '';
+            }
+            el.text = text;
             markDirty();
             if (editingTextElementId === el.id) {
               editingTextElementId = null;
@@ -6410,7 +6567,7 @@
       const slideAnimationControlsEnabled = activeToolTab === 'animation';
       const elementAnimationEnabled = Boolean(selected);
 
-      const textControls = [fontFamilySelect, fontSizeSelect, textColorInput, textBgColorInput, textBgClearBtn, boldBtn, italicBtn, underlineBtn, alignLeftBtn, alignCenterBtn, alignRightBtn, lineHeightSelect, letterSpacingSelect, textTransformSelect];
+      const textControls = [fontFamilySelect, fontSizeSelect, textColorInput, textBgColorInput, textBgClearBtn, boldBtn, italicBtn, underlineBtn, alignLeftBtn, alignCenterBtn, alignRightBtn, listTypeSelect, lineHeightSelect, letterSpacingSelect, textTransformSelect];
       textControls.forEach(control => {
         if (!control) return;
         control.disabled = !isText;
@@ -6431,6 +6588,9 @@
         }
         if (textBgClearBtn) {
           textBgClearBtn.disabled = !selected.backgroundColor;
+        }
+        if (listTypeSelect) {
+          listTypeSelect.value = selected.listType || 'none';
         }
         if (lineHeightSelect) {
           const lh = typeof selected.lineHeight === 'number' ? selected.lineHeight : 1.4;
@@ -7775,6 +7935,7 @@
           italic: false,
           underline: false,
           align: 'left',
+          listType: 'none',
           lineHeight: 1.4,
           letterSpacing: 0,
           textTransform: 'none',
@@ -7908,6 +8069,19 @@
       alignRightBtn.addEventListener('click', () => {
         const el = getSelectedElement();
         if (el && el.type === 'text') { el.align = 'right'; markDirty(); render(); }
+      });
+    }
+
+    // List type handler
+    if (listTypeSelect) {
+      listTypeSelect.addEventListener('change', () => {
+        const el = getSelectedElement();
+        if (el && el.type === 'text') {
+          const listType = listTypeSelect.value;
+          el.listType = listType;
+          markDirty();
+          render();
+        }
       });
     }
 
