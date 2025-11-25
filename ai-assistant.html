@@ -895,6 +895,42 @@
           };
         }
 
+        function createChartElement(chartData, x = 400, y = 150, width = 420, height = 280) {
+          // chartData should have: type, title, labels, values, description
+          const chartType = chartData.type || 'bar';
+          const chartTitle = chartData.title || 'Chart';
+          const labels = Array.isArray(chartData.labels) ? chartData.labels : ['A', 'B', 'C'];
+          const values = Array.isArray(chartData.values) ? chartData.values : [10, 20, 30];
+          
+          // Ensure labels and values arrays match in length
+          const maxLength = Math.max(labels.length, values.length);
+          const finalLabels = [];
+          const finalValues = [];
+          
+          for (let i = 0; i < maxLength; i++) {
+            finalLabels.push(labels[i] || `Item ${i + 1}`);
+            finalValues.push(typeof values[i] === 'number' ? values[i] : (i + 1) * 10);
+          }
+          
+          return {
+            id: generatePresentationId(),
+            type: 'chart',
+            title: chartTitle,
+            chartType: chartType,
+            palette: 'ocean', // Default palette
+            dataset: {
+              labels: finalLabels,
+              values: finalValues
+            },
+            left: x,
+            top: y,
+            width: width,
+            height: height,
+            rotation: 0,
+            animation: { type: 'none', duration: 600, delay: 0 }
+          };
+        }
+
         function generateSlidesFromDescription(description, title, theme) {
           const colors = getThemeColors(theme);
           const slides = [];
@@ -1166,15 +1202,36 @@
             minimal: 'minimal gray color scheme'
           }[theme] || 'professional blue color scheme';
 
+          // Check if user wants charts - MORE AGGRESSIVE DETECTION
+          const descLower = description.toLowerCase();
+          const wantsCharts = descLower.includes('chart') || 
+                            descLower.includes('graph') ||
+                            descLower.includes('data visualization') ||
+                            descLower.includes('statistics') ||
+                            descLower.includes('analytics') ||
+                            descLower.includes('visualize') ||
+                            descLower.includes('visualization') ||
+                            descLower.includes('data') ||
+                            descLower.includes('numbers') ||
+                            descLower.includes('metrics') ||
+                            descLower.includes('show data') ||
+                            descLower.includes('include chart') ||
+                            descLower.includes('add chart') ||
+                            descLower.includes('with chart') ||
+                            descLower.includes('with graphs') ||
+                            descLower.includes('with data');
+
           const prompt = `Create a comprehensive presentation based on the following description. Generate 5-8 slides with creative, engaging content.
 
 Presentation Title: ${title}
 Theme: ${themeDescription}
 Description: ${description}
+${wantsCharts ? '\n🚨 CRITICAL REQUIREMENT: THE USER HAS EXPLICITLY REQUESTED CHARTS. YOU MUST INCLUDE AT LEAST 1-2 CHARTS IN YOUR RESPONSE. Add charts to slides that would benefit from data visualization (e.g., statistics slides, comparison slides, performance slides, analysis slides).' : ''}
 
 IMPORTANT: For each slide, you MUST provide:
 1. A clear, engaging slide title (required)
 2. An array of "points" with 3-5 well-written bullet points (REQUIRED - each point must be a complete sentence or phrase)
+3. OPTIONAL: A "chart" object if the slide should include a data visualization
 
 Format your response as JSON with this EXACT structure (no markdown, no code blocks):
 {
@@ -1186,9 +1243,30 @@ Format your response as JSON with this EXACT structure (no markdown, no code blo
     {
       "title": "Key Concepts",
       "points": ["Concept 1 explanation", "Concept 2 details", "Concept 3 insights"]
+    },
+    {
+      "title": "Data Analysis",
+      "points": ["Key finding 1", "Key finding 2", "Key finding 3"],
+      "chart": {
+        "type": "bar",
+        "title": "Relevant Chart Title",
+        "labels": ["Category A", "Category B", "Category C", "Category D"],
+        "values": [45, 67, 34, 89],
+        "description": "Brief description of what this chart shows"
+      }
     }
   ]
 }
+
+CHART REQUIREMENTS ${wantsCharts ? '(MANDATORY - USER REQUESTED CHARTS)' : '(when including charts)'}:
+- Chart type can be: "bar", "line", "pie", "doughnut", "radar", or "polarArea"
+- Chart title should be relevant to the slide topic
+- Labels array: 3-6 meaningful category names related to the presentation topic
+- Values array: Realistic numbers that make sense for the topic (same length as labels)
+- Description: Brief explanation of what the chart represents
+- Include charts on slides where data visualization would be helpful (statistics, comparisons, trends, distributions, etc.)
+- Make chart data relevant and meaningful to: ${description}
+${wantsCharts ? '\n⚠️ IF THE USER ASKED FOR CHARTS, YOU MUST INCLUDE THEM. DO NOT SKIP CHARTS. Add at least 1-2 charts total across your slides.' : ''}
 
 CRITICAL REQUIREMENTS:
 - Every slide MUST have a "title" field
@@ -1197,6 +1275,7 @@ CRITICAL REQUIREMENTS:
 - Make content specific, detailed, and relevant to: ${description}
 - Include an introduction slide, 3-5 main content slides, and a conclusion slide
 - Write complete, informative bullet points (not just keywords)
+${wantsCharts ? '- If charts are requested, include 1-3 charts total across different slides with relevant data' : ''}
 
 Return ONLY valid JSON, no other text.`;
 
@@ -1269,6 +1348,25 @@ Return ONLY valid JSON, no other text.`;
           const colors = getThemeColors(theme);
           const slides = [];
 
+          // Check if user wants charts
+          const descLower = description.toLowerCase();
+          const wantsCharts = descLower.includes('chart') || 
+                            descLower.includes('graph') ||
+                            descLower.includes('data visualization') ||
+                            descLower.includes('statistics') ||
+                            descLower.includes('analytics') ||
+                            descLower.includes('visualize') ||
+                            descLower.includes('visualization') ||
+                            descLower.includes('data') ||
+                            descLower.includes('numbers') ||
+                            descLower.includes('metrics') ||
+                            descLower.includes('show data') ||
+                            descLower.includes('include chart') ||
+                            descLower.includes('add chart') ||
+                            descLower.includes('with chart') ||
+                            descLower.includes('with graphs') ||
+                            descLower.includes('with data');
+
           // Title slide
           const titleSlide = createEmptySlide();
           titleSlide.title = 'Title';
@@ -1284,6 +1382,47 @@ Return ONLY valid JSON, no other text.`;
           // Debug: Log the AI response to see what we're getting
           console.log('AI Presentation Response:', aiPresentation);
           console.log('AI Slides:', aiSlides);
+          console.log('User wants charts:', wantsCharts);
+          
+          // Check if AI included any charts
+          let chartsFound = 0;
+          aiSlides.forEach(slide => {
+            if (slide.chart && typeof slide.chart === 'object') {
+              chartsFound++;
+            }
+          });
+          console.log('Charts found in AI response:', chartsFound);
+          
+          // If user wants charts but AI didn't include any, add one automatically
+          if (wantsCharts && chartsFound === 0) {
+            console.log('⚠️ User requested charts but AI did not include any. Adding chart automatically...');
+            // Find a good slide to add a chart to (prefer data/analysis/statistics slides)
+            let chartAdded = false;
+            for (let i = 0; i < aiSlides.length && !chartAdded; i++) {
+              const slide = aiSlides[i];
+              const slideTitleLower = (slide.title || '').toLowerCase();
+              // Add chart to slides about data, statistics, analysis, performance, results, etc.
+              if (slideTitleLower.includes('data') || 
+                  slideTitleLower.includes('statistic') || 
+                  slideTitleLower.includes('analysis') || 
+                  slideTitleLower.includes('performance') || 
+                  slideTitleLower.includes('result') ||
+                  slideTitleLower.includes('metric') ||
+                  slideTitleLower.includes('trend') ||
+                  slideTitleLower.includes('comparison') ||
+                  i >= 2) { // Or add to 3rd+ slide if no data-related slide found
+                slide.chart = {
+                  type: 'bar',
+                  title: `${slide.title || 'Data'} Overview`,
+                  labels: ['Category A', 'Category B', 'Category C', 'Category D'],
+                  values: [45, 67, 34, 89],
+                  description: `Visual representation of ${slide.title || 'key data'}`
+                };
+                chartAdded = true;
+                console.log(`✅ Added chart to slide: "${slide.title}"`);
+              }
+            }
+          }
           
           if (aiSlides.length === 0) {
             console.error('No slides found in AI response');
@@ -1350,10 +1489,43 @@ Return ONLY valid JSON, no other text.`;
               }
             }
             
+            // Check if this slide should have a chart
+            if (aiSlide.chart && typeof aiSlide.chart === 'object') {
+              console.log(`Adding chart to slide "${slide.title}":`, aiSlide.chart);
+              
+              // Create chart element
+              const chartElement = createChartElement(
+                aiSlide.chart,
+                400, // x position (right side)
+                150, // y position
+                420, // width
+                280  // height
+              );
+              elements.push(chartElement);
+              
+              // Add chart description as a bullet point if provided
+              if (aiSlide.chart.description) {
+                const chartDescElement = createBulletPoint(
+                  aiSlide.chart.description,
+                  120,
+                  120,
+                  260, // narrower width to leave room for chart
+                  18,
+                  colors.accent
+                );
+                elements.push(chartDescElement);
+              }
+              
+              // Add fewer bullet points when chart is present (to avoid overcrowding)
+              const maxPointsWithChart = 3;
+              points = points.slice(0, maxPointsWithChart);
+            }
+            
             // Calculate proper spacing for bullet points
             const titleHeight = 50; // Space for title (title is at y=50, height ~40px)
-            const startY = 120; // Start position after title with proper gap
+            const startY = aiSlide.chart ? 120 : 120; // Start position after title with proper gap
             const lineSpacing = 70; // Increased spacing between bullet points to prevent overlap
+            const bulletWidth = aiSlide.chart ? 260 : 760; // Narrower if chart present
             
             points.forEach((point, pIndex) => {
               const pointText = typeof point === 'string' ? point.trim() : String(point).trim();
@@ -1361,7 +1533,7 @@ Return ONLY valid JSON, no other text.`;
                 const bulletColor = pIndex === 0 ? colors.accent : colors.text;
                 const bulletSize = pIndex === 0 ? 20 : 18;
                 const yPosition = startY + (pIndex * lineSpacing);
-                const bulletElement = createBulletPoint(pointText, 120, yPosition, 760, bulletSize, bulletColor);
+                const bulletElement = createBulletPoint(pointText, 120, yPosition, bulletWidth, bulletSize, bulletColor);
                 elements.push(bulletElement);
                 console.log(`Added bullet ${pIndex + 1} to slide "${slide.title}":`, pointText);
               }
@@ -1561,25 +1733,7 @@ Return ONLY valid JSON, no other text.`;
             </div>
           </div>
           <div class="chatbot-header-actions">
-            <button id="chatbotResize" class="chatbot-header-btn" aria-label="Expand" onclick="
-              const win = document.getElementById('chatbotWindow');
-              if (win) {
-                const isExp = win.classList.contains('expanded');
-                if (isExp) {
-                  win.style.width = '380px';
-                  win.style.height = '500px';
-                  win.classList.remove('expanded');
-                  this.textContent = '⊞';
-                } else {
-                  win.style.width = '800px';
-                  win.style.height = '900px';
-                  win.classList.add('expanded');
-                  this.textContent = '⊟';
-                }
-                localStorage.setItem('chatbot_expanded', !isExp ? 'true' : 'false');
-              }
-              return false;
-            ">⊞</button>
+            <button id="chatbotResize" class="chatbot-header-btn" aria-label="Expand" onclick="if(typeof window.toggleChatbotSize==='function'){window.toggleChatbotSize();}else{const w=document.getElementById('chatbotWindow');if(w){const e=w.classList.contains('expanded');w.style.setProperty('width',e?'380px':'1200px','important');w.style.setProperty('height',e?'500px':'1000px','important');w.classList.toggle('expanded');this.textContent=e?'⊞':'⊟';localStorage.setItem('chatbot_expanded',e?'false':'true');}}return false;">⊞</button>
             <button id="chatbotMinimize" class="chatbot-header-btn" aria-label="Minimize">−</button>
             <button id="chatbotClose" class="chatbot-header-btn" aria-label="Close">×</button>
           </div>

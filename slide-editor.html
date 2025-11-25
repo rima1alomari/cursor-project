@@ -576,28 +576,17 @@
     .presenter-overlay--fullscreen .presenter-body {
       padding: 0;
     }
+    /* Hide all header elements in fullscreen */
     .presenter-overlay--fullscreen .presenter-header {
-      position: absolute;
-      top: 1.25rem;
-      left: 50%;
-      transform: translateX(-50%);
-      width: min(100vw - 3rem, 1200px);
-      padding: 0.75rem 1.5rem;
-      border-radius: 999px;
-      background: rgba(15, 23, 42, 0.55);
-      backdrop-filter: blur(10px);
-      box-shadow: 0 20px 40px rgba(15, 23, 42, 0.35);
+      display: none !important;
     }
+    /* Hide all control buttons in fullscreen */
     .presenter-overlay--fullscreen .presenter-controls {
-      position: absolute;
-      bottom: 2rem;
-      left: 50%;
-      transform: translateX(-50%);
-      padding: 0.75rem 1.5rem;
-      border-radius: 999px;
-      background: rgba(15, 23, 42, 0.55);
-      backdrop-filter: blur(10px);
-      box-shadow: 0 20px 40px rgba(15, 23, 42, 0.35);
+      display: none !important;
+    }
+    /* Hide live transcription box in fullscreen */
+    .presenter-overlay--fullscreen #liveTranscriptionBox {
+      display: none !important;
     }
     .presenter-overlay--fullscreen #presenterCanvas {
       width: 100vw !important;
@@ -617,13 +606,6 @@
       height: min(100vh, 100vw * (9 / 16));
       border-radius: 0;
       box-shadow: 0 40px 80px rgba(15, 23, 42, 0.55);
-    }
-    .presenter-overlay--fullscreen .presenter-controls button,
-    .presenter-overlay--fullscreen .presenter-controls span,
-    .presenter-overlay--fullscreen .presenter-header span,
-    .presenter-overlay--fullscreen .presenter-header button,
-    .presenter-overlay--fullscreen .presenter-header h2 {
-      font-weight: 600;
     }
     #presenterRecordBtn.recording {
       background-color: rgba(239, 68, 68, 0.2);
@@ -689,13 +671,13 @@
     }
     @media (max-width: 768px) {
       .presenter-overlay--fullscreen .presenter-header {
-        width: calc(100vw - 2rem);
-        top: 0.75rem;
-        padding: 0.6rem 1rem;
+        display: none !important;
       }
       .presenter-overlay--fullscreen .presenter-controls {
-        bottom: 1rem;
-        padding: 0.6rem 1rem;
+        display: none !important;
+      }
+      .presenter-overlay--fullscreen #liveTranscriptionBox {
+        display: none !important;
       }
       .presenter-overlay--fullscreen .presenter-frame {
         width: 100vw;
@@ -1006,6 +988,10 @@
             </div>
           </div>
           <div data-tab-panel="image" class="hidden flex flex-wrap items-center gap-4">
+            <button id="generateAIImageBtn" class="rounded-full bg-gradient-to-r from-purple-500/90 to-pink-500/90 px-4 py-2 text-sm font-medium shadow-sm transition hover:from-purple-500 hover:to-pink-500 text-white whitespace-nowrap flex items-center gap-2">
+              <span>✨</span>
+              <span>Generate AI Image</span>
+            </button>
             <label for="uploadImageInput" class="cursor-pointer rounded-full bg-white/20 px-3 py-1.5 text-sm hover:bg-white/30">Upload Image</label>
             <input id="uploadImageInput" type="file" accept="image/*">
             <label for="replaceImageInput" class="cursor-pointer rounded-full border border-white/30 px-3 py-1.5 text-sm hover:bg-white/10">Replace Image</label>
@@ -1554,13 +1540,19 @@
       </div>
       <div class="flex items-center gap-3 text-sm">
         <span class="rounded-full bg-slate-800/80 px-3 py-1.5">Tips: ← → to navigate · Esc to exit</span>
-        <button id="presenterRecordBtn" class="rounded-full border border-white/40 px-4 py-2 text-sm hover:bg-white/10 flex items-center gap-2">
-          <svg id="recordIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10" fill="none"></circle>
-          </svg>
-          <span id="recordText">Record / تسجيل صوت</span>
-        </button>
-        <button id="presenterFullscreenBtn" class="rounded-full border border-white/40 px-4 py-2 text-sm hover:bg-white/10">Enter Fullscreen</button>
+        <div class="flex items-center gap-2">
+          <button id="presenterRecordBtn" class="rounded-full border border-white/40 px-4 py-2 text-sm hover:bg-white/10 flex items-center gap-2">
+            <svg id="recordIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" fill="none"></circle>
+            </svg>
+            <span id="recordText">Record Audio / تسجيل صوت</span>
+          </button>
+          <div id="presenterRecordingTimer" class="hidden flex items-center gap-2 text-red-400">
+            <span class="inline-block w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+            <span id="presenterTimerText" class="font-mono text-sm">00:00</span>
+          </div>
+        </div>
+        <button id="presenterFullscreenBtn" type="button" class="rounded-full border border-white/40 px-4 py-2 text-sm hover:bg-white/10">Enter Fullscreen</button>
         <button id="presenterExitBtn" class="rounded-full border border-white/40 px-4 py-2 text-sm hover:bg-white/10">Exit</button>
       </div>
     </div>
@@ -1575,7 +1567,7 @@
       </div>
       <!-- Live Transcription Display -->
       <div id="liveTranscriptionBox" class="w-full max-w-md hidden flex-shrink-0">
-        <div class="bg-slate-800/95 backdrop-blur-sm rounded-xl border-2 border-white/30 p-4 shadow-2xl h-full">
+        <div class="bg-slate-800/95 backdrop-blur-sm rounded-xl border-2 border-white/30 p-4 shadow-2xl h-full flex flex-col">
           <div class="flex items-center justify-between mb-3">
             <h3 class="text-base font-bold text-white uppercase tracking-wider flex items-center gap-2">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1586,10 +1578,30 @@
               </svg>
               Live Transcription / النسخ المباشر
             </h3>
-            <button id="clearTranscriptionBtn" class="text-xs text-white hover:bg-white/20 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition">Clear / مسح</button>
+            <div class="flex items-center gap-2">
+              <button id="saveAudioBtn" class="hidden text-xs text-white hover:bg-white/20 px-3 py-1.5 rounded-lg bg-green-600/80 hover:bg-green-600 transition">Save Audio / حفظ الصوت</button>
+              <button id="clearTranscriptionBtn" class="text-xs text-white hover:bg-white/20 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition">Clear / مسح</button>
+            </div>
           </div>
-          <div id="liveTranscriptionContent" class="text-white text-sm leading-relaxed whitespace-pre-wrap overflow-y-auto min-h-[400px] max-h-[600px] p-4 bg-slate-900/70 rounded-lg border border-white/10">
+          <div id="liveTranscriptionContent" class="text-white text-sm leading-relaxed whitespace-pre-wrap overflow-y-auto min-h-[400px] max-h-[500px] p-4 bg-slate-900/70 rounded-lg border border-white/10 flex-1">
             <!-- Transcription will appear here -->
+          </div>
+          
+          <!-- Minutes to Meeting Section -->
+          <div class="mt-4 pt-4 border-t border-white/20">
+            <h4 class="text-sm font-bold text-white uppercase tracking-wider mb-2 flex items-center gap-2">
+              📝 Minutes to Meeting / محضر الاجتماع
+            </h4>
+            <textarea 
+              id="presenterMinutesInput" 
+              class="w-full bg-slate-900/70 border border-white/20 rounded-lg p-3 text-white text-sm resize-none focus:outline-none focus:border-white/40" 
+              rows="4" 
+              placeholder="Paste or type meeting minutes here... / الصق أو اكتب محضر الاجتماع هنا..."
+            ></textarea>
+            <div class="flex gap-2 mt-2">
+              <button id="saveMinutesToMeetingBtn" class="flex-1 text-xs text-white hover:bg-white/20 px-3 py-2 rounded-lg bg-green-600/80 hover:bg-green-600 transition">Save to Meeting / حفظ للاجتماع</button>
+              <button id="saveMinutesBtn" class="flex-1 text-xs text-white hover:bg-white/20 px-3 py-2 rounded-lg bg-blue-600/80 hover:bg-blue-600 transition">Download / تحميل</button>
+            </div>
           </div>
         </div>
       </div>
@@ -1635,6 +1647,65 @@
         <button id="transcriptionSaveBtn" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
           Save
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Image Generation Modal -->
+  <div id="aiImageModal" class="fixed inset-0 z-[60] hidden flex items-center justify-center bg-black/60 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col m-4">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200">
+        <h2 class="text-2xl font-semibold text-slate-900">✨ Generate AI Image</h2>
+        <button id="aiImageCloseBtn" class="text-slate-400 hover:text-slate-600">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="flex-1 overflow-y-auto p-6">
+        <div class="mb-4">
+          <label class="block text-sm font-semibold text-slate-700 mb-2">Image Description</label>
+          <textarea 
+            id="aiImagePrompt" 
+            class="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm focus:border-[#004c97] focus:outline-none focus:ring-2 focus:ring-[#004c97]/30 resize-none" 
+            rows="4" 
+            placeholder="Describe the image you want to generate... (e.g., 'A modern business presentation slide with blue gradient background and white text')"
+          ></textarea>
+          <p class="mt-2 text-xs text-slate-500">Be specific and descriptive for best results. The AI will generate a unique image based on your description.</p>
+        </div>
+        <div class="mb-4">
+          <label class="block text-sm font-semibold text-slate-700 mb-2">Image Size</label>
+          <select id="aiImageSize" class="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm focus:border-[#004c97] focus:outline-none focus:ring-2 focus:ring-[#004c97]/30">
+            <option value="1024x1024">Square (1024x1024)</option>
+            <option value="1792x1024" selected>Wide (1792x1024)</option>
+            <option value="1024x1792">Tall (1024x1792)</option>
+          </select>
+        </div>
+        <div id="aiImagePreview" class="hidden mb-4">
+          <label class="block text-sm font-semibold text-slate-700 mb-2">Preview</label>
+          <div class="border border-slate-200 rounded-lg p-4 bg-slate-50 flex items-center justify-center min-h-[200px]">
+            <img id="aiImagePreviewImg" src="" alt="Generated image preview" class="max-w-full max-h-[300px] rounded-lg">
+          </div>
+        </div>
+        <div id="aiImageError" class="hidden mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700"></div>
+        <div id="aiImageLoading" class="hidden mb-4 text-center">
+          <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#004c97]"></div>
+          <p class="mt-2 text-sm text-slate-600">Generating your image... This may take a moment.</p>
+        </div>
+      </div>
+      <div class="flex items-center justify-between px-6 py-4 border-t border-slate-200 gap-3">
+        <button id="aiImageCancelBtn" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition">
+          Cancel
+        </button>
+        <div class="flex gap-2">
+          <button id="aiImageGenerateBtn" class="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 transition font-medium">
+            Generate Image
+          </button>
+          <button id="aiImageAddBtn" class="hidden px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+            Add to Slide
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -2701,29 +2772,59 @@
     }
 
     function requestFullscreen(element) {
-       if (!element) return;
-       if (element.requestFullscreen) {
-         element.requestFullscreen().catch(() => {});
-       } else if (element.webkitRequestFullscreen) {
-         element.webkitRequestFullscreen();
-       } else if (element.msRequestFullscreen) {
-         element.msRequestFullscreen();
-       }
+       if (!element) return Promise.reject(new Error('No element provided'));
+       return new Promise((resolve, reject) => {
+         try {
+           if (element.requestFullscreen) {
+             element.requestFullscreen().then(resolve).catch(reject);
+           } else if (element.webkitRequestFullscreen) {
+             element.webkitRequestFullscreen();
+             resolve();
+           } else if (element.mozRequestFullScreen) {
+             element.mozRequestFullScreen();
+             resolve();
+           } else if (element.msRequestFullscreen) {
+             element.msRequestFullscreen();
+             resolve();
+           } else {
+             reject(new Error('Fullscreen API not supported'));
+           }
+         } catch (err) {
+           reject(err);
+         }
+       });
      }
 
     function exitFullscreen() {
-      if (document.exitFullscreen) {
-        document.exitFullscreen().catch(() => {});
-      } else if (document.webkitExitFullscreen) {
-        document.webkitExitFullscreen();
-      } else if (document.msExitFullscreen) {
-        document.msExitFullscreen();
+      try {
+        if (document.exitFullscreen) {
+          document.exitFullscreen().catch(err => {
+            console.error('Error exiting fullscreen:', err);
+          });
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+        } else if (document.mozCancelFullScreen) {
+          document.mozCancelFullScreen();
+        } else if (document.msExitFullscreen) {
+          document.msExitFullscreen();
+        }
+      } catch (err) {
+        console.error('Error exiting fullscreen:', err);
       }
     }
 
     function isPresenterFullscreen() {
-      const elem = document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
-      return elem === presenterCanvasEl;
+      const elem = document.fullscreenElement || 
+                   document.webkitFullscreenElement || 
+                   document.mozFullScreenElement || 
+                   document.msFullscreenElement;
+      // Check if presenter overlay or canvas is in fullscreen
+      if (!elem) return false;
+      if (!presenterOverlay) return false;
+      return elem === presenterCanvasEl || 
+             elem === presenterOverlay || 
+             presenterOverlay.contains(elem) || 
+             (presenterCanvasEl && presenterCanvasEl.contains(elem));
     }
 
     function syncPresenterFullscreenUI() {
@@ -2792,6 +2893,18 @@
     const fillBtn = document.getElementById('fillBtn');
     const imageOpacityRange = document.getElementById('imageOpacityRange');
     const imageOpacityValue = document.getElementById('imageOpacityValue');
+    const generateAIImageBtn = document.getElementById('generateAIImageBtn');
+    const aiImageModal = document.getElementById('aiImageModal');
+    const aiImageCloseBtn = document.getElementById('aiImageCloseBtn');
+    const aiImageCancelBtn = document.getElementById('aiImageCancelBtn');
+    const aiImagePrompt = document.getElementById('aiImagePrompt');
+    const aiImageSize = document.getElementById('aiImageSize');
+    const aiImageGenerateBtn = document.getElementById('aiImageGenerateBtn');
+    const aiImageAddBtn = document.getElementById('aiImageAddBtn');
+    const aiImagePreview = document.getElementById('aiImagePreview');
+    const aiImagePreviewImg = document.getElementById('aiImagePreviewImg');
+    const aiImageError = document.getElementById('aiImageError');
+    const aiImageLoading = document.getElementById('aiImageLoading');
 
     const addBarChartBtn = document.getElementById('addBarChartBtn');
     const addLineChartBtn = document.getElementById('addLineChartBtn');
@@ -2890,10 +3003,27 @@
     const presenterRecordBtn = document.getElementById('presenterRecordBtn');
     const recordIcon = document.getElementById('recordIcon');
     const recordText = document.getElementById('recordText');
+    const presenterRecordingTimer = document.getElementById('presenterRecordingTimer');
+    const presenterTimerText = document.getElementById('presenterTimerText');
+    
+    // Audio recording variables for presenter mode
+    let presenterMediaRecorder = null;
+    let presenterAudioChunks = [];
+    let presenterRecordingStream = null;
+    let presenterRecordingStartTime = null;
+    let presenterTimerInterval = null;
+    let presenterRecordedBlob = null;
+    let isPresenterAudioRecording = false;
+    let isExitingFullscreen = false; // Flag to prevent ESC from closing presenter mode immediately
+    let isClosingPresenterMode = false; // Flag to prevent fullscreen handler from restoring presenter mode
     
     const liveTranscriptionBox = document.getElementById('liveTranscriptionBox');
     const liveTranscriptionContent = document.getElementById('liveTranscriptionContent');
     const clearTranscriptionBtn = document.getElementById('clearTranscriptionBtn');
+    const saveAudioBtn = document.getElementById('saveAudioBtn');
+    const presenterMinutesInput = document.getElementById('presenterMinutesInput');
+    const saveMinutesBtn = document.getElementById('saveMinutesBtn');
+    const saveMinutesToMeetingBtn = document.getElementById('saveMinutesToMeetingBtn');
     
     const transcriptionModal = document.getElementById('transcriptionModal');
     const transcriptionCloseBtn = document.getElementById('transcriptionCloseBtn');
@@ -3989,16 +4119,72 @@
       document.body.classList.add('overflow-hidden');
       renderPresenterSlide();
       syncPresenterFullscreenUI();
+      
+      // Re-attach fullscreen handler when presenter mode opens
+      setTimeout(() => {
+        attachFullscreenHandler();
+      }, 100);
+      
       presenterKeyHandler = (event) => {
-        if (event.key === 'ArrowRight' || event.key === ' ') {
+        // Handle ESC key - exit fullscreen first, then close presenter mode
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          event.stopPropagation();
+          
+          // Check if we're currently in fullscreen BEFORE exiting
+          const currentlyFullscreen = isPresenterFullscreen();
+          console.log('ESC pressed. Currently in fullscreen:', currentlyFullscreen);
+          
+          if (currentlyFullscreen) {
+            console.log('ESC pressed while in fullscreen, exiting fullscreen and closing presenter mode...');
+            // Set flag to prevent fullscreen handler from restoring presenter mode
+            isClosingPresenterMode = true;
+            // Exit fullscreen first
+            exitFullscreen();
+            // Close presenter mode immediately (don't wait) to go back to edit mode
+            setTimeout(() => {
+              console.log('Closing presenter mode after fullscreen exit');
+              // Force close presenter mode completely
+              if (presenterOverlay) {
+                presenterOverlay.classList.add('hidden');
+                presenterOverlay.style.display = 'none';
+                presenterOverlay.style.visibility = 'hidden';
+                presenterOverlay.style.opacity = '0';
+              }
+              document.body.classList.remove('overflow-hidden');
+              // Remove key handler
+              if (presenterKeyHandler) {
+                document.removeEventListener('keydown', presenterKeyHandler);
+                presenterKeyHandler = null;
+              }
+              // Stop any recording
+              if (isPresenterAudioRecording) {
+                stopPresenterAudioRecording();
+              }
+              if (isRecording) {
+                stopRecording();
+              }
+              // Hide live transcription
+              if (liveTranscriptionBox) {
+                liveTranscriptionBox.classList.add('hidden');
+              }
+              // Clear the flag after a delay
+              setTimeout(() => {
+                isClosingPresenterMode = false;
+              }, 500);
+              console.log('Presenter mode closed, returned to edit mode');
+            }, 200);
+            return;
+          } else {
+            console.log('ESC pressed, closing presenter mode...');
+            closePresenterMode();
+          }
+        } else if (event.key === 'ArrowRight' || event.key === ' ') {
           event.preventDefault();
           navigatePresenter(1);
         } else if (event.key === 'ArrowLeft') {
           event.preventDefault();
           navigatePresenter(-1);
-        } else if (event.key === 'Escape') {
-          event.preventDefault();
-          closePresenterMode();
         }
       };
       document.addEventListener('keydown', presenterKeyHandler);
@@ -4006,22 +4192,53 @@
 
     function closePresenterMode() {
       if (!presenterOverlay) return;
+      
+      console.log('Closing presenter mode completely...');
+      
+      // Set flag to prevent fullscreen handler from restoring
+      isClosingPresenterMode = true;
+      
+      // Stop audio recording if active
+      if (isPresenterAudioRecording) {
+        stopPresenterAudioRecording();
+      }
+      
       if (isRecording) {
         stopRecording();
       }
+      
+      // Exit fullscreen if still in fullscreen
       if (isPresenterFullscreen()) {
+        console.log('Exiting fullscreen before closing presenter mode');
         exitFullscreen();
       }
+      
       // Hide live transcription box when closing presenter mode
       if (liveTranscriptionBox) {
         liveTranscriptionBox.classList.add('hidden');
       }
+      
+      // Force hide presenter overlay completely
       presenterOverlay.classList.add('hidden');
+      presenterOverlay.style.display = 'none';
+      presenterOverlay.style.visibility = 'hidden';
+      presenterOverlay.style.opacity = '0';
+      
+      // Restore body overflow
       document.body.classList.remove('overflow-hidden');
+      
+      // Remove key handler
       if (presenterKeyHandler) {
         document.removeEventListener('keydown', presenterKeyHandler);
         presenterKeyHandler = null;
       }
+      
+      // Clear the flag after a delay
+      setTimeout(() => {
+        isClosingPresenterMode = false;
+      }, 500);
+      
+      console.log('Presenter mode closed, returned to edit mode');
     }
     
     // Speech Recognition Functions
@@ -7140,6 +7357,958 @@
       }
     }
 
+    /**
+     * Helper function to find element by ID, index, or content search
+     * @param {Object} slide - The slide to search in
+     * @param {string|number|Object} identifier - elementId, elementIndex, or search criteria
+     * @returns {Object|null} Found element or null
+     */
+    function findElement(slide, identifier) {
+      if (!slide || !slide.elements) return null;
+      
+      // If identifier is a string (elementId)
+      if (typeof identifier === 'string') {
+        return slide.elements.find(el => el.id === identifier) || null;
+      }
+      
+      // If identifier is a number (elementIndex)
+      if (typeof identifier === 'number') {
+        return slide.elements[identifier] || null;
+      }
+      
+      // If identifier is an object with search criteria
+      if (typeof identifier === 'object' && identifier !== null) {
+        const { elementId, elementIndex, searchText, elementType, position } = identifier;
+        
+        if (elementId) {
+          return slide.elements.find(el => el.id === elementId) || null;
+        }
+        
+        if (typeof elementIndex === 'number') {
+          return slide.elements[elementIndex] || null;
+        }
+        
+        if (searchText) {
+          // Search by text content (case-insensitive partial match)
+          const lowerSearch = searchText.toLowerCase();
+          return slide.elements.find(el => 
+            el.type === 'text' && 
+            el.text && 
+            el.text.toLowerCase().includes(lowerSearch)
+          ) || null;
+        }
+        
+        if (elementType) {
+          // Find by type and optional position
+          const matching = slide.elements.filter(el => el.type === elementType);
+          if (position === 'first' || position === 0) {
+            return matching[0] || null;
+          } else if (position === 'last') {
+            return matching[matching.length - 1] || null;
+          } else if (typeof position === 'number') {
+            return matching[position] || null;
+          }
+          return matching[0] || null; // Default to first
+        }
+      }
+      
+      return null;
+    }
+
+    /**
+     * AI Slide Control Feature
+     * Applies modifications to slides based on structured JSON from AI
+     * 
+     * @param {Object} modification - Structured modification JSON
+     * @returns {Object} Result object with success flag and message
+     */
+    function applySlideModification(modification) {
+      console.log('🎨 applySlideModification called with:', modification);
+      
+      if (!modification || !modification.action) {
+        console.error('❌ Invalid modification format:', modification);
+        return { success: false, message: 'Invalid modification format' };
+      }
+
+      try {
+        const action = modification.action;
+        console.log('⚡ Executing action:', action);
+        const target = modification.target || 'current_slide';
+        let targetSlide = null;
+        let targetSlideIndex = activeSlideIndex;
+
+        // Determine target slide
+        if (target === 'current_slide') {
+          targetSlide = getActiveSlide();
+          targetSlideIndex = activeSlideIndex;
+        } else if (target === 'new_slide') {
+          // Will be handled in add_slide action
+        } else if (typeof target === 'number') {
+          targetSlideIndex = Math.max(0, Math.min(target - 1, slides.length - 1));
+          targetSlide = slides[targetSlideIndex];
+        } else if (typeof target === 'string' && target.startsWith('slide_')) {
+          const slideNum = parseInt(target.replace('slide_', ''), 10);
+          if (!isNaN(slideNum)) {
+            targetSlideIndex = Math.max(0, Math.min(slideNum - 1, slides.length - 1));
+            targetSlide = slides[targetSlideIndex];
+          }
+        }
+
+        // Apply the modification based on action type
+        switch (action) {
+          case 'add_slide':
+            {
+              const newSlide = {
+                id: crypto.randomUUID(),
+                title: modification.title || `Slide ${slides.length + 1}`,
+                backgroundColor: modification.backgroundColor || '#ffffff',
+                backgroundImage: modification.backgroundImage || null,
+                elements: modification.elements || [],
+                animation: modification.animation || { ...slideAnimationDefaults }
+              };
+              
+              // Add elements if provided
+              if (modification.elements && Array.isArray(modification.elements)) {
+                newSlide.elements = modification.elements.map(el => {
+                  if (el.type === 'text') {
+                    return {
+                      id: crypto.randomUUID(),
+                      type: 'text',
+                      text: el.text || el.content || '',
+                      left: el.left || 40,
+                      top: el.top || 40,
+                      width: el.width || 360,
+                      fontSize: el.fontSize || 16,
+                      fontFamily: el.fontFamily || 'Inter, sans-serif',
+                      color: el.color || '#111827',
+                      backgroundColor: el.backgroundColor || null,
+                      bold: el.bold || false,
+                      italic: el.italic || false,
+                      underline: el.underline || false,
+                      align: el.align || 'left',
+                      lineHeight: el.lineHeight || 1.4,
+                      letterSpacing: el.letterSpacing || 0,
+                      textTransform: el.textTransform || 'none',
+                      animation: el.animation || {}
+                    };
+                  }
+                  return el;
+                });
+              }
+              
+              const insertIndex = modification.insertAfter !== undefined 
+                ? Math.min(modification.insertAfter, slides.length)
+                : activeSlideIndex + 1;
+              slides.splice(insertIndex, 0, newSlide);
+              activeSlideIndex = insertIndex;
+              selectedElementId = null;
+              editingTextElementId = null;
+              markDirty();
+              render();
+              return { success: true, message: `Added new slide at position ${insertIndex + 1}` };
+            }
+
+          case 'update_text':
+            {
+              if (!targetSlide) {
+                return { success: false, message: 'Target slide not found' };
+              }
+
+              // Use helper function to find element
+              const elementIdentifier = modification.elementId || 
+                                       (modification.elementIndex !== undefined ? modification.elementIndex : 
+                                       (modification.searchText ? { searchText: modification.searchText } :
+                                       { elementType: 'text', position: 'first' }));
+              
+              let element = findElement(targetSlide, elementIdentifier);
+
+              // If not found and content is provided, create new text element
+              if (!element && modification.content) {
+                element = {
+                  id: crypto.randomUUID(),
+                  type: 'text',
+                  text: '',
+                  left: 40,
+                  top: 40,
+                  width: 360,
+                  fontSize: 16,
+                  fontFamily: 'Inter, sans-serif',
+                  color: '#111827',
+                  backgroundColor: null,
+                  bold: false,
+                  italic: false,
+                  underline: false,
+                  align: 'left',
+                  lineHeight: 1.4,
+                  letterSpacing: 0,
+                  textTransform: 'none',
+                  animation: {}
+                };
+                targetSlide.elements.push(element);
+              }
+
+              if (element && element.type === 'text') {
+                if (modification.content !== undefined) {
+                  element.text = modification.content;
+                }
+                if (modification.fontSize !== undefined) {
+                  element.fontSize = modification.fontSize;
+                }
+                if (modification.color !== undefined) {
+                  element.color = modification.color;
+                }
+                if (modification.bold !== undefined) {
+                  element.bold = modification.bold;
+                }
+                if (modification.italic !== undefined) {
+                  element.italic = modification.italic;
+                }
+                if (modification.underline !== undefined) {
+                  element.underline = modification.underline;
+                }
+                if (modification.align !== undefined) {
+                  element.align = modification.align;
+                }
+                if (modification.width !== undefined) {
+                  element.width = Math.max(MIN_TEXT_WIDTH, modification.width);
+                }
+                if (modification.height !== undefined) {
+                  element.height = Math.max(MIN_TEXT_HEIGHT, modification.height);
+                }
+                if (modification.fontFamily !== undefined) {
+                  element.fontFamily = modification.fontFamily;
+                }
+                if (modification.lineHeight !== undefined) {
+                  element.lineHeight = modification.lineHeight;
+                }
+                if (modification.letterSpacing !== undefined) {
+                  element.letterSpacing = modification.letterSpacing;
+                }
+                if (modification.textTransform !== undefined) {
+                  element.textTransform = modification.textTransform;
+                }
+                if (modification.backgroundColor !== undefined) {
+                  element.backgroundColor = modification.backgroundColor;
+                }
+                markDirty();
+                render();
+                return { success: true, message: 'Text updated successfully' };
+              }
+              return { success: false, message: 'Text element not found' };
+            }
+
+          case 'add_text':
+            {
+              if (!targetSlide) {
+                return { success: false, message: 'Target slide not found' };
+              }
+
+              const textElement = {
+                id: crypto.randomUUID(),
+                type: 'text',
+                text: modification.content || modification.text || '',
+                left: modification.left || 40,
+                top: modification.top || 40,
+                width: modification.width || 360,
+                fontSize: modification.fontSize || 16,
+                fontFamily: modification.fontFamily || 'Inter, sans-serif',
+                color: modification.color || '#111827',
+                backgroundColor: modification.backgroundColor || null,
+                bold: modification.bold || false,
+                italic: modification.italic || false,
+                underline: modification.underline || false,
+                align: modification.align || 'left',
+                lineHeight: modification.lineHeight || 1.4,
+                letterSpacing: modification.letterSpacing || 0,
+                textTransform: modification.textTransform || 'none',
+                animation: modification.animation || {}
+              };
+
+              targetSlide.elements.push(textElement);
+              markDirty();
+              render();
+              return { success: true, message: 'Text element added' };
+            }
+
+          case 'add_bullets':
+            {
+              if (!targetSlide) {
+                return { success: false, message: 'Target slide not found' };
+              }
+
+              const bullets = modification.bullets || modification.items || [];
+              if (!Array.isArray(bullets) || bullets.length === 0) {
+                return { success: false, message: 'No bullet points provided' };
+              }
+
+              const startTop = modification.startTop || 100;
+              const left = modification.left || 60;
+              const spacing = modification.spacing || 50;
+
+              bullets.forEach((bullet, index) => {
+                const textElement = {
+                  id: crypto.randomUUID(),
+                  type: 'text',
+                  text: `• ${bullet}`,
+                  left: left,
+                  top: startTop + (index * spacing),
+                  width: modification.width || 400,
+                  fontSize: modification.fontSize || 16,
+                  fontFamily: 'Inter, sans-serif',
+                  color: modification.color || '#111827',
+                  backgroundColor: null,
+                  bold: false,
+                  italic: false,
+                  underline: false,
+                  align: 'left',
+                  lineHeight: 1.4,
+                  letterSpacing: 0,
+                  textTransform: 'none',
+                  animation: {}
+                };
+                targetSlide.elements.push(textElement);
+              });
+
+              markDirty();
+              render();
+              return { success: true, message: `Added ${bullets.length} bullet points` };
+            }
+
+          case 'update_background':
+            {
+              if (!targetSlide) {
+                return { success: false, message: 'Target slide not found' };
+              }
+
+              if (modification.backgroundColor !== undefined) {
+                targetSlide.backgroundColor = modification.backgroundColor;
+              }
+              if (modification.backgroundImage !== undefined) {
+                targetSlide.backgroundImage = modification.backgroundImage;
+              }
+              markDirty();
+              render();
+              return { success: true, message: 'Background updated' };
+            }
+
+          case 'remove_element':
+            {
+              if (!targetSlide) {
+                return { success: false, message: 'Target slide not found' };
+              }
+
+              const elementIdentifier = modification.elementId || 
+                                       (modification.elementIndex !== undefined ? modification.elementIndex :
+                                       (modification.searchText ? { searchText: modification.searchText } : null));
+              
+              if (!elementIdentifier) {
+                return { success: false, message: 'Element identifier required' };
+              }
+
+              const element = findElement(targetSlide, elementIdentifier);
+              if (!element) {
+                return { success: false, message: 'Element not found' };
+              }
+
+              const index = targetSlide.elements.findIndex(el => el.id === element.id);
+              if (index !== -1) {
+                targetSlide.elements.splice(index, 1);
+                if (selectedElementId === element.id) {
+                  selectedElementId = null;
+                  editingTextElementId = null;
+                }
+                markDirty();
+                render();
+                return { success: true, message: 'Element removed' };
+              }
+              return { success: false, message: 'Element not found' };
+            }
+
+          case 'change_layout':
+            {
+              if (!targetSlide) {
+                return { success: false, message: 'Target slide not found' };
+              }
+
+              // Rearrange elements based on layout
+              const layout = modification.layout || 'center';
+              const elements = targetSlide.elements || [];
+
+              if (layout === 'center') {
+                elements.forEach(el => {
+                  if (el.type === 'text') {
+                    el.left = (800 - (el.width || 360)) / 2;
+                    el.align = 'center';
+                  }
+                });
+              } else if (layout === 'left') {
+                elements.forEach(el => {
+                  if (el.type === 'text') {
+                    el.left = 40;
+                    el.align = 'left';
+                  }
+                });
+              } else if (layout === 'right') {
+                elements.forEach(el => {
+                  if (el.type === 'text') {
+                    el.left = 800 - (el.width || 360) - 40;
+                    el.align = 'right';
+                  }
+                });
+              }
+
+              markDirty();
+              render();
+              return { success: true, message: `Layout changed to ${layout}` };
+            }
+
+          case 'replace_content':
+            {
+              if (!targetSlide) {
+                return { success: false, message: 'Target slide not found' };
+              }
+
+              // Replace all elements or specific ones
+              if (modification.elements && Array.isArray(modification.elements)) {
+                targetSlide.elements = modification.elements.map(el => {
+                  if (el.type === 'text') {
+                    return {
+                      id: el.id || crypto.randomUUID(),
+                      type: 'text',
+                      text: el.text || el.content || '',
+                      left: el.left || 40,
+                      top: el.top || 40,
+                      width: el.width || 360,
+                      fontSize: el.fontSize || 16,
+                      fontFamily: el.fontFamily || 'Inter, sans-serif',
+                      color: el.color || '#111827',
+                      backgroundColor: el.backgroundColor || null,
+                      bold: el.bold || false,
+                      italic: el.italic || false,
+                      underline: el.underline || false,
+                      align: el.align || 'left',
+                      lineHeight: el.lineHeight || 1.4,
+                      letterSpacing: el.letterSpacing || 0,
+                      textTransform: el.textTransform || 'none',
+                      animation: el.animation || {}
+                    };
+                  }
+                  return el;
+                });
+              }
+
+              if (modification.backgroundColor !== undefined) {
+                targetSlide.backgroundColor = modification.backgroundColor;
+              }
+
+              selectedElementId = null;
+              editingTextElementId = null;
+              markDirty();
+              render();
+              return { success: true, message: 'Slide content replaced' };
+            }
+
+          case 'delete_slide':
+            {
+              const slideIndex = typeof modification.slideIndex === 'number' 
+                ? modification.slideIndex 
+                : (typeof target === 'number' ? target - 1 : targetSlideIndex);
+              
+              if (slideIndex < 0 || slideIndex >= slides.length) {
+                return { success: false, message: 'Invalid slide index' };
+              }
+              
+              if (slides.length <= 1) {
+                return { success: false, message: 'Cannot delete the last slide' };
+              }
+              
+              slides.splice(slideIndex, 1);
+              
+              // Adjust active slide index
+              if (activeSlideIndex >= slides.length) {
+                activeSlideIndex = slides.length - 1;
+              } else if (activeSlideIndex > slideIndex) {
+                activeSlideIndex--;
+              }
+              
+              selectedElementId = null;
+              editingTextElementId = null;
+              markDirty();
+              render();
+              return { success: true, message: `Deleted slide ${slideIndex + 1}` };
+            }
+
+          case 'duplicate_slide':
+            {
+              const sourceIndex = typeof modification.slideIndex === 'number'
+                ? modification.slideIndex
+                : targetSlideIndex;
+              
+              if (sourceIndex < 0 || sourceIndex >= slides.length) {
+                return { success: false, message: 'Invalid slide index' };
+              }
+              
+              const source = slides[sourceIndex];
+              const clone = JSON.parse(JSON.stringify(source));
+              clone.id = crypto.randomUUID();
+              clone.title = source.title ? `${source.title} Copy` : `Slide ${slides.length + 1}`;
+              clone.animation = normalizeAnimationConfig(clone.animation, slideAnimationDefaults);
+              clone.elements = (clone.elements || []).map(element => {
+                const cloned = JSON.parse(JSON.stringify(element));
+                cloned.id = crypto.randomUUID();
+                return cloned;
+              });
+              
+              const insertIndex = modification.insertAfter !== undefined
+                ? Math.min(modification.insertAfter, slides.length)
+                : sourceIndex + 1;
+              
+              slides.splice(insertIndex, 0, clone);
+              activeSlideIndex = insertIndex;
+              selectedElementId = null;
+              editingTextElementId = null;
+              markDirty();
+              render();
+              return { success: true, message: `Duplicated slide to position ${insertIndex + 1}` };
+            }
+
+          case 'move_slide':
+            {
+              const fromIndex = typeof modification.fromIndex === 'number'
+                ? modification.fromIndex
+                : (typeof target === 'number' ? target - 1 : targetSlideIndex);
+              const toIndex = typeof modification.toIndex === 'number'
+                ? modification.toIndex
+                : (modification.position || activeSlideIndex);
+              
+              if (fromIndex < 0 || fromIndex >= slides.length || toIndex < 0 || toIndex >= slides.length) {
+                return { success: false, message: 'Invalid slide indices' };
+              }
+              
+              const [moved] = slides.splice(fromIndex, 1);
+              slides.splice(toIndex, 0, moved);
+              
+              // Update active slide index
+              if (activeSlideIndex === fromIndex) {
+                activeSlideIndex = toIndex;
+              } else if (activeSlideIndex > fromIndex && activeSlideIndex <= toIndex) {
+                activeSlideIndex--;
+              } else if (activeSlideIndex < fromIndex && activeSlideIndex >= toIndex) {
+                activeSlideIndex++;
+              }
+              
+              markDirty();
+              render();
+              return { success: true, message: `Moved slide from position ${fromIndex + 1} to ${toIndex + 1}` };
+            }
+
+          case 'navigate_to_slide':
+            {
+              const slideIndex = typeof modification.slideIndex === 'number'
+                ? modification.slideIndex
+                : (typeof target === 'number' ? target - 1 : null);
+              
+              if (slideIndex === null || slideIndex < 0 || slideIndex >= slides.length) {
+                return { success: false, message: 'Invalid slide index' };
+              }
+              
+              activeSlideIndex = slideIndex;
+              selectedElementId = null;
+              editingTextElementId = null;
+              markDirty();
+              render();
+              return { success: true, message: `Navigated to slide ${slideIndex + 1}` };
+            }
+
+          case 'move_element':
+            {
+              if (!targetSlide) {
+                return { success: false, message: 'Target slide not found' };
+              }
+              
+              const elementIdentifier = modification.elementId || 
+                                       (modification.elementIndex !== undefined ? modification.elementIndex :
+                                       (modification.searchText ? { searchText: modification.searchText } : null));
+              
+              if (!elementIdentifier) {
+                return { success: false, message: 'Element identifier required' };
+              }
+              
+              const element = findElement(targetSlide, elementIdentifier);
+              if (!element) {
+                return { success: false, message: 'Element not found' };
+              }
+              
+              if (modification.left !== undefined) {
+                element.left = Math.max(0, modification.left);
+              }
+              if (modification.top !== undefined) {
+                element.top = Math.max(0, modification.top);
+              }
+              
+              markDirty();
+              render();
+              return { success: true, message: 'Element moved' };
+            }
+
+          case 'resize_element':
+            {
+              if (!targetSlide) {
+                return { success: false, message: 'Target slide not found' };
+              }
+              
+              const elementIdentifier = modification.elementId || 
+                                       (modification.elementIndex !== undefined ? modification.elementIndex :
+                                       (modification.searchText ? { searchText: modification.searchText } : null));
+              
+              if (!elementIdentifier) {
+                return { success: false, message: 'Element identifier required' };
+              }
+              
+              const element = findElement(targetSlide, elementIdentifier);
+              if (!element) {
+                return { success: false, message: 'Element not found' };
+              }
+              
+              if (modification.width !== undefined) {
+                const minWidth = element.type === 'text' ? MIN_TEXT_WIDTH : 
+                                element.type === 'image' ? MIN_IMAGE_DIMENSION :
+                                element.type === 'chart' ? MIN_CHART_DIMENSION : 50;
+                element.width = Math.max(minWidth, modification.width);
+              }
+              if (modification.height !== undefined && (element.type === 'image' || element.type === 'chart' || element.type === 'shape')) {
+                const minHeight = element.type === 'image' ? MIN_IMAGE_DIMENSION :
+                                 element.type === 'chart' ? MIN_CHART_DIMENSION : 50;
+                element.height = Math.max(minHeight, modification.height);
+              }
+              
+              markDirty();
+              render();
+              return { success: true, message: 'Element resized' };
+            }
+
+          case 'update_element':
+            {
+              if (!targetSlide) {
+                return { success: false, message: 'Target slide not found' };
+              }
+              
+              const elementIdentifier = modification.elementId || 
+                                       (modification.elementIndex !== undefined ? modification.elementIndex :
+                                       (modification.searchText ? { searchText: modification.searchText } : null));
+              
+              if (!elementIdentifier) {
+                return { success: false, message: 'Element identifier required' };
+              }
+              
+              const element = findElement(targetSlide, elementIdentifier);
+              if (!element) {
+                return { success: false, message: 'Element not found' };
+              }
+              
+              // Update any properties provided (exclude action, target, and identifier fields)
+              Object.keys(modification).forEach(key => {
+                if (key !== 'action' && key !== 'target' && key !== 'elementId' && 
+                    key !== 'elementIndex' && key !== 'searchText') {
+                  element[key] = modification[key];
+                }
+              });
+              
+              markDirty();
+              render();
+              return { success: true, message: 'Element updated' };
+            }
+
+          case 'add_image':
+            {
+              if (!targetSlide) {
+                return { success: false, message: 'Target slide not found' };
+              }
+              
+              if (!modification.src && !modification.url) {
+                return { success: false, message: 'Image source URL required' };
+              }
+              
+              const imageElement = {
+                id: crypto.randomUUID(),
+                type: 'image',
+                src: modification.src || modification.url,
+                left: modification.left || 100,
+                top: modification.top || 100,
+                width: modification.width || 400,
+                height: modification.height || null,
+                aspectRatio: modification.aspectRatio || null,
+                fit: modification.fit || 'contain',
+                opacity: modification.opacity !== undefined ? modification.opacity : 1,
+                animation: modification.animation || {}
+              };
+              
+              targetSlide.elements.push(imageElement);
+              markDirty();
+              render();
+              return { success: true, message: 'Image added' };
+            }
+
+          case 'add_shape':
+            {
+              if (!targetSlide) {
+                return { success: false, message: 'Target slide not found' };
+              }
+              
+              const shapeElement = {
+                id: crypto.randomUUID(),
+                type: 'shape',
+                shape: modification.shape || 'rectangle',
+                left: modification.left || 160,
+                top: modification.top || 120,
+                width: modification.width || 200,
+                height: modification.height || 150,
+                fill: modification.fill || '#3b82f6',
+                stroke: modification.stroke || '#1e40af',
+                strokeWidth: modification.strokeWidth || 2,
+                opacity: modification.opacity !== undefined ? modification.opacity : 1,
+                cornerRadius: modification.cornerRadius || null,
+                animation: modification.animation || {}
+              };
+              
+              targetSlide.elements.push(shapeElement);
+              markDirty();
+              render();
+              return { success: true, message: 'Shape added' };
+            }
+
+          case 'add_chart':
+            {
+              if (!targetSlide) {
+                return { success: false, message: 'Target slide not found' };
+              }
+              
+              const chartElement = {
+                id: crypto.randomUUID(),
+                type: 'chart',
+                chartType: modification.chartType || 'bar',
+                left: modification.left || 100,
+                top: modification.top || 100,
+                width: modification.width || 420,
+                height: modification.height || 280,
+                data: modification.data || {
+                  labels: ['A', 'B', 'C'],
+                  datasets: [{
+                    label: 'Data',
+                    data: [10, 20, 30]
+                  }]
+                },
+                options: modification.options || {},
+                animation: modification.animation || {}
+              };
+              
+              targetSlide.elements.push(chartElement);
+              markDirty();
+              render();
+              return { success: true, message: 'Chart added' };
+            }
+
+          case 'update_animation':
+            {
+              const animTarget = modification.animationTarget || 'slide'; // 'slide' or 'element'
+              
+              if (animTarget === 'slide') {
+                if (!targetSlide) {
+                  return { success: false, message: 'Target slide not found' };
+                }
+                targetSlide.animation = {
+                  ...targetSlide.animation,
+                  type: modification.animationType || targetSlide.animation.type || 'none',
+                  duration: modification.duration !== undefined ? modification.duration : targetSlide.animation.duration || 600,
+                  delay: modification.delay !== undefined ? modification.delay : targetSlide.animation.delay || 0
+                };
+                ensureSlideAnimation(targetSlide);
+              } else {
+                if (!targetSlide) {
+                  return { success: false, message: 'Target slide not found' };
+                }
+                const elementIdentifier = modification.elementId || 
+                                         (modification.elementIndex !== undefined ? modification.elementIndex :
+                                         (modification.searchText ? { searchText: modification.searchText } : null));
+                if (!elementIdentifier) {
+                  return { success: false, message: 'Element identifier required for element animation' };
+                }
+                const element = findElement(targetSlide, elementIdentifier);
+                if (!element) {
+                  return { success: false, message: 'Element not found' };
+                }
+                element.animation = {
+                  ...element.animation,
+                  type: modification.animationType || element.animation.type || 'none',
+                  duration: modification.duration !== undefined ? modification.duration : element.animation.duration || 600,
+                  delay: modification.delay !== undefined ? modification.delay : element.animation.delay || 0
+                };
+                ensureElementAnimation(element);
+              }
+              
+              markDirty();
+              render();
+              return { success: true, message: 'Animation updated' };
+            }
+
+          case 'select_element':
+            {
+              if (!targetSlide) {
+                return { success: false, message: 'Target slide not found' };
+              }
+              
+              const elementIdentifier = modification.elementId || 
+                                       (modification.elementIndex !== undefined ? modification.elementIndex :
+                                       (modification.searchText ? { searchText: modification.searchText } : null));
+              
+              if (!elementIdentifier) {
+                return { success: false, message: 'Element identifier required' };
+              }
+              
+              const element = findElement(targetSlide, elementIdentifier);
+              if (!element) {
+                return { success: false, message: 'Element not found' };
+              }
+              
+              selectedElementId = element.id;
+              editingTextElementId = null;
+              markDirty();
+              render();
+              return { success: true, message: 'Element selected' };
+            }
+
+          case 'reorder_element':
+            {
+              if (!targetSlide) {
+                return { success: false, message: 'Target slide not found' };
+              }
+              
+              const elementIdentifier = modification.elementId || 
+                                       (modification.elementIndex !== undefined ? modification.elementIndex :
+                                       (modification.searchText ? { searchText: modification.searchText } : null));
+              
+              if (!elementIdentifier) {
+                return { success: false, message: 'Element identifier required' };
+              }
+              
+              const element = findElement(targetSlide, elementIdentifier);
+              if (!element) {
+                return { success: false, message: 'Element not found' };
+              }
+              
+              const index = targetSlide.elements.findIndex(el => el.id === element.id);
+              if (index === -1) {
+                return { success: false, message: 'Element not found' };
+              }
+              
+              const [movedElement] = targetSlide.elements.splice(index, 1);
+              const position = modification.position || 'front'; // 'front' or 'back'
+              
+              if (position === 'front') {
+                targetSlide.elements.push(movedElement);
+              } else if (position === 'back') {
+                targetSlide.elements.unshift(movedElement);
+              } else {
+                targetSlide.elements.splice(index, 0, movedElement);
+                return { success: false, message: 'Invalid position. Use "front" or "back"' };
+              }
+              
+              markDirty();
+              render();
+              return { success: true, message: `Element moved to ${position}` };
+            }
+
+          case 'update_font':
+            {
+              if (!targetSlide) {
+                return { success: false, message: 'Target slide not found' };
+              }
+              
+              const elementIdentifier = modification.elementId || 
+                                       (modification.elementIndex !== undefined ? modification.elementIndex :
+                                       (modification.searchText ? { searchText: modification.searchText } :
+                                       { elementType: 'text', position: 'first' }));
+              
+              const element = findElement(targetSlide, elementIdentifier);
+              
+              if (!element || element.type !== 'text') {
+                return { success: false, message: 'Text element not found' };
+              }
+              
+              if (modification.fontFamily !== undefined) {
+                element.fontFamily = modification.fontFamily;
+              }
+              if (modification.fontSize !== undefined) {
+                element.fontSize = modification.fontSize;
+              }
+              if (modification.fontWeight !== undefined) {
+                element.bold = modification.fontWeight >= 600;
+              }
+              if (modification.color !== undefined) {
+                element.color = modification.color;
+              }
+              
+              markDirty();
+              render();
+              return { success: true, message: 'Font updated' };
+            }
+
+          case 'update_text_style':
+            {
+              if (!targetSlide) {
+                return { success: false, message: 'Target slide not found' };
+              }
+              
+              const elementIdentifier = modification.elementId || 
+                                       (modification.elementIndex !== undefined ? modification.elementIndex :
+                                       (modification.searchText ? { searchText: modification.searchText } :
+                                       { elementType: 'text', position: 'first' }));
+              
+              const element = findElement(targetSlide, elementIdentifier);
+              
+              if (!element || element.type !== 'text') {
+                return { success: false, message: 'Text element not found' };
+              }
+              
+              if (modification.bold !== undefined) {
+                element.bold = modification.bold;
+              }
+              if (modification.italic !== undefined) {
+                element.italic = modification.italic;
+              }
+              if (modification.underline !== undefined) {
+                element.underline = modification.underline;
+              }
+              if (modification.align !== undefined) {
+                element.align = modification.align;
+              }
+              if (modification.textTransform !== undefined) {
+                element.textTransform = modification.textTransform;
+              }
+              if (modification.lineHeight !== undefined) {
+                element.lineHeight = modification.lineHeight;
+              }
+              if (modification.letterSpacing !== undefined) {
+                element.letterSpacing = modification.letterSpacing;
+              }
+              
+              markDirty();
+              render();
+              return { success: true, message: 'Text style updated' };
+            }
+
+          default:
+            return { success: false, message: `Unknown action: ${action}` };
+        }
+      } catch (error) {
+        console.error('Error applying slide modification:', error);
+        return { success: false, message: `Error: ${error.message}` };
+      }
+    }
+
+    // Expose to window for chatbot access
+    window.applySlideModification = applySlideModification;
+
     const MIN_CHART_DIMENSION = 120;
     const MIN_IMAGE_DIMENSION = 80;
     const MIN_TEXT_WIDTH = 120;
@@ -8776,14 +9945,362 @@
       presenterNextBtn.addEventListener('click', () => navigatePresenter(1));
     }
     
-    // Recording functionality
+    // Recording functionality - support both transcription and audio recording
     if (presenterRecordBtn) {
-      presenterRecordBtn.addEventListener('click', toggleRecording);
+      presenterRecordBtn.addEventListener('click', togglePresenterRecording);
+    }
+    
+    // Toggle between transcription and audio recording
+    function togglePresenterRecording() {
+      if (isPresenterAudioRecording) {
+        stopPresenterAudioRecording();
+      } else {
+        // Start both audio recording AND speech recognition for live transcription
+        startPresenterAudioRecording();
+        // Also start speech recognition to show words in real-time
+        if (!isRecording) {
+          startRecording(); // This will show live transcription
+        }
+      }
+    }
+    
+    // Start audio recording in presenter mode
+    async function startPresenterAudioRecording() {
+      try {
+        // Request microphone access
+        presenterRecordingStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        
+        // Create MediaRecorder
+        const options = { mimeType: 'audio/webm' };
+        if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+          options.mimeType = 'audio/webm;codecs=opus';
+          if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+            options.mimeType = ''; // Let browser choose
+          }
+        }
+        
+        presenterMediaRecorder = new MediaRecorder(presenterRecordingStream, options);
+        presenterAudioChunks = [];
+        let lastChunkTime = Date.now();
+        
+        // Capture ALL data - request data frequently to ensure nothing is lost
+        presenterMediaRecorder.ondataavailable = (event) => {
+          if (event.data && event.data.size > 0) {
+            presenterAudioChunks.push(event.data);
+            lastChunkTime = Date.now();
+            const totalSize = presenterAudioChunks.reduce((sum, chunk) => sum + (chunk ? chunk.size : 0), 0);
+            console.log('Presenter recording chunk:', event.data.size, 'bytes. Total:', presenterAudioChunks.length, 'chunks,', (totalSize/1024).toFixed(2), 'KB');
+          } else if (event.data) {
+            presenterAudioChunks.push(event.data);
+          }
+        };
+        
+        presenterMediaRecorder.onerror = (event) => {
+          console.error('Presenter MediaRecorder error:', event.error);
+          alert('Recording error occurred. Please try again.');
+        };
+        
+        presenterMediaRecorder.onstop = () => {
+          setTimeout(() => {
+            const totalSize = presenterAudioChunks.reduce((sum, chunk) => sum + (chunk ? chunk.size : 0), 0);
+            console.log('Presenter recording stopped. Total chunks:', presenterAudioChunks.length, 'Total size:', (totalSize/1024).toFixed(2), 'KB');
+            
+            presenterRecordedBlob = new Blob(presenterAudioChunks, { type: presenterMediaRecorder.mimeType || 'audio/webm' });
+            
+            if (presenterRecordedBlob.size === 0) {
+              alert('Recording is empty. Please try recording again.');
+              return;
+            }
+            
+            // Show save button instead of auto-downloading
+            if (saveAudioBtn) {
+              saveAudioBtn.classList.remove('hidden');
+            }
+            
+            const fileSizeMB = (presenterRecordedBlob.size / (1024 * 1024)).toFixed(2);
+            const duration = presenterRecordingStartTime ? Math.floor((Date.now() - presenterRecordingStartTime) / 1000) : 0;
+            const minutes = Math.floor(duration / 60);
+            const seconds = duration % 60;
+            
+            // Update transcription content to show recording info
+            if (liveTranscriptionContent) {
+              const existingText = liveTranscriptionContent.textContent.trim();
+              const recordingInfo = `\n\n[Recording completed: ${minutes}:${String(seconds).padStart(2, '0')}, ${fileSizeMB} MB - Click "Save Audio" to download]`;
+              liveTranscriptionContent.textContent = existingText + recordingInfo;
+              liveTranscriptionContent.scrollTop = liveTranscriptionContent.scrollHeight;
+            }
+          }, 500);
+        };
+        
+        // Start recording with small timeslice for frequent chunks
+        presenterRecordingStartTime = Date.now();
+        presenterMediaRecorder.start(250); // Request data every 250ms
+        
+        // Periodic data requests
+        const dataRequestInterval = setInterval(() => {
+          if (presenterMediaRecorder && presenterMediaRecorder.state === 'recording') {
+            try {
+              presenterMediaRecorder.requestData();
+            } catch (e) {
+              console.warn('Could not request data:', e);
+            }
+          } else {
+            clearInterval(dataRequestInterval);
+          }
+        }, 2000);
+        
+        window.presenterDataInterval = dataRequestInterval;
+        
+        // Update UI
+        isPresenterAudioRecording = true;
+        if (presenterRecordBtn) {
+          presenterRecordBtn.classList.add('recording');
+          if (recordText) recordText.textContent = 'Stop Recording / إيقاف التسجيل';
+        }
+        if (presenterRecordingTimer) {
+          presenterRecordingTimer.classList.remove('hidden');
+        }
+        
+        // Show live transcription box
+        if (liveTranscriptionBox) {
+          liveTranscriptionBox.classList.remove('hidden');
+        }
+        
+        // Clear previous transcription and show recording started message
+        if (liveTranscriptionContent) {
+          liveTranscriptionContent.textContent = 'Recording started... / بدء التسجيل...\n\n';
+        }
+        
+        // Hide save button initially
+        if (saveAudioBtn) {
+          saveAudioBtn.classList.add('hidden');
+        }
+        
+        // Start timer
+        startPresenterTimer();
+        
+        console.log('Presenter audio recording started');
+      } catch (error) {
+        console.error('Error starting presenter recording:', error);
+        if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+          alert('Microphone access denied. Please allow microphone access and try again.');
+        } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+          alert('No microphone found. Please connect a microphone and try again.');
+        } else {
+          alert('Failed to start recording. Please try again.');
+        }
+        isPresenterAudioRecording = false;
+      }
+    }
+    
+    // Stop audio recording in presenter mode
+    function stopPresenterAudioRecording() {
+      console.log('Stop presenter recording requested');
+      
+      if (window.presenterDataInterval) {
+        clearInterval(window.presenterDataInterval);
+        window.presenterDataInterval = null;
+      }
+      
+      if (presenterMediaRecorder && presenterMediaRecorder.state !== 'inactive') {
+        // Request final data multiple times
+        const requestFinalData = () => {
+          if (presenterMediaRecorder && presenterMediaRecorder.state === 'recording') {
+            try {
+              presenterMediaRecorder.requestData();
+            } catch (e) {
+              console.warn('Could not request final data:', e);
+            }
+          }
+        };
+        
+        requestFinalData();
+        setTimeout(requestFinalData, 50);
+        setTimeout(requestFinalData, 100);
+        setTimeout(requestFinalData, 200);
+        setTimeout(requestFinalData, 300);
+        
+        setTimeout(() => {
+          if (presenterMediaRecorder && presenterMediaRecorder.state !== 'inactive') {
+            presenterMediaRecorder.stop();
+          }
+        }, 500);
+      }
+      
+      setTimeout(() => {
+        if (presenterRecordingStream) {
+          presenterRecordingStream.getTracks().forEach(track => track.stop());
+          presenterRecordingStream = null;
+        }
+      }, 1500);
+      
+      // Also stop speech recognition if it's running
+      if (isRecording) {
+        stopRecording();
+      }
+      
+      // Update UI
+      isPresenterAudioRecording = false;
+      if (presenterRecordBtn) {
+        presenterRecordBtn.classList.remove('recording');
+        if (recordText) recordText.textContent = 'Record Audio / تسجيل صوت';
+      }
+      if (presenterRecordingTimer) {
+        presenterRecordingTimer.classList.add('hidden');
+      }
+      
+      stopPresenterTimer();
+    }
+    
+    // Timer functions for presenter recording
+    function startPresenterTimer() {
+      if (presenterTimerInterval) {
+        clearInterval(presenterTimerInterval);
+      }
+      presenterTimerInterval = setInterval(() => {
+        if (presenterRecordingStartTime && presenterTimerText) {
+          const elapsed = Math.floor((Date.now() - presenterRecordingStartTime) / 1000);
+          const minutes = Math.floor(elapsed / 60);
+          const seconds = elapsed % 60;
+          const hours = Math.floor(minutes / 60);
+          const displayMinutes = minutes % 60;
+          
+          if (hours > 0) {
+            presenterTimerText.textContent = `${String(hours).padStart(2, '0')}:${String(displayMinutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+          } else {
+            presenterTimerText.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+          }
+        }
+      }, 1000);
+    }
+    
+    function stopPresenterTimer() {
+      if (presenterTimerInterval) {
+        clearInterval(presenterTimerInterval);
+        presenterTimerInterval = null;
+      }
+      presenterRecordingStartTime = null;
+      if (presenterTimerText) {
+        presenterTimerText.textContent = '00:00';
+      }
+    }
+    
+    // Also keep the old transcription recording for backward compatibility
+    function toggleRecording() {
+      if (isRecording) {
+        stopRecording();
+      } else {
+        startRecording();
+      }
     }
     
     // Clear transcription button
     if (clearTranscriptionBtn) {
       clearTranscriptionBtn.addEventListener('click', clearLiveTranscription);
+    }
+    
+    // Save audio button
+    if (saveAudioBtn) {
+      saveAudioBtn.addEventListener('click', () => {
+        if (presenterRecordedBlob) {
+          const audioUrl = URL.createObjectURL(presenterRecordedBlob);
+          const a = document.createElement('a');
+          a.href = audioUrl;
+          a.download = `presentation-recording-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.webm`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(audioUrl);
+          
+          const fileSizeMB = (presenterRecordedBlob.size / (1024 * 1024)).toFixed(2);
+          alert(`Audio saved! Size: ${fileSizeMB} MB`);
+        } else {
+          alert('No recording available to save.');
+        }
+      });
+    }
+    
+    // Save minutes to Meeting to Presentation feature
+    if (saveMinutesToMeetingBtn) {
+      saveMinutesToMeetingBtn.addEventListener('click', () => {
+        // Get transcription text or minutes input
+        let minutesText = '';
+        
+        // First try to get from minutes input
+        if (presenterMinutesInput && presenterMinutesInput.value.trim()) {
+          minutesText = presenterMinutesInput.value.trim();
+        } 
+        // Otherwise get from live transcription
+        else if (liveTranscriptionContent && liveTranscriptionContent.textContent.trim()) {
+          minutesText = liveTranscriptionContent.textContent.trim();
+          // Remove the recording info line if present
+          minutesText = minutesText.replace(/\[Recording completed:.*?\]/g, '').trim();
+        }
+        
+        if (!minutesText) {
+          alert('No minutes or transcription available. Please record or enter minutes first.');
+          return;
+        }
+        
+        // Save to localStorage for meeting-to-presentation page
+        localStorage.setItem('savedMeetingMinutes', minutesText);
+        localStorage.setItem('savedMeetingMinutesTimestamp', Date.now().toString());
+        
+        // Show confirmation and option to navigate
+        const shouldNavigate = confirm(`Minutes saved! Would you like to go to "Meeting to Presentation" page to use them?`);
+        if (shouldNavigate) {
+          // Navigate to meeting-to-presentation page
+          if (window.fadeNavigate) {
+            window.fadeNavigate('meeting-to-presentation.html');
+          } else {
+            window.location.href = 'meeting-to-presentation.html';
+          }
+        } else {
+          alert('Minutes saved! You can access them later in the "Meeting to Presentation" page.');
+        }
+      });
+    }
+    
+    // Save minutes button (download)
+    if (saveMinutesBtn) {
+      saveMinutesBtn.addEventListener('click', () => {
+        const minutesText = presenterMinutesInput ? presenterMinutesInput.value.trim() : '';
+        if (!minutesText) {
+          // Try to get from transcription if minutes input is empty
+          if (liveTranscriptionContent && liveTranscriptionContent.textContent.trim()) {
+            const transcriptionText = liveTranscriptionContent.textContent.trim().replace(/\[Recording completed:.*?\]/g, '').trim();
+            if (transcriptionText) {
+              // Create a text file and download it
+              const blob = new Blob([transcriptionText], { type: 'text/plain' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `meeting-minutes-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.txt`;
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+              alert('Meeting minutes downloaded!');
+              return;
+            }
+          }
+          alert('Please enter meeting minutes first.');
+          return;
+        }
+        
+        // Create a text file and download it
+        const blob = new Blob([minutesText], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `meeting-minutes-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        alert('Meeting minutes downloaded!');
+      });
     }
     
     // Initialize speech recognition on page load
@@ -9066,6 +10583,189 @@
       });
     }
 
+    // AI Image Generation
+    let generatedImageUrl = null;
+
+    function openAIImageModal() {
+      if (!aiImageModal) return;
+      aiImageModal.classList.remove('hidden');
+      aiImageModal.classList.add('flex');
+      aiImagePrompt.value = '';
+      aiImageSize.value = '1792x1024';
+      generatedImageUrl = null;
+      aiImagePreview.classList.add('hidden');
+      aiImageAddBtn.classList.add('hidden');
+      aiImageError.classList.add('hidden');
+      aiImageLoading.classList.add('hidden');
+      aiImagePrompt.focus();
+    }
+
+    function closeAIImageModal() {
+      if (!aiImageModal) return;
+      aiImageModal.classList.add('hidden');
+      aiImageModal.classList.remove('flex');
+      generatedImageUrl = null;
+    }
+
+    async function generateAIImage() {
+      const prompt = aiImagePrompt?.value.trim();
+      if (!prompt) {
+        if (aiImageError) {
+          aiImageError.textContent = 'Please enter an image description.';
+          aiImageError.classList.remove('hidden');
+        }
+        return;
+      }
+
+      // Check for API key
+      const API_KEY = window.OPENAI_API_KEY;
+      if (!API_KEY || API_KEY === 'YOUR_OPENAI_API_KEY_HERE' || API_KEY === 'YOUR_API_KEY_HERE') {
+        if (aiImageError) {
+          aiImageError.textContent = 'OpenAI API key not configured. Please set your API key in config.js';
+          aiImageError.classList.remove('hidden');
+        }
+        return;
+      }
+
+      // Show loading state
+      if (aiImageLoading) aiImageLoading.classList.remove('hidden');
+      if (aiImageError) aiImageError.classList.add('hidden');
+      if (aiImageGenerateBtn) aiImageGenerateBtn.disabled = true;
+      if (aiImagePreview) aiImagePreview.classList.add('hidden');
+      if (aiImageAddBtn) aiImageAddBtn.classList.add('hidden');
+
+      try {
+        const size = aiImageSize?.value || '1792x1024';
+        const response = await fetch('https://api.openai.com/v1/images/generations', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${API_KEY}`
+          },
+          body: JSON.stringify({
+            model: 'dall-e-3',
+            prompt: prompt,
+            n: 1,
+            size: size,
+            quality: 'standard',
+            response_format: 'url'
+          })
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ error: { message: 'Failed to generate image' } }));
+          const errorMsg = errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`;
+          throw new Error(errorMsg);
+        }
+
+        const data = await response.json();
+        if (!data.data || !data.data[0] || !data.data[0].url) {
+          throw new Error('Invalid response format from API');
+        }
+
+        generatedImageUrl = data.data[0].url;
+
+        // Show preview
+        if (aiImagePreviewImg) {
+          aiImagePreviewImg.src = generatedImageUrl;
+          aiImagePreview.classList.remove('hidden');
+        }
+        if (aiImageAddBtn) {
+          aiImageAddBtn.classList.remove('hidden');
+        }
+
+      } catch (error) {
+        console.error('Error generating image:', error);
+        if (aiImageError) {
+          aiImageError.textContent = `Error: ${error.message || 'Failed to generate image. Please try again.'}`;
+          aiImageError.classList.remove('hidden');
+        }
+      } finally {
+        if (aiImageLoading) aiImageLoading.classList.add('hidden');
+        if (aiImageGenerateBtn) aiImageGenerateBtn.disabled = false;
+      }
+    }
+
+    function addGeneratedImageToSlide() {
+      if (!generatedImageUrl) return;
+
+      const slide = getActiveSlide();
+      if (!slide) return;
+
+      // Calculate dimensions based on size
+      const size = aiImageSize?.value || '1792x1024';
+      let width = 400;
+      let height = 300;
+      let aspectRatio = 0.75;
+
+      if (size === '1024x1024') {
+        width = 400;
+        height = 400;
+        aspectRatio = 1;
+      } else if (size === '1792x1024') {
+        width = 500;
+        height = 286;
+        aspectRatio = 1024 / 1792;
+      } else if (size === '1024x1792') {
+        width = 300;
+        height = 525;
+        aspectRatio = 1792 / 1024;
+      }
+
+      const element = {
+        id: crypto.randomUUID(),
+        type: 'image',
+        src: generatedImageUrl,
+        left: 80,
+        top: 80,
+        width: width,
+        height: height,
+        aspectRatio: aspectRatio,
+        fit: 'contain',
+        opacity: 1,
+        animation: { ...elementAnimationDefaults }
+      };
+
+      slide.elements.push(element);
+      selectedElementId = element.id;
+      markDirty();
+      render();
+      closeAIImageModal();
+    }
+
+    // Event listeners for AI image generation
+    if (generateAIImageBtn) {
+      generateAIImageBtn.addEventListener('click', openAIImageModal);
+    }
+    if (aiImageCloseBtn) {
+      aiImageCloseBtn.addEventListener('click', closeAIImageModal);
+    }
+    if (aiImageCancelBtn) {
+      aiImageCancelBtn.addEventListener('click', closeAIImageModal);
+    }
+    if (aiImageGenerateBtn) {
+      aiImageGenerateBtn.addEventListener('click', generateAIImage);
+    }
+    if (aiImageAddBtn) {
+      aiImageAddBtn.addEventListener('click', addGeneratedImageToSlide);
+    }
+    if (aiImagePrompt) {
+      aiImagePrompt.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+          e.preventDefault();
+          generateAIImage();
+        }
+      });
+    }
+    // Close modal on backdrop click
+    if (aiImageModal) {
+      aiImageModal.addEventListener('click', (e) => {
+        if (e.target === aiImageModal) {
+          closeAIImageModal();
+        }
+      });
+    }
+
     if (replaceImageInput) {
       replaceImageInput.addEventListener('change', (e) => {
         const file = e.target.files && e.target.files[0];
@@ -9218,16 +10918,212 @@
     if (presenterExitBtn) {
        presenterExitBtn.addEventListener('click', closePresenterMode);
      }
-    if (presenterFullscreenBtn) {
-      presenterFullscreenBtn.addEventListener('click', () => {
-        if (!presenterOverlay) return;
-        if (isPresenterFullscreen()) {
-          exitFullscreen();
-        } else {
-          requestFullscreen(presenterCanvasEl || presenterOverlay);
+    // Fullscreen button handler - make it work!
+    function attachFullscreenHandler() {
+      const btn = document.getElementById('presenterFullscreenBtn');
+      if (!btn) {
+        console.warn('Fullscreen button not found, will retry...');
+        return;
+      }
+      
+      console.log('✓ Fullscreen button found, attaching handler');
+      
+      // Remove any existing handlers
+      btn.onclick = null;
+      const newBtn = btn.cloneNode(true);
+      btn.parentNode.replaceChild(newBtn, btn);
+      const freshBtn = document.getElementById('presenterFullscreenBtn');
+      
+      if (!freshBtn) {
+        console.error('Failed to get fresh button');
+        return;
+      }
+      
+      // Add click handler with both methods
+      function handleFullscreenClick(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        console.log('🔵 FULLSCREEN BUTTON CLICKED!');
+        
+        if (!presenterOverlay) {
+          console.error('Presenter overlay not found');
+          alert('Presenter overlay not found');
+          return;
         }
-      });
+        
+        const isCurrentlyFullscreen = isPresenterFullscreen();
+        console.log('Current fullscreen state:', isCurrentlyFullscreen);
+        
+        if (isCurrentlyFullscreen) {
+          console.log('Exiting fullscreen via button...');
+          exitFullscreen();
+          // The fullscreen change handler will restore presenter mode
+          // But add a backup to ensure it's visible
+          setTimeout(() => {
+            if (presenterOverlay && presenterOverlay.classList.contains('hidden')) {
+              console.log('Backup: Making presenter overlay visible after button exit');
+              presenterOverlay.classList.remove('hidden');
+              presenterOverlay.style.display = 'flex';
+              document.body.classList.add('overflow-hidden');
+            }
+          }, 100);
+          return;
+        }
+        
+        // Enter fullscreen
+        console.log('Entering fullscreen...');
+        const targetElement = presenterOverlay;
+        
+        // Standard API
+        if (targetElement && targetElement.requestFullscreen) {
+          console.log('Using requestFullscreen()');
+          targetElement.requestFullscreen().then(() => {
+            console.log('✓ Fullscreen success!');
+            syncPresenterFullscreenUI();
+            setTimeout(() => {
+              if (typeof renderPresenterSlide === 'function') {
+                renderPresenterSlide();
+              }
+            }, 100);
+          }).catch((err) => {
+            console.error('✗ Fullscreen error:', err);
+            alert('Fullscreen error: ' + err.message);
+          });
+        }
+        // WebKit
+        else if (targetElement && targetElement.webkitRequestFullscreen) {
+          console.log('Using webkitRequestFullscreen()');
+          targetElement.webkitRequestFullscreen();
+          setTimeout(() => {
+            syncPresenterFullscreenUI();
+            if (typeof renderPresenterSlide === 'function') {
+              renderPresenterSlide();
+            }
+          }, 100);
+        }
+        // Mozilla
+        else if (targetElement && targetElement.mozRequestFullScreen) {
+          console.log('Using mozRequestFullScreen()');
+          targetElement.mozRequestFullScreen();
+          setTimeout(() => {
+            syncPresenterFullscreenUI();
+            if (typeof renderPresenterSlide === 'function') {
+              renderPresenterSlide();
+            }
+          }, 100);
+        }
+        // Microsoft
+        else if (targetElement && targetElement.msRequestFullscreen) {
+          console.log('Using msRequestFullscreen()');
+          targetElement.msRequestFullscreen();
+          setTimeout(() => {
+            syncPresenterFullscreenUI();
+            if (typeof renderPresenterSlide === 'function') {
+              renderPresenterSlide();
+            }
+          }, 100);
+        }
+        else {
+          alert('Fullscreen not supported in this browser');
+        }
+      }
+      
+      freshBtn.onclick = handleFullscreenClick;
+      freshBtn.addEventListener('click', handleFullscreenClick, true);
+      
+      console.log('✓ Fullscreen handler attached');
     }
+    
+    // Attach handler immediately
+    attachFullscreenHandler();
+    
+    // Also attach when presenter mode opens (in case button is recreated)
+    const originalOpenPresenter = openPresenterMode;
+    if (typeof originalOpenPresenter === 'function') {
+      // This will be handled by the fullscreen change listener
+    }
+    
+    // Track if we were in presenter mode before fullscreen
+    let wasInPresenterModeBeforeFullscreen = false;
+    // Note: isExitingFullscreen is declared earlier with other presenter variables
+    
+    // Handle fullscreen change events for all browsers
+    const handleFullscreenChange = () => {
+      const isNowFullscreen = isPresenterFullscreen();
+      
+      console.log('🔵 Fullscreen change detected. Now fullscreen:', isNowFullscreen);
+      console.log('isClosingPresenterMode:', isClosingPresenterMode);
+      
+      // Update UI state
+      syncPresenterFullscreenUI();
+      
+      // If we exited fullscreen, ensure presenter mode is still open and restore UI
+      // BUT ONLY if we're not intentionally closing presenter mode
+      if (!isNowFullscreen && !isClosingPresenterMode) {
+        console.log('✅ Exited fullscreen, restoring presenter mode');
+        
+        // Check if presenter overlay exists and is not hidden
+        if (presenterOverlay && !presenterOverlay.classList.contains('hidden')) {
+          console.log('Making presenter overlay visible...');
+          
+          // Force remove hidden class and make visible
+          presenterOverlay.classList.remove('hidden');
+          presenterOverlay.style.display = 'flex';
+          presenterOverlay.style.visibility = 'visible';
+          presenterOverlay.style.opacity = '1';
+          presenterOverlay.style.zIndex = '9999';
+          
+          // Ensure body overflow is hidden for presenter mode
+          document.body.classList.add('overflow-hidden');
+          
+          // Make sure the canvas is visible
+          if (presenterCanvasEl) {
+            presenterCanvasEl.style.display = 'flex';
+            presenterCanvasEl.style.visibility = 'visible';
+          }
+          
+          // Make sure header and controls are visible
+          const header = presenterOverlay.querySelector('.presenter-header');
+          const controls = presenterOverlay.querySelector('.presenter-controls');
+          if (header) {
+            header.style.display = 'flex';
+            header.style.visibility = 'visible';
+          }
+          if (controls) {
+            controls.style.display = 'flex';
+            controls.style.visibility = 'visible';
+          }
+          
+          // Re-render slide to restore proper sizing and visibility
+          setTimeout(() => {
+            console.log('Re-rendering slide after fullscreen exit');
+            if (typeof renderPresenterSlide === 'function') {
+              renderPresenterSlide();
+            }
+          }, 100);
+        } else {
+          console.log('Presenter overlay is hidden or closing, not restoring');
+        }
+      }
+      // When entering fullscreen, remember we were in presenter mode
+      else if (isNowFullscreen && presenterOverlay && !presenterOverlay.classList.contains('hidden')) {
+        wasInPresenterModeBeforeFullscreen = true;
+        isExitingFullscreen = false; // Clear flag when entering
+        console.log('Entered fullscreen, presenter mode was open');
+        setTimeout(() => {
+          if (typeof renderPresenterSlide === 'function') {
+            renderPresenterSlide();
+          }
+        }, 100);
+      }
+    };
+    
+    // Listen to all fullscreen change events
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
     if (presenterPrevBtn) {
       presenterPrevBtn.addEventListener('click', () => navigatePresenter(-1));
     }
@@ -9236,12 +11132,6 @@
     }
 
     setCanvasZoomPercent(currentCanvasZoomPercent);
-
-    const handleFullscreenChange = () => {
-      syncPresenterFullscreenUI();
-    };
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
  
     setActiveTab('slides');
 
@@ -9692,25 +11582,7 @@
           </div>
         </div>
         <div class="chatbot-header-actions">
-          <button id="chatbotResize" class="chatbot-header-btn" aria-label="Expand" onclick="
-              const win = document.getElementById('chatbotWindow');
-              if (win) {
-                const isExp = win.classList.contains('expanded');
-                if (isExp) {
-                  win.style.width = '380px';
-                  win.style.height = '500px';
-                  win.classList.remove('expanded');
-                  this.textContent = '⊞';
-                } else {
-                  win.style.width = '800px';
-                  win.style.height = '900px';
-                  win.classList.add('expanded');
-                  this.textContent = '⊟';
-                }
-                localStorage.setItem('chatbot_expanded', !isExp ? 'true' : 'false');
-              }
-              return false;
-            ">⊞</button>
+          <button id="chatbotResize" class="chatbot-header-btn" aria-label="Expand" onclick="if(typeof window.toggleChatbotSize==='function'){window.toggleChatbotSize();}else{const w=document.getElementById('chatbotWindow');if(w){const e=w.classList.contains('expanded');w.style.setProperty('width',e?'380px':'1200px','important');w.style.setProperty('height',e?'500px':'1000px','important');w.classList.toggle('expanded');this.textContent=e?'⊞':'⊟';localStorage.setItem('chatbot_expanded',e?'false':'true');}}return false;">⊞</button>
           <button id="chatbotMinimize" class="chatbot-header-btn" aria-label="Minimize">−</button>
           <button id="chatbotClose" class="chatbot-header-btn" aria-label="Close">×</button>
         </div>

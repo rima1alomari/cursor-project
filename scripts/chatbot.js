@@ -217,120 +217,112 @@
       });
     }
 
-    // Chatbot resize functionality
+    // Chatbot resize functionality - BULLETPROOF VERSION
     let isExpanded = false;
     
-    function toggleChatbotSize() {
-      console.log('🟢 toggleChatbotSize() called');
+    // GLOBAL FUNCTION - This will ALWAYS work
+    window.toggleChatbotSize = function() {
+      console.log('🟢 toggleChatbotSize() CALLED!');
       
-      const window = document.getElementById('chatbotWindow');
-      if (!window) {
+      const win = document.getElementById('chatbotWindow');
+      const btn = document.getElementById('chatbotResize');
+      
+      if (!win) {
         console.error('❌ Chatbot window not found!');
-        alert('Chatbot window not found! Please refresh the page.');
         return;
       }
       
-      // Toggle expanded state
-      isExpanded = !isExpanded;
-      console.log('🟢 New expanded state:', isExpanded);
-      
       // Make sure window is visible
-      if (!window.classList.contains('active')) {
-        window.classList.add('active');
+      if (!win.classList.contains('active')) {
+        win.classList.add('active');
         const toggle = document.getElementById('chatbotToggle');
         if (toggle) toggle.classList.add('active');
       }
       
-      // Apply expanded or normal size directly with !important via setProperty
-      if (isExpanded) {
-        window.style.setProperty('width', '800px', 'important');
-        window.style.setProperty('height', '900px', 'important');
-        window.style.setProperty('max-width', 'calc(100vw - 40px)', 'important');
-        window.style.setProperty('max-height', 'calc(100vh - 120px)', 'important');
-        window.classList.add('expanded');
-        console.log('✅ Applied EXPANDED size: 800x900');
+      const currentlyExpanded = win.classList.contains('expanded');
+      const newExpanded = !currentlyExpanded;
+      
+      console.log('📏 Toggling from', currentlyExpanded ? 'EXPANDED' : 'NORMAL', 'to', newExpanded ? 'EXPANDED' : 'NORMAL');
+      
+      if (newExpanded) {
+        // EXPAND - MUCH BIGGER
+        win.style.setProperty('width', '1200px', 'important');
+        win.style.setProperty('height', '1000px', 'important');
+        win.style.setProperty('max-width', 'calc(100vw - 40px)', 'important');
+        win.style.setProperty('max-height', 'calc(100vh - 40px)', 'important');
+        win.classList.add('expanded');
+        if (btn) btn.textContent = '⊟';
+        isExpanded = true;
+        localStorage.setItem(CHATBOT_EXPANDED_KEY, 'true');
+        console.log('✅ EXPANDED to 1200x1000');
       } else {
-        window.style.setProperty('width', '380px', 'important');
-        window.style.setProperty('height', '500px', 'important');
-        window.style.removeProperty('max-width');
-        window.style.removeProperty('max-height');
-        window.classList.remove('expanded');
-        console.log('✅ Applied NORMAL size: 380x500');
+        // SHRINK
+        win.style.setProperty('width', '380px', 'important');
+        win.style.setProperty('height', '500px', 'important');
+        win.style.removeProperty('max-width');
+        win.style.removeProperty('max-height');
+        win.classList.remove('expanded');
+        if (btn) btn.textContent = '⊞';
+        isExpanded = false;
+        localStorage.setItem(CHATBOT_EXPANDED_KEY, 'false');
+        console.log('✅ SHRUNK to 380x500');
       }
       
-      // Save to localStorage
-      localStorage.setItem(CHATBOT_EXPANDED_KEY, isExpanded ? 'true' : 'false');
-      
-      // Update button text
-      const resizeBtn = document.getElementById('chatbotResize');
-      if (resizeBtn) {
-        resizeBtn.textContent = isExpanded ? '⊟' : '⊞';
+      // Update button attributes
+      if (btn) {
         const lang = getCurrentLanguage();
         const t = translations[lang];
-        resizeBtn.setAttribute('title', isExpanded ? t.shrink : t.expand);
-        resizeBtn.setAttribute('aria-label', isExpanded ? t.shrink : t.expand);
-        console.log('✅ Button text updated to:', isExpanded ? '⊟' : '⊞');
+        btn.setAttribute('title', newExpanded ? t.shrink : t.expand);
+        btn.setAttribute('aria-label', newExpanded ? t.shrink : t.expand);
       }
-      
-      console.log('🎉 Chatbot resized successfully:', isExpanded ? 'EXPANDED (800x900)' : 'NORMAL (380x500)');
-    }
+    };
     
-    // Expose globally for testing
-    window.toggleChatbotSize = toggleChatbotSize;
-
-    // Initialize resize button - use multiple methods to ensure it works
-    function initResizeButton() {
+    // Setup resize button with MULTIPLE methods
+    function setupResizeButton() {
       const resizeBtn = document.getElementById('chatbotResize');
-      if (resizeBtn) {
-        // Remove any existing listeners
-        const newBtn = resizeBtn.cloneNode(true);
-        resizeBtn.parentNode.replaceChild(newBtn, resizeBtn);
-        
-        // Add click handler
-        newBtn.onclick = function(e) {
-          e.stopPropagation();
-          e.preventDefault();
-          console.log('🔵 RESIZE BUTTON CLICKED!');
-          toggleChatbotSize();
-          return false;
-        };
-        
-        // Also add event listener
-        newBtn.addEventListener('click', function(e) {
-          e.stopPropagation();
-          e.preventDefault();
-          console.log('🔵 RESIZE BUTTON CLICKED (addEventListener)!');
-          toggleChatbotSize();
-          return false;
-        }, true); // Use capture phase
-        
-        console.log('✅ Resize button initialized and ready');
-        return true;
-      } else {
-        console.warn('⚠️ Resize button not found, will retry...');
+      if (!resizeBtn) {
         return false;
       }
+      
+      console.log('🔧 Setting up resize button...');
+      
+      // Method 1: Direct onclick (always works)
+      resizeBtn.onclick = function(e) {
+        e.stopPropagation();
+        e.preventDefault();
+        console.log('🔵 DIRECT ONCLICK FIRED!');
+        window.toggleChatbotSize();
+        return false;
+      };
+      
+      // Method 2: Event listener
+      resizeBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        e.preventDefault();
+        console.log('🔵 EVENT LISTENER FIRED!');
+        window.toggleChatbotSize();
+        return false;
+      }, true);
+      
+      console.log('✅ Resize button setup complete!');
+      return true;
     }
     
-    // Try to initialize immediately
-    if (!initResizeButton()) {
-      // If not found, try again after a delay
-      setTimeout(function() {
-        if (!initResizeButton()) {
-          // Try one more time
-          setTimeout(initResizeButton, 500);
-        }
-      }, 200);
-    }
+    // Setup immediately and multiple times
+    setupResizeButton();
+    setTimeout(setupResizeButton, 50);
+    setTimeout(setupResizeButton, 200);
+    setTimeout(setupResizeButton, 500);
+    setTimeout(setupResizeButton, 1000);
     
-    // Also expose globally for testing
+    // Test function
     window.testResizeButton = function() {
       const btn = document.getElementById('chatbotResize');
       if (btn) {
-        console.log('Button found!', btn);
+        console.log('🧪 Testing resize button...');
         btn.click();
       } else {
-        console.error('Button not found!');
+        console.error('❌ Button not found!');
       }
     };
 
@@ -339,12 +331,16 @@
     if (savedExpanded && chatbotWindow) {
       isExpanded = true;
       chatbotWindow.classList.add('expanded');
-      chatbotWindow.style.width = '800px';
-      chatbotWindow.style.height = '900px';
+      chatbotWindow.style.setProperty('width', '1200px', 'important');
+      chatbotWindow.style.setProperty('height', '1000px', 'important');
+      chatbotWindow.style.setProperty('max-width', 'calc(100vw - 40px)', 'important');
+      chatbotWindow.style.setProperty('max-height', 'calc(100vh - 40px)', 'important');
       if (chatbotResize) {
         chatbotResize.textContent = '⊟';
       }
       console.log('✅ Restored expanded state');
+    } else if (chatbotResize) {
+      chatbotResize.textContent = '⊞';
     }
 
     // Parse slide editor commands
@@ -521,6 +517,119 @@
       }
     }
     
+    /**
+     * AI Slide Control Feature
+     * Handles AI commands for slide modifications
+     * 
+     * @param {string} command - User's text command
+     * @param {Object} slideState - Current slide state (slides, activeSlideIndex)
+     * @returns {Promise<Object>} Structured modification JSON
+     */
+    async function handleAICommand(command, slideState) {
+      try {
+        // Check if we're in the slide editor
+        const isSlideEditor = window.location.pathname.includes('slide-editor.html') || 
+                             window.location.href.includes('slide-editor.html');
+        console.log('📍 Current location:', window.location.pathname, window.location.href);
+        console.log('📄 Is slide editor?', isSlideEditor);
+        
+        if (!isSlideEditor) {
+          console.log('⚠️ Not in slide editor, skipping AI command');
+          return null;
+        }
+        
+        // Get current slide state if not provided
+        const state = slideState || {
+          slides: window.slides || [],
+          activeSlideIndex: window.activeSlideIndex || 0
+        };
+        
+        console.log('📋 Slide state:', {
+          slidesCount: state.slides.length,
+          activeSlideIndex: state.activeSlideIndex,
+          slidesAvailable: typeof window.slides !== 'undefined'
+        });
+        
+        // Get current slide or use null if no slides
+        const currentSlide = state.slides && state.slides.length > 0 
+          ? (state.slides[state.activeSlideIndex] || null)
+          : null;
+        
+        if (!currentSlide) {
+          console.log('⚠️ No current slide found, will use default context');
+        }
+        
+        // Build context about current slide
+        const slideContext = currentSlide ? {
+          slideNumber: state.activeSlideIndex + 1,
+          totalSlides: state.slides.length,
+          backgroundColor: currentSlide.backgroundColor || '#ffffff',
+          elementCount: currentSlide.elements?.length || 0,
+          elements: currentSlide.elements?.map(el => ({
+            type: el.type,
+            text: el.type === 'text' ? (el.text || '').substring(0, 100) : null,
+            fontSize: el.fontSize || null,
+            color: el.color || null
+          })) || []
+        } : {
+          slideNumber: 1,
+          totalSlides: state.slides.length || 0,
+          backgroundColor: '#ffffff',
+          elementCount: 0,
+          elements: []
+        };
+        
+        // Call the AI endpoint
+        console.log('🤖 AI Slide Control: Sending command to server:', command);
+        console.log('📊 Slide context:', slideContext);
+        
+        const response = await fetch('/ai/slide-command', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            command: command,
+            slideContext: slideContext
+          })
+        });
+        
+        console.log('📡 Server response status:', response.status, response.statusText);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('❌ Server error response:', errorText);
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        console.log('✅ Server returned data:', data);
+        
+        // Handle different response formats
+        let modification = null;
+        if (data.modification) {
+          modification = data.modification;
+        } else if (data.action) {
+          // If the modification is returned directly
+          modification = data;
+        } else if (data && typeof data === 'object' && 'action' in data) {
+          modification = data;
+        }
+        
+        // Check if action is null (meaning not a slide command)
+        if (modification && modification.action === null) {
+          console.log('ℹ️ AI determined this is not a slide command');
+          return null;
+        }
+        
+        console.log('✅ Final modification to apply:', modification);
+        return modification;
+      } catch (error) {
+        console.error('Error in handleAICommand:', error);
+        return null;
+      }
+    }
+    
     // Send message
     function sendMessage() {
       const message = chatbotInput.value.trim();
@@ -547,12 +656,102 @@
       // Show typing indicator
       const typingIndicator = addTypingIndicator();
       
-      // Check for slide editor commands first
+      // Check for slide editor commands first (legacy simple commands)
       const slideCommand = parseSlideCommand(message, detectedLang);
       if (slideCommand) {
         removeTypingIndicator(typingIndicator);
         executeSlideCommand(slideCommand, detectedLang);
         return;
+      }
+      
+      // AI Slide Control: Check if this is a slide modification command
+      const isSlideEditor = window.location.pathname.includes('slide-editor.html') || 
+                           window.location.href.includes('slide-editor.html');
+      if (isSlideEditor) {
+        const slideState = {
+          slides: window.slides || [],
+          activeSlideIndex: window.activeSlideIndex || 0
+        };
+        
+        // Try to interpret as AI slide command
+        console.log('🔍 Checking if message is a slide command:', message);
+        handleAICommand(message, slideState)
+          .then(modification => {
+            console.log('🎯 AI command result:', modification);
+            console.log('🔧 applySlideModification available:', typeof window.applySlideModification);
+            
+            if (modification && typeof window.applySlideModification === 'function') {
+              removeTypingIndicator(typingIndicator);
+              console.log('⚙️ Applying modification:', modification);
+              // Apply the modification
+              const result = window.applySlideModification(modification);
+              console.log('📝 Modification result:', result);
+              if (result.success) {
+                const successMsg = detectedLang === 'ar'
+                  ? `✅ ${result.message || 'تم تطبيق التعديل بنجاح'}`
+                  : `✅ ${result.message || 'Modification applied successfully'}`;
+                addMessage('bot', successMsg);
+              } else {
+                const errorMsg = detectedLang === 'ar'
+                  ? `❌ ${result.message || 'فشل تطبيق التعديل'}`
+                  : `❌ ${result.message || 'Failed to apply modification'}`;
+                addMessage('bot', errorMsg);
+              }
+            } else {
+              console.log('ℹ️ Not a slide command or modification is null, falling back to normal chat');
+              // Not a slide command, continue with normal AI response
+              getOpenAIResponse(message, detectedLang)
+                .then(response => {
+                  removeTypingIndicator(typingIndicator);
+                  if (response && response.trim()) {
+                    addMessage('bot', response);
+                  } else {
+                    const lang = getCurrentLanguage();
+                    const fallbackMsg = lang === 'ar'
+                      ? 'عذراً، لم أتمكن من الحصول على إجابة. يرجى المحاولة مرة أخرى.'
+                      : 'Sorry, I couldn\'t get a response. Please try again.';
+                    addMessage('bot', fallbackMsg);
+                  }
+                })
+                .catch(error => {
+                  removeTypingIndicator(typingIndicator);
+                  console.error('Error getting response:', error);
+                  const lang = getCurrentLanguage();
+                  const errorMsg = lang === 'ar' 
+                    ? 'عذراً، حدث خطأ في الاتصال. يرجى المحاولة مرة أخرى.'
+                    : 'Sorry, there was an error. Please try again.';
+                  addMessage('bot', errorMsg);
+                });
+            }
+          })
+          .catch(error => {
+            console.error('❌ Error in AI command handling:', error);
+            console.error('Error stack:', error.stack);
+            // Fallback to normal AI response
+            getOpenAIResponse(message, detectedLang)
+              .then(response => {
+                removeTypingIndicator(typingIndicator);
+                if (response && response.trim()) {
+                  addMessage('bot', response);
+                } else {
+                  const lang = getCurrentLanguage();
+                  const fallbackMsg = lang === 'ar'
+                    ? 'عذراً، لم أتمكن من الحصول على إجابة. يرجى المحاولة مرة أخرى.'
+                    : 'Sorry, I couldn\'t get a response. Please try again.';
+                  addMessage('bot', fallbackMsg);
+                }
+              })
+              .catch(err => {
+                removeTypingIndicator(typingIndicator);
+                console.error('Error getting response:', err);
+                const lang = getCurrentLanguage();
+                const errorMsg = lang === 'ar' 
+                  ? 'عذراً، حدث خطأ في الاتصال. يرجى المحاولة مرة أخرى.'
+                  : 'Sorry, there was an error. Please try again.';
+                addMessage('bot', errorMsg);
+              });
+          });
+        return; // Exit early, we're handling it asynchronously
       }
       
       // Always try to get a real answer from OpenAI API first
@@ -1349,42 +1548,55 @@ For more accurate and detailed answers, please try asking again or rephrase your
     }
   };
   
-  // Final backup - add handler after everything loads (runs on all pages)
+  // FINAL ABSOLUTE BACKUP - runs on ALL pages after everything loads
   setTimeout(function() {
     const btn = document.getElementById('chatbotResize');
     if (btn) {
-      console.log('🔵 Adding FINAL backup handler to resize button');
-      // Add visual indicator that button is ready
-      btn.style.boxShadow = '0 0 10px rgba(255, 255, 0, 0.5)';
-      btn.addEventListener('click', function(e) {
+      console.log('🔴 FINAL BACKUP: Setting up resize button');
+      
+      // Remove any existing handlers
+      btn.removeAttribute('onclick');
+      
+      // Set direct onclick - this WILL work
+      btn.onclick = function(e) {
         e.stopPropagation();
         e.preventDefault();
-        console.log('🔴🔴🔴 FINAL BACKUP CLICKED! 🔴🔴🔴');
-        if (window.toggleChatbotSize) {
-          window.toggleChatbotSize();
-        } else {
-          console.error('toggleChatbotSize function not found!');
-          // Fallback: direct resize
-          const window = document.getElementById('chatbotWindow');
-          if (window) {
-            const isExpanded = window.classList.contains('expanded');
-            if (isExpanded) {
-              window.style.width = '380px';
-              window.style.height = '500px';
-              window.classList.remove('expanded');
-              btn.textContent = '⊞';
-            } else {
-              window.style.width = '800px';
-              window.style.height = '900px';
-              window.classList.add('expanded');
-              btn.textContent = '⊟';
-            }
-          }
+        console.log('🔴🔴🔴 FINAL BACKUP CLICKED!');
+        
+        const win = document.getElementById('chatbotWindow');
+        if (!win) {
+          console.error('❌ Window not found');
+          return false;
         }
+        
+        const isExp = win.classList.contains('expanded');
+        
+        if (isExp) {
+          win.style.setProperty('width', '380px', 'important');
+          win.style.setProperty('height', '500px', 'important');
+          win.style.removeProperty('max-width');
+          win.style.removeProperty('max-height');
+          win.classList.remove('expanded');
+          btn.textContent = '⊞';
+          localStorage.setItem('chatbot_expanded', 'false');
+          console.log('✅ Shrunk via backup');
+        } else {
+          win.style.setProperty('width', '1200px', 'important');
+          win.style.setProperty('height', '1000px', 'important');
+          win.style.setProperty('max-width', 'calc(100vw - 40px)', 'important');
+          win.style.setProperty('max-height', 'calc(100vh - 40px)', 'important');
+          win.classList.add('expanded');
+          btn.textContent = '⊟';
+          localStorage.setItem('chatbot_expanded', 'true');
+          console.log('✅ Expanded via backup');
+        }
+        
         return false;
-      }, true);
+      };
+      
+      console.log('✅ Final backup handler installed');
     } else {
-      console.error('❌ Resize button still not found after 2 seconds');
+      console.error('❌ Resize button not found in final backup');
     }
   }, 2000);
 })();

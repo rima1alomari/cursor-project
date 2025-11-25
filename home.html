@@ -607,25 +607,7 @@
             </div>
           </div>
           <div class="chatbot-header-actions">
-            <button id="chatbotResize" class="chatbot-header-btn" aria-label="Expand" onclick="
-              const win = document.getElementById('chatbotWindow');
-              if (win) {
-                const isExp = win.classList.contains('expanded');
-                if (isExp) {
-                  win.style.width = '380px';
-                  win.style.height = '500px';
-                  win.classList.remove('expanded');
-                  this.textContent = '⊞';
-                } else {
-                  win.style.width = '800px';
-                  win.style.height = '900px';
-                  win.classList.add('expanded');
-                  this.textContent = '⊟';
-                }
-                localStorage.setItem('chatbot_expanded', !isExp ? 'true' : 'false');
-              }
-              return false;
-            ">⊞</button>
+            <button id="chatbotResize" class="chatbot-header-btn" aria-label="Expand" onclick="if(typeof window.toggleChatbotSize==='function'){window.toggleChatbotSize();}else{const w=document.getElementById('chatbotWindow');if(w){const e=w.classList.contains('expanded');w.style.setProperty('width',e?'380px':'1200px','important');w.style.setProperty('height',e?'500px':'1000px','important');w.classList.toggle('expanded');this.textContent=e?'⊞':'⊟';localStorage.setItem('chatbot_expanded',e?'false':'true');}}return false;">⊞</button>
             <button id="chatbotMinimize" class="chatbot-header-btn" aria-label="Minimize">−</button>
             <button id="chatbotClose" class="chatbot-header-btn" aria-label="Close">×</button>
           </div>
