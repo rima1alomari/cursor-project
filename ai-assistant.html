@@ -887,10 +887,26 @@
             italic: false,
             underline: false,
             align: 'left',
-            lineHeight: 1.5,
-            letterSpacing: 0,
+            lineHeight: 1.7, // Increased line height for better spacing
+            letterSpacing: 0.2, // Slight letter spacing for better readability
             textTransform: 'none',
             backgroundColor: null,
+            animation: { type: 'none', duration: 600, delay: 0 }
+          };
+        }
+
+        function createImageElement(imageUrl, x = 400, y = 150, width = 400, height = 300) {
+          return {
+            id: generatePresentationId(),
+            type: 'image',
+            src: imageUrl,
+            left: x,
+            top: y,
+            width: width,
+            height: height,
+            aspectRatio: height / width,
+            fit: 'contain',
+            opacity: 1,
             animation: { type: 'none', duration: 600, delay: 0 }
           };
         }
@@ -1220,6 +1236,19 @@
                             descLower.includes('with chart') ||
                             descLower.includes('with graphs') ||
                             descLower.includes('with data');
+          
+          // Check if user wants images
+          const wantsImages = descLower.includes('image') || 
+                            descLower.includes('picture') ||
+                            descLower.includes('photo') ||
+                            descLower.includes('illustration') ||
+                            descLower.includes('visual') ||
+                            descLower.includes('with images') ||
+                            descLower.includes('include images') ||
+                            descLower.includes('add images') ||
+                            descLower.includes('with pictures') ||
+                            descLower.includes('with photos') ||
+                            descLower.includes('with visuals');
 
           const prompt = `Create a comprehensive presentation based on the following description. Generate 5-8 slides with creative, engaging content.
 
@@ -1227,11 +1256,13 @@ Presentation Title: ${title}
 Theme: ${themeDescription}
 Description: ${description}
 ${wantsCharts ? '\n🚨 CRITICAL REQUIREMENT: THE USER HAS EXPLICITLY REQUESTED CHARTS. YOU MUST INCLUDE AT LEAST 1-2 CHARTS IN YOUR RESPONSE. Add charts to slides that would benefit from data visualization (e.g., statistics slides, comparison slides, performance slides, analysis slides).' : ''}
+${wantsImages ? '\n🚨 CRITICAL REQUIREMENT: THE USER HAS EXPLICITLY REQUESTED IMAGES. YOU MUST INCLUDE AT LEAST 2-3 IMAGES IN YOUR RESPONSE. For each slide that would benefit from visual content, add an "image" field with a detailed description of what image should be generated (e.g., "A professional illustration of [topic]", "A modern diagram showing [concept]", "A vibrant image representing [idea]").' : ''}
 
 IMPORTANT: For each slide, you MUST provide:
 1. A clear, engaging slide title (required)
 2. An array of "points" with 3-5 well-written bullet points (REQUIRED - each point must be a complete sentence or phrase)
 3. OPTIONAL: A "chart" object if the slide should include a data visualization
+4. OPTIONAL: An "image" string with a detailed description of what image should be generated for this slide (e.g., "A professional illustration of [topic]", "A modern infographic showing [concept]")
 
 Format your response as JSON with this EXACT structure (no markdown, no code blocks):
 {
@@ -1253,7 +1284,8 @@ Format your response as JSON with this EXACT structure (no markdown, no code blo
         "labels": ["Category A", "Category B", "Category C", "Category D"],
         "values": [45, 67, 34, 89],
         "description": "Brief description of what this chart shows"
-      }
+      },
+      "image": "A professional data visualization illustration showing analytics and metrics"
     }
   ]
 }
@@ -1276,6 +1308,7 @@ CRITICAL REQUIREMENTS:
 - Include an introduction slide, 3-5 main content slides, and a conclusion slide
 - Write complete, informative bullet points (not just keywords)
 ${wantsCharts ? '- If charts are requested, include 1-3 charts total across different slides with relevant data' : ''}
+${wantsImages ? '- If images are requested, include 2-4 images total across different slides. Each image description should be specific and relevant to the slide content (e.g., "A modern illustration of [topic]", "A professional diagram showing [concept]", "A vibrant visual representing [idea]")' : ''}
 
 Return ONLY valid JSON, no other text.`;
 
@@ -1344,7 +1377,86 @@ Return ONLY valid JSON, no other text.`;
           }
         }
 
-        function convertAISlidesToEditorFormat(aiPresentation, title, theme, description) {
+        // Function to generate image using DALL-E API
+        async function generateImageWithDALLE(imageDescription) {
+          const API_KEY = window.OPENAI_API_KEY;
+          if (!API_KEY || API_KEY === 'YOUR_OPENAI_API_KEY_HERE' || API_KEY === 'YOUR_API_KEY_HERE') {
+            console.warn('OpenAI API key not configured, skipping image generation');
+            return null;
+          }
+
+          try {
+            // Always enhance prompt with clean, simple, informative diagram style
+            let enhancedPrompt = imageDescription.trim();
+            
+            // Add informative diagram requirements - like the cloud computing architecture example
+            const informativeSuffix = '. Create a clean, simple diagram or infographic with clear labels, icons, and visual elements that explain the concept. Include text labels, arrows, connections, or structured information. Make it informative and educational like a technical diagram or architecture illustration.';
+            
+            // Add style requirements - clean, simple, muted colors
+            const styleSuffix = ' Style: clean, simple, minimalist diagram style with muted colors (light blues, grays, soft tones), professional, suitable for business presentation. No bright or vibrant colors. Use clear lines, simple shapes, and readable text labels. Similar to a technical architecture diagram.';
+            
+            // Check if the prompt already contains style instructions
+            const hasStyleKeywords = /style|simple|modern|minimalist|professional|business|presentation|diagram|clean/i.test(enhancedPrompt);
+            const hasInformativeKeywords = /informative|detailed|information|data|visualization|educational|diagram|labels|icons/i.test(enhancedPrompt);
+            
+            if (!hasStyleKeywords && !hasInformativeKeywords) {
+              enhancedPrompt = `${enhancedPrompt}${informativeSuffix}${styleSuffix}`;
+            } else {
+              // Add informative requirements if missing
+              if (!hasInformativeKeywords) {
+                enhancedPrompt = `${enhancedPrompt}${informativeSuffix}`;
+              }
+              // Ensure style requirements are included
+              if (!hasStyleKeywords) {
+                enhancedPrompt = `${enhancedPrompt}${styleSuffix}`;
+              } else {
+                // Ensure it includes the key requirements
+                if (!/simple|clean/i.test(enhancedPrompt)) {
+                  enhancedPrompt = `${enhancedPrompt}. Keep it simple and clean.`;
+                }
+                if (!/diagram|labels|icons|informative/i.test(enhancedPrompt)) {
+                  enhancedPrompt = `${enhancedPrompt}. Include labels, icons, or diagram elements.`;
+                }
+                if (!/muted|not too colorful|subtle colors/i.test(enhancedPrompt)) {
+                  enhancedPrompt = `${enhancedPrompt}. Use muted, subtle colors, not too colorful.`;
+                }
+              }
+            }
+            
+            const response = await fetch('https://api.openai.com/v1/images/generations', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${API_KEY}`
+              },
+              body: JSON.stringify({
+                model: 'dall-e-3',
+                prompt: enhancedPrompt,
+                n: 1,
+                size: '1024x1024',
+                quality: 'standard',
+                response_format: 'url'
+              })
+            });
+
+            if (!response.ok) {
+              const errorData = await response.json().catch(() => ({ error: { message: 'Failed to generate image' } }));
+              console.error('Image generation error:', errorData);
+              return null;
+            }
+
+            const data = await response.json();
+            if (data.data && data.data[0] && data.data[0].url) {
+              return data.data[0].url;
+            }
+            return null;
+          } catch (error) {
+            console.error('Error generating image:', error);
+            return null;
+          }
+        }
+
+        async function convertAISlidesToEditorFormat(aiPresentation, title, theme, description) {
           const colors = getThemeColors(theme);
           const slides = [];
 
@@ -1366,6 +1478,19 @@ Return ONLY valid JSON, no other text.`;
                             descLower.includes('with chart') ||
                             descLower.includes('with graphs') ||
                             descLower.includes('with data');
+          
+          // Check if user wants images
+          const wantsImages = descLower.includes('image') || 
+                            descLower.includes('picture') ||
+                            descLower.includes('photo') ||
+                            descLower.includes('illustration') ||
+                            descLower.includes('visual') ||
+                            descLower.includes('with images') ||
+                            descLower.includes('include images') ||
+                            descLower.includes('add images') ||
+                            descLower.includes('with pictures') ||
+                            descLower.includes('with photos') ||
+                            descLower.includes('with visuals');
 
           // Title slide
           const titleSlide = createEmptySlide();
@@ -1430,20 +1555,55 @@ Return ONLY valid JSON, no other text.`;
             return generateSlidesFromDescription(description, title, theme);
           }
           
-          aiSlides.forEach((aiSlide, index) => {
-            const slide = createEmptySlide();
-            slide.title = aiSlide.title || `Slide ${index + 1}`;
-            
-            // Alternate backgrounds
-            const useAltBackground = (index + 1) % 2 === 0;
-            slide.backgroundColor = useAltBackground 
-              ? (colors.backgroundAlt || colors.background)
-              : (colors.backgroundGradient || colors.background);
+          // Process slides and generate images if needed
+          const processSlides = async () => {
+            for (let index = 0; index < aiSlides.length; index++) {
+              const aiSlide = aiSlides[index];
+              const slide = createEmptySlide();
+              slide.title = aiSlide.title || `Slide ${index + 1}`;
+              
+              // Alternate backgrounds
+              const useAltBackground = (index + 1) % 2 === 0;
+              slide.backgroundColor = useAltBackground 
+                ? (colors.backgroundAlt || colors.background)
+                : (colors.backgroundGradient || colors.background);
 
-            const elements = [];
-            
-            // Add title with proper spacing (moved up to leave room for content)
-            elements.push(createTextElement(slide.title, 100, 50, 800, 40, 700, colors.primary));
+              const elements = [];
+              
+              // Add title with proper spacing (moved up to leave room for content)
+              elements.push(createTextElement(slide.title, 100, 50, 800, 40, 700, colors.primary));
+              
+              // Check if this slide has a chart - if so, skip images
+              const hasChart = aiSlide.chart && typeof aiSlide.chart === 'object';
+              
+              // Generate and add image if requested (but NOT if chart is present)
+              let imageUrl = null;
+              if (!hasChart) {
+                if (aiSlide.image && typeof aiSlide.image === 'string' && aiSlide.image.trim()) {
+                  console.log(`Generating image for slide "${slide.title}": ${aiSlide.image}`);
+                  imageUrl = await generateImageWithDALLE(aiSlide.image);
+                  if (imageUrl) {
+                    console.log(`✅ Image generated successfully for slide "${slide.title}"`);
+                    // Add image element (position on right side, similar to charts)
+                    const imageElement = createImageElement(imageUrl, 450, 120, 400, 300);
+                    elements.push(imageElement);
+                    // Adjust bullet point width to leave room for image
+                  } else {
+                    console.warn(`⚠️ Failed to generate image for slide "${slide.title}"`);
+                  }
+                } else if (wantsImages && index > 0 && index < aiSlides.length - 1 && index % 2 === 0) {
+                  // If user wants images but AI didn't include them, generate one for every other slide
+                  const imagePrompt = `A clean, simple diagram or infographic about: ${aiSlide.title || slide.title}. Include labels, icons, and visual elements that explain the concept`;
+                  console.log(`Auto-generating image for slide "${slide.title}"`);
+                  imageUrl = await generateImageWithDALLE(imagePrompt);
+                  if (imageUrl) {
+                    const imageElement = createImageElement(imageUrl, 450, 120, 400, 300);
+                    elements.push(imageElement);
+                  }
+                }
+              } else {
+                console.log(`Skipping image for slide "${slide.title}" because it has a chart`);
+              }
 
             // Add bullet points - handle different possible formats
             let points = [];
@@ -1493,28 +1653,25 @@ Return ONLY valid JSON, no other text.`;
             if (aiSlide.chart && typeof aiSlide.chart === 'object') {
               console.log(`Adding chart to slide "${slide.title}":`, aiSlide.chart);
               
+              // Remove any images that were already added (chart takes priority)
+              const imageElements = elements.filter(el => el.type === 'image');
+              imageElements.forEach(imgEl => {
+                const imgIndex = elements.indexOf(imgEl);
+                if (imgIndex !== -1) {
+                  elements.splice(imgIndex, 1);
+                  console.log(`Removed image from slide "${slide.title}" because chart is present`);
+                }
+              });
+              
               // Create chart element
               const chartElement = createChartElement(
                 aiSlide.chart,
-                400, // x position (right side)
-                150, // y position
+                450, // x position (right side, better aligned)
+                120, // y position (aligned with text start)
                 420, // width
-                280  // height
+                320  // height (slightly taller for better visibility)
               );
               elements.push(chartElement);
-              
-              // Add chart description as a bullet point if provided
-              if (aiSlide.chart.description) {
-                const chartDescElement = createBulletPoint(
-                  aiSlide.chart.description,
-                  120,
-                  120,
-                  260, // narrower width to leave room for chart
-                  18,
-                  colors.accent
-                );
-                elements.push(chartDescElement);
-              }
               
               // Add fewer bullet points when chart is present (to avoid overcrowding)
               const maxPointsWithChart = 3;
@@ -1523,17 +1680,18 @@ Return ONLY valid JSON, no other text.`;
             
             // Calculate proper spacing for bullet points
             const titleHeight = 50; // Space for title (title is at y=50, height ~40px)
-            const startY = aiSlide.chart ? 120 : 120; // Start position after title with proper gap
-            const lineSpacing = 70; // Increased spacing between bullet points to prevent overlap
-            const bulletWidth = aiSlide.chart ? 260 : 760; // Narrower if chart present
+            const hasRightElement = aiSlide.chart || imageUrl; // Chart or image on right side
+            const startY = hasRightElement ? 150 : 140; // Start position after title with more gap
+            const lineSpacing = hasRightElement ? 150 : 90; // Much more spacing when chart/image present for better readability
+            const bulletWidth = hasRightElement ? 300 : 760; // Wider text area when chart present (was 260, now 300 for better readability)
             
             points.forEach((point, pIndex) => {
               const pointText = typeof point === 'string' ? point.trim() : String(point).trim();
               if (pointText && pointText.length > 0) {
                 const bulletColor = pIndex === 0 ? colors.accent : colors.text;
-                const bulletSize = pIndex === 0 ? 20 : 18;
+                const bulletSize = hasRightElement ? 18 : (pIndex === 0 ? 20 : 18); // Slightly smaller when chart present
                 const yPosition = startY + (pIndex * lineSpacing);
-                const bulletElement = createBulletPoint(pointText, 120, yPosition, bulletWidth, bulletSize, bulletColor);
+                const bulletElement = createBulletPoint(pointText, 100, yPosition, bulletWidth, bulletSize, bulletColor);
                 elements.push(bulletElement);
                 console.log(`Added bullet ${pIndex + 1} to slide "${slide.title}":`, pointText);
               }
@@ -1560,9 +1718,13 @@ Return ONLY valid JSON, no other text.`;
             console.log(`Final slide "${slide.title}" has ${elements.length} elements`);
             slide.elements = elements;
             slides.push(slide);
-          });
-
-          return slides;
+          }
+            
+            return slides;
+          };
+          
+          // Process slides sequentially (await image generation)
+          return await processSlides();
         }
 
         form.addEventListener('submit', async (e) => {
@@ -1601,8 +1763,8 @@ Return ONLY valid JSON, no other text.`;
             console.log('AI Presentation received:', aiPresentation);
             console.log('AI Slides count:', aiPresentation.slides?.length || 0);
             
-            // Convert AI slides to editor format
-            const slides = convertAISlidesToEditorFormat(aiPresentation, title, theme, description);
+            // Convert AI slides to editor format (await since it's async for image generation)
+            const slides = await convertAISlidesToEditorFormat(aiPresentation, title, theme, description);
             
             // Validate slides
             if (!slides || slides.length === 0) {
