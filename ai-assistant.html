@@ -1203,9 +1203,9 @@
 
         // OpenAI API Key - Load from config.js
         const API_KEY = window.OPENAI_API_KEY || 'YOUR_OPENAI_API_KEY_HERE';
-        
+
         // Validate API key on page load
-        if (!API_KEY || API_KEY === 'YOUR_OPENAI_API_KEY_HERE' || API_KEY === 'YOUR_API_KEY_HERE') {
+        if (!API_KEY || API_KEY === 'YOUR_OPENAI_API_KEY_HERE') {
           console.error('OpenAI API key not configured. Please set your API key in config.js');
         }
 

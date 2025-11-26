@@ -678,6 +678,7 @@
   <script src="./scripts/profile.js"></script>
   <script src="./scripts/account-display.js"></script>
   <script src="./scripts/firebase.js"></script>
+  <script src="./scripts/importPPTX.js"></script>
   <script>
     const PRESENTATIONS_INDEX_KEY = 'lumen-presentations-index';
     const PRESENTATION_STORAGE_PREFIX = 'lumen-presentation-';
@@ -1562,6 +1563,181 @@
       }
     }
 
+    // Helpers to build slide elements
+    function genId(prefix = 'id') {
+      if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+      return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    }
+    function buildTitleElement(text) {
+      return {
+        id: genId('el'),
+        type: 'text',
+        text: text || 'Title',
+        left: 100,
+        top: 70,
+        width: 800,
+        fontSize: 44,
+        fontFamily: 'Inter, sans-serif',
+        color: '#0f172a',
+        bold: true,
+        italic: false,
+        underline: false,
+        align: 'left',
+        lineHeight: 1.2,
+        letterSpacing: 0,
+        textTransform: 'none',
+        backgroundColor: null,
+        animation: { type: 'none', duration: 600, delay: 0 }
+      };
+    }
+    function buildBulletElement(text, idx) {
+      return {
+        id: genId('el'),
+        type: 'text',
+        text: `• ${text}`,
+        left: 140,
+        top: 150 + (idx * 55),
+        width: 740,
+        fontSize: 18,
+        fontFamily: 'Inter, sans-serif',
+        color: idx === 0 ? '#2563eb' : '#0f172a',
+        bold: false,
+        italic: false,
+        underline: false,
+        align: 'left',
+        lineHeight: 1.5,
+        letterSpacing: 0,
+        textTransform: 'none',
+        backgroundColor: null,
+        animation: { type: 'none', duration: 600, delay: 0 }
+      };
+    }
+    function createSlideFromTexts(title, points) {
+      const elements = [buildTitleElement(title)];
+      const bullets = (points || []).slice(0, 8);
+      bullets.forEach((t, i) => {
+        const clean = String(t || '').trim();
+        if (clean) elements.push(buildBulletElement(clean, i));
+      });
+      return {
+        id: genId('slide'),
+        title: title || 'Slide',
+        backgroundColor: '#ffffff',
+        backgroundImage: null,
+        elements,
+        animation: { type: 'none', duration: 600, delay: 0 }
+      };
+    }
+
+    // Import Custom: PDF or PPTX → slides → save → open editor
+    async function createProjectFromCustom(file) {
+      const now = Date.now();
+      const newProjectId = genId('project');
+      const nameBase = (file.name || 'Imported').replace(/\.(pdf|pptx)$/i, '');
+
+      let slides = [];
+      const ext = (file.name || '').split('.').pop().toLowerCase();
+      if (ext === 'pdf') {
+        slides = await importFromPDF(file);
+      } else if (ext === 'pptx') {
+        slides = await importFromPPTX(file);
+      } else {
+        throw new Error('Unsupported file type');
+      }
+      if (!slides || slides.length === 0) {
+        // Ensure at least one slide
+        slides = [createSlideFromTexts(nameBase, ['Imported content'])];
+      }
+
+      const projectData = {
+        id: newProjectId,
+        name: `${nameBase}`,
+        slides,
+        createdAt: now,
+        updatedAt: now,
+        important: false
+      };
+
+      // Save project to Firestore if available, else localStorage
+      if (typeof saveProjectToFirestore === 'function') {
+        const saveResult = await saveProjectToFirestore(newProjectId, projectData);
+        if (!saveResult.success) {
+          console.warn('Failed to save to Firestore, using localStorage:', saveResult.error);
+          const currentUser = getCurrentUser();
+          if (currentUser && currentUser.id) {
+            projectData.userId = currentUser.id;
+            const userKey = `${PRESENTATION_STORAGE_PREFIX}${currentUser.id}-${newProjectId}`;
+            localStorage.setItem(userKey, JSON.stringify(projectData));
+          }
+        }
+      } else {
+        const currentUser = getCurrentUser();
+        if (currentUser && currentUser.id) {
+          projectData.userId = currentUser.id;
+          const userKey = `${PRESENTATION_STORAGE_PREFIX}${currentUser.id}-${newProjectId}`;
+          localStorage.setItem(userKey, JSON.stringify(projectData));
+        }
+      }
+
+      // Update list and index
+      allProjects.push({
+        id: newProjectId,
+        name: projectData.name,
+        createdAt: now,
+        updatedAt: now,
+        important: false
+      });
+      const currentUser = getCurrentUser();
+      if (currentUser && currentUser.id) {
+        const userIndexKey = `${PRESENTATIONS_INDEX_KEY}-${currentUser.id}`;
+        localStorage.setItem(userIndexKey, JSON.stringify(allProjects));
+      }
+
+      // Navigate to editor
+      window.location.href = `slide-editor.html?id=${encodeURIComponent(newProjectId)}`;
+    }
+
+    async function importFromPDF(file) {
+      const importer = window.PresentationImporter;
+      if (!importer || typeof importer.importPdf !== 'function') {
+        console.warn('PDF importer is not available.');
+        return [];
+      }
+      try {
+        const result = await importer.importPdf(file);
+        if (Array.isArray(result?.slides)) {
+          return result.slides;
+        }
+        if (Array.isArray(result)) {
+          return result;
+        }
+        return [];
+      } catch (e) {
+        console.warn('PDF import failed', e);
+        return [];
+      }
+    }
+
+    async function importFromPPTX(file) {
+      const importer = window.PresentationImporter;
+      if (!importer || typeof importer.importPptx !== 'function') {
+        console.warn('PPTX importer is not available.');
+        return [];
+      }
+      try {
+        const result = await importer.importPptx(file);
+        if (Array.isArray(result?.slides)) {
+          return result.slides;
+        }
+        if (Array.isArray(result)) {
+          return result;
+        }
+        return [];
+      } catch (e) {
+        console.warn('PPTX import failed', e);
+        return [];
+      }
+    }
     // Rename project
     document.getElementById('closeRenameModal').addEventListener('click', () => {
       document.getElementById('renameProjectModal').classList.remove('active');

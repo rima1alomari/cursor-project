@@ -12,8 +12,10 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+   <script src="./scripts/importPPTX.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <style>
     body { font-family: 'Inter', sans-serif; }
     .draggable-placeholder { cursor: move; }
@@ -819,6 +821,22 @@
   </style>
 </head>
 <body class="min-h-screen bg-[#f5f7fa] text-slate-800">
+  <div id="visualModeNotice" class="fixed bottom-6 right-6 z-50 hidden w-full max-w-sm rounded-2xl border border-slate-200 bg-white/95 p-4 shadow-2xl shadow-slate-500/30 backdrop-blur">
+    <div class="flex items-start gap-3">
+      <div class="rounded-full bg-[#004c97]/15 p-2 text-[#004c97]">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M12 8v4"></path>
+          <circle cx="12" cy="16" r="1"></circle>
+        </svg>
+      </div>
+      <div class="flex-1 text-sm text-slate-600">
+        <p class="text-sm font-semibold text-slate-900">Visual fidelity mode</p>
+        <p id="visualModeNoticeText" class="mt-1 text-sm leading-snug"></p>
+      </div>
+      <button id="visualModeNoticeClose" class="text-slate-400 transition hover:text-slate-600" aria-label="Dismiss notice">×</button>
+    </div>
+  </div>
   <div class="flex h-screen flex-col">
     <!-- Top Toolbar -->
     <header class="w-full border-b border-slate-200/50 bg-gradient-to-r from-[#004c97] via-teal-500 to-emerald-500 py-4 text-white shadow-sm">
@@ -888,6 +906,8 @@
             <button id="deleteSlideBtn" class="rounded-full border border-white/30 px-3 py-1.5 text-sm hover:bg-white/10">Delete Slide</button>
             <button id="renameSlideBtn" class="rounded-full border border-white/30 px-3 py-1.5 text-sm hover:bg-white/10">Rename Slide</button>
             <button id="clearSlideBtn" class="rounded-full border border-white/30 px-3 py-1.5 text-sm hover:bg-white/10">Clear Content</button>
+            <button id="importSlidesBtn" class="rounded-full border border-white/30 px-3 py-1.5 text-sm hover:bg-white/10">Import File</button>
+            <input id="importFileInput" type="file" accept=".pptx,.pdf">
           </div>
           <div data-tab-panel="text" class="hidden flex flex-wrap items-center gap-4">
             <button id="addTextBtn" class="rounded-full bg-white/20 px-3 py-1.5 text-sm hover:bg-white/30">Add Text</button>
@@ -1752,6 +1772,8 @@
       </div>
     </div>
   </div>
+
+  <script src="./scripts/importPPTX.js"></script>
 
   <script>
     // 🧹 Force reset when creating a new presentation
@@ -2913,6 +2935,11 @@
     const deleteSlideBtn = document.getElementById('deleteSlideBtn');
     const renameSlideBtn = document.getElementById('renameSlideBtn');
     const clearSlideBtn = document.getElementById('clearSlideBtn');
+    const importSlidesBtn = document.getElementById('importSlidesBtn');
+    const importFileInput = document.getElementById('importFileInput');
+    const visualModeNotice = document.getElementById('visualModeNotice');
+    const visualModeNoticeText = document.getElementById('visualModeNoticeText');
+    const visualModeNoticeClose = document.getElementById('visualModeNoticeClose');
 
     const addTextBtn = document.getElementById('addTextBtn');
     const fontFamilySelect = document.getElementById('fontFamilySelect');
@@ -3078,6 +3105,22 @@
     
     const transcriptionModal = document.getElementById('transcriptionModal');
     const transcriptionCloseBtn = document.getElementById('transcriptionCloseBtn');
+
+    let visualModeNoticeTimeout = null;
+    let isImportingSlides = false;
+
+    if (visualModeNoticeClose) {
+      visualModeNoticeClose.addEventListener('click', () => {
+        hideVisualModeNotice();
+      });
+    }
+
+    if (importSlidesBtn && importFileInput) {
+      importSlidesBtn.addEventListener('click', () => {
+        importFileInput.click();
+      });
+      importFileInput.addEventListener('change', handleImportFileSelection);
+    }
     const transcriptionContent = document.getElementById('transcriptionContent');
     const transcriptionCopyBtn = document.getElementById('transcriptionCopyBtn');
     const transcriptionPrintBtn = document.getElementById('transcriptionPrintBtn');
@@ -3744,6 +3787,107 @@
       savedStatusTimeout = window.setTimeout(() => {
         updateAutosaveStatus('Autosave ready', 'idle');
       }, 6000);
+    }
+
+    function hideVisualModeNotice() {
+      if (!visualModeNotice) return;
+      visualModeNotice.classList.add('hidden');
+      if (visualModeNoticeTimeout) {
+        window.clearTimeout(visualModeNoticeTimeout);
+        visualModeNoticeTimeout = null;
+      }
+    }
+
+    function showVisualModeNotice(rasterizedCount) {
+      if (!visualModeNotice || !visualModeNoticeText) return;
+      const plural = rasterizedCount === 1 ? 'slide was' : 'slides were';
+      visualModeNoticeText.textContent = `${rasterizedCount} ${plural} converted to images to preserve complex visuals.`;
+      visualModeNotice.classList.remove('hidden');
+      if (visualModeNoticeTimeout) {
+        window.clearTimeout(visualModeNoticeTimeout);
+      }
+      visualModeNoticeTimeout = window.setTimeout(() => {
+        hideVisualModeNotice();
+      }, 6500);
+    }
+
+    async function handleImportFileSelection(event) {
+      const input = event?.target;
+      const file = input?.files?.[0];
+      if (!file || isImportingSlides) {
+        if (input) input.value = '';
+        return;
+      }
+      try {
+        isImportingSlides = true;
+        updateAutosaveStatus('Importing file…', 'saving');
+        await importSlidesFromFile(file);
+        updateAutosaveStatus('Slides imported', 'saving');
+        scheduleAutosave();
+      } catch (error) {
+        console.error('Import failed', error);
+        const message = error?.message || 'Failed to import file. Please verify the file and try again.';
+        alert(message);
+        updateAutosaveStatus('Import failed', 'error');
+      } finally {
+        isImportingSlides = false;
+        if (input) input.value = '';
+        scheduleAutosaveIdleReset();
+      }
+    }
+
+    async function importSlidesFromFile(file) {
+      const importer = window.PresentationImporter || (typeof globalThis !== 'undefined' ? globalThis.PresentationImporter : null);
+      if (!importer) {
+        throw new Error('Importer module is unavailable.');
+      }
+      const ext = (file.name || '').split('.').pop()?.toLowerCase();
+      let result;
+      if (ext === 'pptx') {
+        if (typeof importer.importPptx !== 'function') {
+          throw new Error('PPTX importer is not available.');
+        }
+        result = await importer.importPptx(file);
+      } else if (ext === 'pdf') {
+        if (typeof importer.importPdf !== 'function') {
+          throw new Error('PDF importer is not available.');
+        }
+        result = await importer.importPdf(file);
+      } else {
+        throw new Error('Please select a PPTX or PDF file to import.');
+      }
+
+      if (!result || !Array.isArray(result.slides) || result.slides.length === 0) {
+        throw new Error('No slides were found in this file.');
+      }
+
+      slides = result.slides.map((slide, index) => ({
+        ...slide,
+        title: slide.title || `Slide ${index + 1}`
+      }));
+      slides.forEach((slide) => {
+        ensureSlideAnimation(slide);
+        if (Array.isArray(slide.elements)) {
+          slide.elements.forEach(ensureElementAnimation);
+        }
+      });
+      activeSlideIndex = 0;
+      selectedElementId = null;
+      editingTextElementId = null;
+
+      if (presentationNameInput && file.name) {
+        const cleanedName = file.name.replace(/\.(pptx|pdf)$/i, '').trim();
+        if (cleanedName.length > 0) {
+          presentationNameInput.value = cleanedName;
+        }
+      }
+
+      markDirty();
+      render();
+
+      if (typeof result.rasterizedSlides === 'number' && result.rasterizedSlides > 0) {
+        showVisualModeNotice(result.rasterizedSlides);
+      }
     }
 
     function markDirty() {

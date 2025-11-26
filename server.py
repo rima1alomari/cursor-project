@@ -11,8 +11,40 @@ import sys
 import json
 import urllib.parse
 import re
+import shutil
 
 PORT = 8000
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+CONFIG_PATH = os.path.join(BASE_DIR, 'config.js')
+CONFIG_EXAMPLE_PATH = os.path.join(BASE_DIR, 'config.example.js')
+
+
+def ensure_config_file():
+    """
+    Make sure config.js exists so the frontend doesn't fail trying to load it.
+    When missing, copy config.example.js or create a placeholder file.
+    """
+    if os.path.exists(CONFIG_PATH):
+        return False
+
+    try:
+        if os.path.exists(CONFIG_EXAMPLE_PATH):
+            shutil.copy(CONFIG_EXAMPLE_PATH, CONFIG_PATH)
+            print(f"[Config] Created config.js from {CONFIG_EXAMPLE_PATH}")
+        else:
+            with open(CONFIG_PATH, 'w') as config_file:
+                config_file.write("window.OPENAI_API_KEY = 'YOUR_OPENAI_API_KEY_HERE';\n")
+            print("[Config] Created config.js placeholder with empty API key.")
+
+        print("[Config] Update config.js with your actual OpenAI key to enable AI features.")
+        return True
+    except Exception as exc:
+        print(f"[Config] Warning: Failed to auto-create config.js: {exc}")
+        return False
+
+
+# Ensure config.js exists before the server starts.
+ensure_config_file()
 
 # Try to get OpenAI API key from environment variable or config.js
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', None)
@@ -20,7 +52,7 @@ OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', None)
 # If not in environment, try to read from config.js
 if not OPENAI_API_KEY:
     try:
-        config_path = os.path.join(os.path.dirname(__file__), 'config.js')
+        config_path = CONFIG_PATH
         if os.path.exists(config_path):
             with open(config_path, 'r') as f:
                 config_content = f.read()
@@ -334,7 +366,7 @@ Return ONLY the JSON object (no other text):"""
 
 def main():
     # Change to the directory where this script is located
-    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    os.chdir(BASE_DIR)
     
     Handler = MyHTTPRequestHandler
     
