@@ -10,6 +10,10 @@
   <link rel="stylesheet" href="styles.css" />
   <script src="./scripts/global.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <!-- PDF.js for PDF import -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <!-- JSZip for PPTX import -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <style>
     .projects-container {
       max-width: 1400px;
@@ -337,7 +341,8 @@
       transition: background 0.2s;
     }
     .modal-close:hover {
-      background: #f1f5f9;
+      background: #eef2ff;
+      color: #1d4ed8;
     }
     .form-group {
       margin-bottom: 1.5rem;
@@ -407,6 +412,75 @@
     }
     .btn-danger:hover {
       background: #dc2626;
+    }
+    /* New Template Selection UI */
+    .template-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      margin-bottom: 1rem;
+    }
+    .template-card {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: #ffffff;
+    }
+    .template-card:hover {
+      border-color: #3b82f6;
+      background: #f8fafc;
+    }
+    .template-card.selected {
+      border-color: #1d4ed8;
+      box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.15);
+      background: #eff6ff;
+    }
+    .template-card-icon {
+      flex-shrink: 0;
+      width: 56px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f8fafc;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+    }
+    .template-card-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #1e293b;
+      margin: 0 0 0.25rem 0;
+    }
+    .template-card-desc {
+      font-size: 0.875rem;
+      color: #64748b;
+      margin: 0;
+    }
+    .template-card-note {
+      font-size: 0.8rem;
+      color: #475569;
+      margin: 0.25rem 0 0;
+    }
+    .custom-file-note {
+      font-size: 0.8rem;
+      color: #0f172a;
+      font-weight: 600;
+    }
+    .modal-actions {
+      display: flex;
+      gap: 1rem;
+      justify-content: flex-end;
+      margin-top: 1rem;
+    }
+    .btn[disabled] {
+      opacity: 0.6;
+      cursor: not-allowed;
     }
     .templates-list {
       margin-bottom: 1.5rem;
@@ -619,24 +693,21 @@
     <div class="modal-content">
       <div class="modal-header">
         <h2 class="modal-title">Choose a Template (Optional)</h2>
-        <button class="modal-close" id="closeTemplateModal">×</button>
+        <button class="modal-close" id="closeTemplateModal" title="Close">×</button>
       </div>
-      <p style="color: #64748b; margin-bottom: 1.5rem; font-size: 0.95rem;">
-        If you skip, the project will start with a blank slide.
-      </p>
-      <div class="templates-list">
-        <div class="template-option" data-template="business">
-          <div class="template-option-preview">
-            <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+      <div class="template-grid">
+        <div class="template-card" id="cardBusiness" data-template="business" role="button" tabindex="0" aria-label="Business template">
+          <div class="template-card-icon">
+            <svg width="36" height="36" viewBox="0 0 40 40" fill="none">
               <rect x="8" y="8" width="24" height="16" rx="2" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="1.5"/>
               <rect x="12" y="12" width="16" height="2" rx="1" fill="#94a3b8"/>
               <rect x="12" y="16" width="12" height="2" rx="1" fill="#cbd5e1"/>
               <rect x="12" y="20" width="10" height="2" rx="1" fill="#cbd5e1"/>
             </svg>
           </div>
-          <div class="template-option-info">
-            <h3 class="template-option-title">Business Template</h3>
-            <p class="template-option-description">A structured layout for professional slides.</p>
+          <div>
+            <h3 class="template-card-title">Business Template</h3>
+            <p class="template-card-desc">A structured layout for professional slides.</p>
           </div>
         </div>
         <div class="template-option" data-template="template2">
@@ -653,11 +724,35 @@
             <p class="template-option-description">Professional slides with custom background images.</p>
           </div>
         </div>
+        <div class="template-card" id="cardBlank" data-template="blank" role="button" tabindex="0" aria-label="Blank template">
+          <div class="template-card-icon">
+            <svg width="36" height="36" viewBox="0 0 40 40" fill="none">
+              <rect x="10" y="10" width="20" height="20" rx="2" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+            </svg>
+          </div>
+          <div>
+            <h3 class="template-card-title">Blank Template</h3>
+            <p class="template-card-desc">Start from a clean, empty slide.</p>
+          </div>
+        </div>
+        <div class="template-card" id="cardCustom" data-template="custom" role="button" tabindex="0" aria-label="Upload and use custom">
+          <div class="template-card-icon">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2">
+              <path d="M12 5v14M5 12h14"></path>
+            </svg>
+          </div>
+          <div style="flex:1">
+            <h3 class="template-card-title">Upload and Use Custom</h3>
+            <p class="template-card-desc">Import a PPTX or PDF and convert to editable slides.</p>
+            <p class="template-card-note custom-file-note" id="customFileName">No file selected</p>
+          </div>
+          <input type="file" id="customFileInput" accept=".pptx,.pdf" style="display:none" />
+        </div>
+>>>>>>> bc8bd4476f8ad6447d8f10a87b103ec7cf4cd620
       </div>
       <div class="modal-actions">
-        <button type="button" class="btn btn-outline" id="cancelTemplate">Cancel</button>
-        <button type="button" class="btn btn-outline" id="skipTemplate">Skip (Blank Project)</button>
-        <button type="button" class="btn btn-primary" id="useTemplate">Use Template</button>
+        <button type="button" class="btn btn-danger" id="cancelTemplate">Cancel</button>
+        <button type="button" class="btn btn-primary" id="createTemplateBtn" disabled>Create</button>
       </div>
     </div>
   </div>
@@ -1473,13 +1568,15 @@
 
     // Template selection state
     let selectedTemplate = null;
+    let customFile = null;
 
     // New project - show template selection modal
     document.getElementById('newProjectBtn').addEventListener('click', () => {
       selectedTemplate = null;
-      document.querySelectorAll('.template-option').forEach(opt => {
-        opt.classList.remove('selected');
-      });
+      customFile = null;
+      document.getElementById('customFileName').textContent = 'No file selected';
+      document.getElementById('createTemplateBtn').disabled = true;
+      document.querySelectorAll('.template-card').forEach(c => c.classList.remove('selected'));
       document.getElementById('templateSelectionModal').classList.add('active');
     });
 
@@ -1488,33 +1585,67 @@
       document.getElementById('templateSelectionModal').classList.remove('active');
     });
 
-    document.getElementById('cancelTemplate').addEventListener('click', () => {
+      document.getElementById('cancelTemplate').addEventListener('click', () => {
       document.getElementById('templateSelectionModal').classList.remove('active');
     });
 
-    // Template option selection
-    document.querySelectorAll('.template-option').forEach(option => {
-      option.addEventListener('click', () => {
-        document.querySelectorAll('.template-option').forEach(opt => {
-          opt.classList.remove('selected');
-        });
-        option.classList.add('selected');
-        selectedTemplate = option.dataset.template;
-      });
-    });
-
-    // Use Template button
-    document.getElementById('useTemplate').addEventListener('click', () => {
-      if (!selectedTemplate) {
-        // If no template selected, select the business template by default
-        selectedTemplate = 'business';
+    // Template card selection
+    function selectCard(template) {
+      selectedTemplate = template;
+      document.querySelectorAll('.template-card').forEach(c => c.classList.remove('selected'));
+      const el = template === 'business' ? document.getElementById('cardBusiness')
+        : template === 'blank' ? document.getElementById('cardBlank')
+        : document.getElementById('cardCustom');
+      if (el) el.classList.add('selected');
+      const createBtn = document.getElementById('createTemplateBtn');
+      if (template === 'custom') {
+        // Require file selected
+        createBtn.disabled = !customFile;
+      } else {
+        createBtn.disabled = false;
       }
-      createProjectWithTemplate(selectedTemplate);
+    }
+    document.getElementById('cardBusiness').addEventListener('click', () => selectCard('business'));
+    document.getElementById('cardBlank').addEventListener('click', () => selectCard('blank'));
+    document.getElementById('cardCustom').addEventListener('click', () => {
+      selectCard('custom');
+      document.getElementById('customFileInput').click();
+    });
+    document.getElementById('cardBusiness').addEventListener('keydown', (e) => { if (e.key === 'Enter') selectCard('business'); });
+    document.getElementById('cardBlank').addEventListener('keydown', (e) => { if (e.key === 'Enter') selectCard('blank'); });
+    document.getElementById('cardCustom').addEventListener('keydown', (e) => { if (e.key === 'Enter') { selectCard('custom'); document.getElementById('customFileInput').click(); }});
+    document.getElementById('customFileInput').addEventListener('change', (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) {
+        customFile = null;
+        document.getElementById('customFileName').textContent = 'No file selected';
+        document.getElementById('createTemplateBtn').disabled = true;
+        return;
+      }
+      customFile = file;
+      document.getElementById('customFileName').textContent = `Selected: ${file.name}`;
+      if (selectedTemplate === 'custom') {
+        document.getElementById('createTemplateBtn').disabled = false;
+      }
     });
 
-    // Skip Template button (create blank project)
-    document.getElementById('skipTemplate').addEventListener('click', () => {
-      createProjectWithTemplate(null);
+    // Create button
+    document.getElementById('createTemplateBtn').addEventListener('click', async () => {
+      if (!selectedTemplate) return;
+      if (selectedTemplate === 'business') {
+        createProjectWithTemplate('business');
+      } else if (selectedTemplate === 'blank') {
+        createProjectWithTemplate(null);
+      } else if (selectedTemplate === 'custom') {
+        if (!customFile) return;
+        try {
+          await createProjectFromCustom(customFile);
+          document.getElementById('templateSelectionModal').classList.remove('active');
+        } catch (err) {
+          console.error('Failed to import file', err);
+          alert('Failed to import the file. Please ensure it is a valid PDF or PPTX.');
+        }
+      }
     });
 
     // Create project with template
@@ -1766,6 +1897,7 @@
         return [];
       }
     }
+
     // Rename project
     document.getElementById('closeRenameModal').addEventListener('click', () => {
       document.getElementById('renameProjectModal').classList.remove('active');

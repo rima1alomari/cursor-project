@@ -1561,12 +1561,12 @@
       <div class="flex items-center gap-3 text-sm">
         <span class="rounded-full bg-slate-800/80 px-3 py-1.5">Tips: ← → to navigate · Esc to exit</span>
         <div class="flex items-center gap-2">
-        <button id="presenterRecordBtn" class="rounded-full border border-white/40 px-4 py-2 text-sm hover:bg-white/10 flex items-center gap-2">
-          <svg id="recordIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10" fill="none"></circle>
-          </svg>
+          <button id="presenterRecordBtn" class="rounded-full border border-white/40 px-4 py-2 text-sm hover:bg-white/10 flex items-center gap-2">
+            <svg id="recordIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" fill="none"></circle>
+            </svg>
             <span id="recordText">Record Audio / تسجيل صوت</span>
-        </button>
+          </button>
           <div id="presenterRecordingTimer" class="hidden flex items-center gap-2 text-red-400">
             <span class="inline-block w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
             <span id="presenterTimerText" class="font-mono text-sm">00:00</span>
@@ -2371,7 +2371,7 @@
     
     // Get current user from auth system
     function getCurrentUserForEditor() {
-      const user = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+      const user = getCurrentUser();
       if (user) {
         const userProfile = getUserWithProfile(user.id);
         return {
@@ -2533,9 +2533,9 @@
       
       // Load project data asynchronously
       (async () => {
-      try {
-        // Skip loading stored data if this is a brand new presentation (already initialized above)
-        if (!newSession && !isNew) {
+        try {
+          // Skip loading stored data if this is a brand new presentation (already initialized above)
+          if (!newSession && !isNew) {
             // Try loading from Firestore first (user-specific path: users/{uid}/projects/{projectId})
             let storedState = null;
             
@@ -2567,7 +2567,7 @@
             // Fallback to localStorage if Firestore didn't return data
             if (!storedState) {
               // Try user-specific localStorage key first
-              const currentUser = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+              const currentUser = getCurrentUser();
               if (currentUser && currentUser.id) {
                 const userSpecificKey = `lumen-presentation-${currentUser.id}-${presentationId}`;
                 const userStoredRaw = localStorage.getItem(userSpecificKey);
@@ -2583,8 +2583,8 @@
               
               // Fallback to legacy key
               if (!storedState) {
-        const storedRaw = localStorage.getItem(presentationStorageKey);
-        if (storedRaw) {
+                const storedRaw = localStorage.getItem(presentationStorageKey);
+                if (storedRaw) {
                   try {
                     storedState = JSON.parse(storedRaw);
                     console.log('Loaded project from localStorage (legacy):', presentationId);
@@ -2596,11 +2596,11 @@
             }
             
             if (storedState) {
-          loadedExistingPresentation = true;
-          // CRITICAL: If we successfully loaded existing data, this is NOT a new presentation
-          isNewPresentation = false;
-          
-          if (storedState && Array.isArray(storedState.slides)) {
+              loadedExistingPresentation = true;
+              // CRITICAL: If we successfully loaded existing data, this is NOT a new presentation
+              isNewPresentation = false;
+              
+              if (storedState && Array.isArray(storedState.slides)) {
                 // Deep clone slides to ensure all nested data is preserved
                 slides = JSON.parse(JSON.stringify(storedState.slides));
                 console.log('Loaded', slides.length, 'slides from Firestore');
@@ -2622,22 +2622,22 @@
               } else {
                 console.warn('Loaded state does not have valid slides array:', storedState);
                 console.warn('storedState keys:', storedState ? Object.keys(storedState) : 'null');
-          }
-          if (typeof storedState?.activeSlideIndex === 'number') {
-            activeSlideIndex = Math.min(Math.max(storedState.activeSlideIndex, 0), Math.max(slides.length - 1, 0));
-          }
-          if (typeof storedState?.createdAt === 'number') {
-            presentationCreatedAt = storedState.createdAt;
-          }
-          if (typeof storedState?.updatedAt === 'number') {
-            presentationUpdatedAt = storedState.updatedAt;
-          }
-          if (storedState?.presentationName) {
-            loadedPresentationName = storedState.presentationName;
-          }
-          if (storedState?.preview) {
-            presentationPreview = normalizePreview(storedState.preview);
-            }
+              }
+              if (typeof storedState?.activeSlideIndex === 'number') {
+                activeSlideIndex = Math.min(Math.max(storedState.activeSlideIndex, 0), Math.max(slides.length - 1, 0));
+              }
+              if (typeof storedState?.createdAt === 'number') {
+                presentationCreatedAt = storedState.createdAt;
+              }
+              if (typeof storedState?.updatedAt === 'number') {
+                presentationUpdatedAt = storedState.updatedAt;
+              }
+              if (storedState?.presentationName) {
+                loadedPresentationName = storedState.presentationName;
+              }
+              if (storedState?.preview) {
+                presentationPreview = normalizePreview(storedState.preview);
+              }
               
               // CRITICAL: Ensure slides array is valid before rendering
               if (!Array.isArray(slides) || slides.length === 0) {
@@ -2671,11 +2671,11 @@
                   console.log('SUCCESS: After loading, first slide has', slides[0].elements.length, 'elements');
                 }
               }, 100);
-          }
-          
-          // Also check the presentations index for the name (in case it's stored there but not in project data)
-          if (!loadedPresentationName || loadedPresentationName === DEFAULT_PRESENTATION_NAME) {
-            try {
+            }
+            
+            // Also check the presentations index for the name (in case it's stored there but not in project data)
+            if (!loadedPresentationName || loadedPresentationName === DEFAULT_PRESENTATION_NAME) {
+              try {
                 // Try loading from Firestore projects list
                 if (typeof loadAllUserProjectsFromFirestore === 'function') {
                   const allProjects = await loadAllUserProjectsFromFirestore();
@@ -2691,23 +2691,23 @@
                 
                 // Fallback to localStorage index
                 if (!loadedPresentationName || loadedPresentationName === DEFAULT_PRESENTATION_NAME) {
-              const indexRaw = localStorage.getItem(PRESENTATIONS_INDEX_KEY);
-              if (indexRaw) {
-                const index = JSON.parse(indexRaw);
-                if (Array.isArray(index)) {
-                  const indexEntry = index.find(item => item && item.id === presentationId);
-                  if (indexEntry && indexEntry.name && indexEntry.name.trim() && indexEntry.name.toLowerCase() !== DEFAULT_PRESENTATION_NAME.toLowerCase()) {
-                    loadedPresentationName = indexEntry.name.trim();
+                  const indexRaw = localStorage.getItem(PRESENTATIONS_INDEX_KEY);
+                  if (indexRaw) {
+                    const index = JSON.parse(indexRaw);
+                    if (Array.isArray(index)) {
+                      const indexEntry = index.find(item => item && item.id === presentationId);
+                      if (indexEntry && indexEntry.name && indexEntry.name.trim() && indexEntry.name.toLowerCase() !== DEFAULT_PRESENTATION_NAME.toLowerCase()) {
+                        loadedPresentationName = indexEntry.name.trim();
                         // Update input if name was loaded from index
                         if (presentationNameInput) {
                           presentationNameInput.value = loadedPresentationName;
                         }
                       }
+                    }
                   }
                 }
-              }
-            } catch (e) {
-              // Ignore errors when loading from index
+              } catch (e) {
+                // Ignore errors when loading from index
               }
             }
           }
@@ -2721,7 +2721,7 @@
         if (!newSession && !isNew) {
           // Synchronous fallback for immediate loading - try user-specific key first
           let storedState = null;
-          const currentUser = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+          const currentUser = getCurrentUser();
           if (currentUser && currentUser.id) {
             const userSpecificKey = `lumen-presentation-${currentUser.id}-${presentationId}`;
             const userStoredRaw = localStorage.getItem(userSpecificKey);
@@ -2960,20 +2960,20 @@
        if (!element) return Promise.reject(new Error('No element provided'));
        return new Promise((resolve, reject) => {
          try {
-       if (element.requestFullscreen) {
+           if (element.requestFullscreen) {
              element.requestFullscreen().then(resolve).catch(reject);
-       } else if (element.webkitRequestFullscreen) {
-         element.webkitRequestFullscreen();
+           } else if (element.webkitRequestFullscreen) {
+             element.webkitRequestFullscreen();
              resolve();
            } else if (element.mozRequestFullScreen) {
              element.mozRequestFullScreen();
              resolve();
-       } else if (element.msRequestFullscreen) {
-         element.msRequestFullscreen();
+           } else if (element.msRequestFullscreen) {
+             element.msRequestFullscreen();
              resolve();
            } else {
              reject(new Error('Fullscreen API not supported'));
-       }
+           }
          } catch (err) {
            reject(err);
          }
@@ -2982,16 +2982,16 @@
 
     function exitFullscreen() {
       try {
-      if (document.exitFullscreen) {
+        if (document.exitFullscreen) {
           document.exitFullscreen().catch(err => {
             console.error('Error exiting fullscreen:', err);
           });
-      } else if (document.webkitExitFullscreen) {
-        document.webkitExitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
         } else if (document.mozCancelFullScreen) {
           document.mozCancelFullScreen();
-      } else if (document.msExitFullscreen) {
-        document.msExitFullscreen();
+        } else if (document.msExitFullscreen) {
+          document.msExitFullscreen();
         }
       } catch (err) {
         console.error('Error exiting fullscreen:', err);
@@ -4348,7 +4348,7 @@
       presenceAvatarsEl.innerHTML = '';
       
       // Get team members if project is linked to a team
-      const projectTeam = typeof getProjectTeam === 'function' ? getProjectTeam(presentationId) : null;
+      const projectTeam = getProjectTeam(presentationId);
       let teamMembers = [];
       if (projectTeam) {
         const members = getTeamMembersList(projectTeam.teamId);
@@ -4672,36 +4672,36 @@
           setTimeout(() => {
             if (!isRecording) return; // Check again after timeout
             
-          try {
-            if (lang === currentRecognitionLang) {
+            try {
+              if (lang === currentRecognitionLang) {
                 console.log(`Restarting recognition for ${lang}`);
-              rec.start();
-            }
-          } catch (e) {
-            console.error(`Failed to restart recognition (${lang}):`, e);
+                rec.start();
+              }
+            } catch (e) {
+              console.error(`Failed to restart recognition (${lang}):`, e);
               // Try switching to other language as fallback
               if (lang === 'ar' && recognitionEN && isRecording) {
-              try {
+                try {
                   console.log('Trying to switch to English recognition');
-                recognitionEN.start();
-                currentRecognitionLang = 'en';
+                  recognitionEN.start();
+                  currentRecognitionLang = 'en';
                   recognition = recognitionEN;
-              } catch (e2) {
+                } catch (e2) {
                   console.error('Failed to switch to English:', e2);
                   // Don't stop recording, just log the error
-              }
+                }
               } else if (lang === 'en' && recognitionAR && isRecording) {
-              try {
+                try {
                   console.log('Trying to switch to Arabic recognition');
-                recognitionAR.start();
-                currentRecognitionLang = 'ar';
+                  recognitionAR.start();
+                  currentRecognitionLang = 'ar';
                   recognition = recognitionAR;
-              } catch (e2) {
+                } catch (e2) {
                   console.error('Failed to switch to Arabic:', e2);
                   // Don't stop recording, just log the error
+                }
               }
             }
-          }
           }, 100); // Small delay before restarting
         }
       };
@@ -4762,12 +4762,12 @@
       }
       
       try {
-      // Create recognition instances for both languages
-      recognitionEN = createRecognition('en', 'en-US');
-      recognitionAR = createRecognition('ar', 'ar-SA');
-      recognition = recognitionEN; // Default to English
+        // Create recognition instances for both languages
+        recognitionEN = createRecognition('en', 'en-US');
+        recognitionAR = createRecognition('ar', 'ar-SA');
+        recognition = recognitionEN; // Default to English
         console.log('Speech recognition initialized successfully');
-      return true;
+        return true;
       } catch (e) {
         console.error('Failed to initialize speech recognition:', e);
         alert('Failed to initialize speech recognition. Please refresh the page. / فشل تهيئة التعرف على الكلام. يرجى تحديث الصفحة.');
@@ -4803,8 +4803,8 @@
       // Initialize speech recognition if not already done
       if (!recognitionEN || !recognitionAR) {
         if (!initSpeechRecognition()) {
-        alert('Voice recording is not available in this browser / تسجيل الصوت غير متاح في هذا المتصفح');
-        return;
+          alert('Voice recording is not available in this browser / تسجيل الصوت غير متاح في هذا المتصفح');
+          return;
         }
       }
       
@@ -4862,9 +4862,9 @@
             // Only switch if no results for 8 seconds (less aggressive)
             if (timeSinceLastResult > 8000) {
               console.log('Switching recognition language (no results for 8s)...');
-            switchRecognitionLanguage();
+              switchRecognitionLanguage();
               lastResultTime = Date.now();
-          }
+            }
           }
         }, 10000); // Check every 10 seconds
       } catch (e) {
@@ -6589,24 +6589,6 @@
         canvasContainerEl.style.backgroundImage = '';
       }
 
-      // Clean up: Remove images if chart is present (chart takes priority)
-      const hasChart = slide.elements.some(el => el.type === 'chart');
-      if (hasChart) {
-        slide.elements = slide.elements.filter(el => el.type !== 'image');
-      }
-      
-      // Adjust text element widths when chart is present for better layout
-      if (hasChart) {
-        slide.elements.forEach(el => {
-          if (el.type === 'text' && el.left < 400) {
-            // Text on left side - make sure it doesn't overlap with chart
-            if (el.width > 300) {
-              el.width = Math.min(el.width, 300);
-            }
-          }
-        });
-      }
-
       // Render elements
       slide.elements.forEach(el => {
         if (el.type === 'text') {
@@ -6632,14 +6614,10 @@
           div.style.textDecoration = el.underline ? 'underline' : 'none';
           div.style.textAlign = el.align || 'left';
           div.style.fontFamily = el.fontFamily || 'Inter, sans-serif';
-          div.style.lineHeight = String(typeof el.lineHeight === 'number' ? el.lineHeight : 1.6);
+          div.style.lineHeight = String(typeof el.lineHeight === 'number' ? el.lineHeight : 1.4);
           const liveLetterSpacing = typeof el.letterSpacing === 'number' ? el.letterSpacing : 0;
           div.style.letterSpacing = `${liveLetterSpacing}px`;
           div.style.textTransform = el.textTransform || 'none';
-          div.style.wordWrap = 'break-word';
-          div.style.overflowWrap = 'break-word';
-          div.style.whiteSpace = 'pre-wrap';
-          div.style.padding = '4px';
           
           // Apply list styling
           const listType = el.listType || 'none';
@@ -6662,25 +6640,18 @@
                 const ol = document.createElement('ol');
                 ol.style.listStyleType = listType;
                 ol.style.margin = '0';
-                ol.style.paddingLeft = '32px';
-                ol.style.paddingRight = '8px';
+                ol.style.paddingLeft = '24px';
                 ol.style.color = el.color || '#111827';
                 ol.style.fontSize = (el.fontSize || 16) + 'px';
                 ol.style.fontFamily = el.fontFamily || 'Inter, sans-serif';
-                ol.style.lineHeight = String(typeof el.lineHeight === 'number' ? el.lineHeight : 1.6);
+                ol.style.lineHeight = String(typeof el.lineHeight === 'number' ? el.lineHeight : 1.4);
                 
                 lines.forEach(line => {
                   const li = document.createElement('li');
                   li.textContent = line.trim();
                   li.contentEditable = 'true';
-                  li.style.marginBottom = '6px';
-                  li.style.marginTop = '0';
-                  li.style.paddingLeft = '4px';
-                  li.style.paddingRight = '4px';
+                  li.style.marginBottom = '4px';
                   li.style.outline = 'none';
-                  li.style.minHeight = '1.5em';
-                  li.style.wordWrap = 'break-word';
-                  li.style.overflowWrap = 'break-word';
                   ol.appendChild(li);
                 });
                 
@@ -6694,17 +6665,14 @@
                 ul.style.color = el.color || '#111827';
                 ul.style.fontSize = (el.fontSize || 16) + 'px';
                 ul.style.fontFamily = el.fontFamily || 'Inter, sans-serif';
-                ul.style.lineHeight = String(typeof el.lineHeight === 'number' ? el.lineHeight : 1.6);
+                ul.style.lineHeight = String(typeof el.lineHeight === 'number' ? el.lineHeight : 1.4);
                 
                 lines.forEach(line => {
                   const li = document.createElement('li');
                   li.textContent = line.trim();
                   li.contentEditable = 'true';
-                  li.style.marginBottom = '6px';
-                  li.style.paddingRight = '4px';
+                  li.style.marginBottom = '4px';
                   li.style.outline = 'none';
-                  li.style.wordWrap = 'break-word';
-                  li.style.overflowWrap = 'break-word';
                   ul.appendChild(li);
                 });
                 
@@ -6745,11 +6713,11 @@
           div.spellcheck = false;
           if (el.backgroundColor) {
             div.style.backgroundColor = el.backgroundColor;
-            div.style.padding = '8px 12px';
+            div.style.padding = '4px 8px';
             div.style.borderRadius = '8px';
           } else {
-            // Keep the padding we set earlier for better text spacing
             div.style.backgroundColor = 'transparent';
+            div.style.padding = '0';
             div.style.borderRadius = '0';
           }
           div.dataset.elementId = el.id;
@@ -12072,30 +12040,30 @@ Generate the meeting minutes now, following the exact structure above. Be concis
           updatedAt: Date.now(),
           preview: presentationPreview
         });
+        
+        // Mark as saved
+        isProjectSaved = true;
       
-      // Mark as saved
-      isProjectSaved = true;
-      
-      // Clear unsaved project flags
-      if (typeof window !== 'undefined') {
-        sessionStorage.removeItem('unsavedProjectId');
-        sessionStorage.removeItem('isUnsavedProject');
-      }
-
-      // Close modal
-      const modal = document.getElementById('namePrompt');
-      if (modal) {
-        modal.style.display = 'none';
-      }
-
-      // Navigate home after a short delay to ensure save completes
-      setTimeout(() => {
-        if (window.fadeNavigate) {
-          window.fadeNavigate('home.html');
-        } else {
-          window.location.href = 'home.html';
+        // Clear unsaved project flags
+        if (typeof window !== 'undefined') {
+          sessionStorage.removeItem('unsavedProjectId');
+          sessionStorage.removeItem('isUnsavedProject');
         }
-      }, 200);
+
+        // Close modal
+        const modal = document.getElementById('namePrompt');
+        if (modal) {
+          modal.style.display = 'none';
+        }
+
+        // Navigate home after a short delay to ensure save completes
+        setTimeout(() => {
+          if (window.fadeNavigate) {
+            window.fadeNavigate('home.html');
+          } else {
+            window.location.href = 'home.html';
+          }
+        }, 200);
       })();
     }
 
@@ -12197,24 +12165,24 @@ Generate the meeting minutes now, following the exact structure above. Be concis
                 updatedAt: Date.now(),
                 preview: presentationPreview
               });
-            
-            // Mark as saved
-            isProjectSaved = true;
-            
-            // Clear unsaved project flags
-            if (typeof window !== 'undefined') {
-              sessionStorage.removeItem('unsavedProjectId');
-              sessionStorage.removeItem('isUnsavedProject');
-            }
+              
+              // Mark as saved
+              isProjectSaved = true;
+              
+              // Clear unsaved project flags
+              if (typeof window !== 'undefined') {
+                sessionStorage.removeItem('unsavedProjectId');
+                sessionStorage.removeItem('isUnsavedProject');
+              }
 
-            // Close modal
-            const modal = document.getElementById('namePrompt');
-            if (modal) {
-              modal.style.display = 'none';
-            }
-            if (nameInputContainer) {
-              nameInputContainer.style.display = 'none';
-            }
+              // Close modal
+              const modal = document.getElementById('namePrompt');
+              if (modal) {
+                modal.style.display = 'none';
+              }
+              if (nameInputContainer) {
+                nameInputContainer.style.display = 'none';
+              }
             })();
             
             // Reset button text
