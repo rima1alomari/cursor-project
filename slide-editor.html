@@ -915,6 +915,7 @@
               <label class="text-sm text-white/80">Font</label>
               <select id="fontFamilySelect" class="rounded-md border-0 bg-white/20 px-2 py-1.5 text-sm text-white focus:ring-2 focus:ring-white/40">
                 <option value="Inter, sans-serif">Inter</option>
+                <option value="Arial, sans-serif">Arial</option>
                 <option value="Poppins, sans-serif">Poppins</option>
                 <option value="Lato, sans-serif">Lato</option>
                 <option value="Montserrat, sans-serif">Montserrat</option>
@@ -2187,17 +2188,20 @@
 
     // Cache for Template 2 JSON data
     let template2DataCache = null;
+    let template2DataLoadPromise = null;
 
     // Load Template 2 JSON data at page initialization
-    (async function loadTemplate2Data() {
+    template2DataLoadPromise = (async function loadTemplate2Data() {
       try {
-        const response = await fetch('Template 2 Presentation.json');
+        const response = await fetch('SA SCDT Template.json');
         if (response.ok) {
           template2DataCache = await response.json();
+          return template2DataCache;
         }
       } catch (error) {
         console.warn('Failed to load Template 2 JSON, using fallback:', error);
       }
+      return null;
     })();
 
     // Cache for Template 3 JSON data
@@ -2548,6 +2552,7 @@
     window.activeSlideIndex = activeSlideIndex;
     let selectedElementId = null; // currently selected element on canvas
     let editingTextElementId = null; // track text element being edited
+    let clipboardElementData = null; // cached element data for copy/paste
     let loadedPresentationName = DEFAULT_PRESENTATION_NAME;
     let loadedExistingPresentation = false;
     let autosaveTimeout = null;
@@ -2600,7 +2605,7 @@
         case 'template2':
         case 'template 2':
           return {
-            presentationName: 'Template 2 Presentation',
+            presentationName: 'SA-SCDT Template',
             slides: createTemplate2Slides(),
           };
         case 'template3':
@@ -2620,16 +2625,39 @@
     // Immediately reset state if newSession is true (before any data loading)
     if (newSession) {
       presentationId = generatePresentationId();
-      slides = clonePresetSlides();
+      // Initialize basic state first
       activeSlideIndex = 0;
-      loadedPresentationName = templatePresentationName;
       presentationCreatedAt = Date.now();
       presentationUpdatedAt = presentationCreatedAt;
       presentationPreview = null;
       loadedExistingPresentation = false;
       isNewPresentation = true;
+      
+      // If template2 is selected, wait for JSON to load before initializing slides
+      if (selectedTemplateName === 'template2' && template2DataLoadPromise) {
+        // Initialize with empty array first, then update when JSON loads
+        slides = [];
+        loadedPresentationName = templatePresentationName;
+        // Wait for JSON to load, then update slides
+        template2DataLoadPromise.then(() => {
+          // Recreate the preset with loaded JSON data
+          const updatedPreset = createTemplatePreset(selectedTemplateName);
+          slides = JSON.parse(JSON.stringify(updatedPreset.slides));
+          loadedPresentationName = updatedPreset.presentationName || templatePresentationName;
+          // Mark as needing save so template slides are persisted immediately
+          needsAutosave = true;
+        }).catch(() => {
+          // Fallback if JSON fails to load
+          const fallbackPreset = createTemplatePreset(selectedTemplateName);
+          slides = JSON.parse(JSON.stringify(fallbackPreset.slides));
+          loadedPresentationName = fallbackPreset.presentationName || templatePresentationName;
+        });
+      } else {
+        slides = clonePresetSlides();
+        loadedPresentationName = templatePresentationName;
+      }
       // Update URL with new ID
-    if (typeof window !== 'undefined') {
+      if (typeof window !== 'undefined') {
         const nextUrl = new URL(window.location.href);
         nextUrl.searchParams.set('id', presentationId);
         window.history.replaceState(null, '', nextUrl.toString());
@@ -2655,15 +2683,38 @@
       const nextUrl = new URL(window.location.href);
       nextUrl.searchParams.set('id', presentationId);
       window.history.replaceState(null, '', nextUrl.toString());
-      // Initialize with truly blank state
-      slides = clonePresetSlides();
+      // Initialize basic state first
       activeSlideIndex = 0;
-      loadedPresentationName = templatePresentationName;
       presentationCreatedAt = Date.now();
       presentationUpdatedAt = presentationCreatedAt;
       presentationPreview = null;
       loadedExistingPresentation = false;
       isNewPresentation = true;
+      
+      // If template2 is selected, wait for JSON to load before initializing slides
+      if (selectedTemplateName === 'template2' && template2DataLoadPromise) {
+        // Initialize with empty array first, then update when JSON loads
+        slides = [];
+        loadedPresentationName = templatePresentationName;
+        // Wait for JSON to load, then update slides
+        template2DataLoadPromise.then(() => {
+          // Recreate the preset with loaded JSON data
+          const updatedPreset = createTemplatePreset(selectedTemplateName);
+          slides = JSON.parse(JSON.stringify(updatedPreset.slides));
+          loadedPresentationName = updatedPreset.presentationName || templatePresentationName;
+          // Mark as needing save so template slides are persisted immediately
+          needsAutosave = true;
+        }).catch(() => {
+          // Fallback if JSON fails to load
+          const fallbackPreset = createTemplatePreset(selectedTemplateName);
+          slides = JSON.parse(JSON.stringify(fallbackPreset.slides));
+          loadedPresentationName = fallbackPreset.presentationName || templatePresentationName;
+        });
+      } else {
+        // Initialize with truly blank state
+        slides = clonePresetSlides();
+        loadedPresentationName = templatePresentationName;
+      }
     }
 
     if (typeof window !== 'undefined') {
@@ -6878,16 +6929,25 @@
           // Select on click
           div.addEventListener('click', (e) => {
             e.stopPropagation();
-            const isDoubleClick = e.detail >= 2;
-            const wasSelected = selectedElementId === el.id;
-            if (!wasSelected) {
+            if (e.detail > 1) {
+              return;
+            }
+            const alreadySelected = selectedElementId === el.id;
+            if (!alreadySelected) {
               selectedElementId = el.id;
-              editingTextElementId = null;
               render();
             }
-            if (isDoubleClick) {
-              focusTextElement(el.id);
+            focusTextElement(el.id);
+          });
+
+          div.addEventListener('dblclick', (e) => {
+            e.stopPropagation();
+            if (document.activeElement === div) {
+              div.blur();
             }
+            selectedElementId = el.id;
+            editingTextElementId = null;
+            render();
           });
 
           div.addEventListener('input', (e) => {
@@ -7860,6 +7920,59 @@
           details: { elementType: deletedElement.type || 'element', slideNumber: activeSlideIndex + 1 }
         });
       }
+    }
+
+    function copySelectedElementToClipboard() {
+      const element = getSelectedElement();
+      if (!element) return false;
+      clipboardElementData = JSON.parse(JSON.stringify(element));
+      return true;
+    }
+
+    function pasteClipboardElement(offset = 24) {
+      if (!clipboardElementData) return false;
+      const slide = getActiveSlide();
+      if (!slide) return false;
+      const newElement = JSON.parse(JSON.stringify(clipboardElementData));
+      newElement.id = crypto.randomUUID();
+      if (typeof newElement.left === 'number') {
+        newElement.left += offset;
+      } else {
+        newElement.left = 40;
+      }
+      if (typeof newElement.top === 'number') {
+        newElement.top += offset;
+      } else {
+        newElement.top = 40;
+      }
+      ensureElementAnimation(newElement);
+      if (newElement.type === 'chart') {
+        ensureChartDataset(newElement);
+      }
+      slide.elements.push(newElement);
+      selectedElementId = newElement.id;
+      editingTextElementId = null;
+      markDirty();
+      render();
+
+      const currentUser = getCurrentUserForEditor();
+      const projectTeam = getProjectTeam(presentationId);
+      if (projectTeam && currentUser && currentUser.id !== SESSION_ID) {
+        logActivity({
+          teamId: projectTeam.teamId,
+          userId: currentUser.id,
+          actionType: 'element_added',
+          projectId: presentationId,
+          slideId: slide.id,
+          details: {
+            elementType: newElement.type || 'element',
+            slideNumber: activeSlideIndex + 1,
+            method: 'paste'
+          }
+        });
+      }
+
+      return true;
     }
 
     /**
@@ -9424,6 +9537,7 @@
     });
 
     document.addEventListener('keydown', handleSlideKeyboardNavigation);
+    document.addEventListener('keydown', handleEditorShortcuts);
 
     document.addEventListener('keydown', (event) => {
     if (!selectedElementId) return;
@@ -10337,6 +10451,60 @@
           selectedElementId = null;
           editingTextElementId = null;
           render();
+        }
+      }
+    }
+
+    function handleEditorShortcuts(event) {
+      const modifierPressed = event.metaKey || event.ctrlKey;
+      if (!modifierPressed) return;
+
+      const target = event.target;
+      const isInputElement = target instanceof HTMLElement && (
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.tagName === 'SELECT'
+      );
+
+      if (isInputElement) {
+        return;
+      }
+
+      const isEditingTextElement = (() => {
+        if (!editingTextElementId || !(target instanceof HTMLElement)) return false;
+        if (!target.isContentEditable) return false;
+        const editingNode = target.closest('[data-element-id]');
+        return editingNode && editingNode.dataset.elementId === editingTextElementId;
+      })();
+
+      if (isEditingTextElement) {
+        return;
+      }
+
+      const key = typeof event.key === 'string' ? event.key.toLowerCase() : '';
+
+      if (key === 'c' && !event.shiftKey && !event.altKey) {
+        const copied = copySelectedElementToClipboard();
+        if (copied) {
+          event.preventDefault();
+        }
+        return;
+      }
+
+      if (key === 'v' && !event.shiftKey && !event.altKey) {
+        const pasted = pasteClipboardElement();
+        if (pasted) {
+          event.preventDefault();
+        }
+        return;
+      }
+
+      if (key === 'z') {
+        event.preventDefault();
+        if (event.shiftKey) {
+          handleRedo();
+        } else {
+          handleUndo();
         }
       }
     }
