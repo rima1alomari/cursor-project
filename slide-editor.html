@@ -1576,33 +1576,76 @@
                 <line x1="12" y1="19" x2="12" y2="23"></line>
                 <line x1="8" y1="23" x2="16" y2="23"></line>
               </svg>
-              Live Transcription / النسخ المباشر
+              Live Transcription
             </h3>
             <div class="flex items-center gap-2">
-              <button id="saveAudioBtn" class="hidden text-xs text-white hover:bg-white/20 px-3 py-1.5 rounded-lg bg-green-600/80 hover:bg-green-600 transition">Save Audio / حفظ الصوت</button>
-              <button id="clearTranscriptionBtn" class="text-xs text-white hover:bg-white/20 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition">Clear / مسح</button>
+              <button id="saveAudioBtn" class="hidden text-xs text-white hover:bg-white/20 px-3 py-1.5 rounded-lg bg-green-600/80 hover:bg-green-600 transition">Save Audio</button>
+              <button id="saveTranscriptionBtn" class="hidden text-xs text-white hover:bg-white/20 px-3 py-1.5 rounded-lg bg-blue-600/80 hover:bg-blue-600 transition">Save</button>
+              <button id="clearTranscriptionBtn" class="text-xs text-white hover:bg-white/20 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition">Clear</button>
             </div>
           </div>
           <div id="liveTranscriptionContent" class="text-white text-sm leading-relaxed whitespace-pre-wrap overflow-y-auto min-h-[400px] max-h-[500px] p-4 bg-slate-900/70 rounded-lg border border-white/10 flex-1">
             <!-- Transcription will appear here -->
           </div>
-          
-          <!-- Minutes to Meeting Section -->
-          <div class="mt-4 pt-4 border-t border-white/20">
-            <h4 class="text-sm font-bold text-white uppercase tracking-wider mb-2 flex items-center gap-2">
-              📝 Minutes to Meeting / محضر الاجتماع
-            </h4>
-            <textarea 
-              id="presenterMinutesInput" 
-              class="w-full bg-slate-900/70 border border-white/20 rounded-lg p-3 text-white text-sm resize-none focus:outline-none focus:border-white/40" 
-              rows="4" 
-              placeholder="Paste or type meeting minutes here... / الصق أو اكتب محضر الاجتماع هنا..."
-            ></textarea>
-            <div class="flex gap-2 mt-2">
-              <button id="saveMinutesToMeetingBtn" class="flex-1 text-xs text-white hover:bg-white/20 px-3 py-2 rounded-lg bg-green-600/80 hover:bg-green-600 transition">Save to Meeting / حفظ للاجتماع</button>
-              <button id="saveMinutesBtn" class="flex-1 text-xs text-white hover:bg-white/20 px-3 py-2 rounded-lg bg-blue-600/80 hover:bg-blue-600 transition">Download / تحميل</button>
-            </div>
-          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Minutes to Meeting Modal -->
+  <div id="minutesToMeetingModal" class="fixed inset-0 z-[60] hidden flex items-center justify-center bg-black/60 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col m-4">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200">
+        <h2 class="text-2xl font-semibold text-slate-900">📝 Minutes to Meeting</h2>
+        <button id="minutesModalCloseBtn" class="text-slate-400 hover:text-slate-600">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="flex-1 overflow-y-auto p-6">
+        <div class="mb-4 flex items-center gap-3 flex-wrap">
+          <label class="flex items-center gap-2 text-slate-700">
+            <input type="radio" name="minutesFormat" value="fulltext" checked class="accent-blue-600">
+            <span>Full Text</span>
+          </label>
+          <label class="flex items-center gap-2 text-slate-700">
+            <input type="radio" name="minutesFormat" value="bullets" class="accent-blue-600">
+            <span>Bullet Points</span>
+          </label>
+        </div>
+        <div class="mb-4">
+          <button id="generateMinutesBtn" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition flex items-center gap-2">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
+                </svg>
+                Generate Minutes
+          </button>
+        </div>
+        <div id="minutesContent" class="prose max-w-none text-slate-800 whitespace-pre-wrap min-h-[500px] p-6 bg-slate-50 rounded-lg border border-slate-200">
+          <!-- Minutes will appear here -->
+        </div>
+      </div>
+      <div class="flex items-center justify-between px-6 py-4 border-t border-slate-200 gap-3">
+        <div class="flex gap-2">
+          <button id="minutesCopyBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+            Copy
+          </button>
+          <button id="minutesPrintBtn" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition">
+            Print
+          </button>
+        </div>
+        <div class="flex gap-2">
+          <button id="saveMinutesToMeetingBtn" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+            Save to Meeting
+          </button>
+          <button id="saveMinutesBtn" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
+            Download
+          </button>
+          <button id="saveMinutesPdfBtn" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
+            Save as PDF
+          </button>
         </div>
       </div>
     </div>
@@ -3021,9 +3064,17 @@
     const liveTranscriptionContent = document.getElementById('liveTranscriptionContent');
     const clearTranscriptionBtn = document.getElementById('clearTranscriptionBtn');
     const saveAudioBtn = document.getElementById('saveAudioBtn');
-    const presenterMinutesInput = document.getElementById('presenterMinutesInput');
+    const saveTranscriptionBtn = document.getElementById('saveTranscriptionBtn');
+    const minutesToMeetingModal = document.getElementById('minutesToMeetingModal');
+    const minutesModalCloseBtn = document.getElementById('minutesModalCloseBtn');
+    const minutesContent = document.getElementById('minutesContent');
+    const minutesFormatRadios = document.querySelectorAll('input[name="minutesFormat"]');
+    const minutesCopyBtn = document.getElementById('minutesCopyBtn');
+    const minutesPrintBtn = document.getElementById('minutesPrintBtn');
     const saveMinutesBtn = document.getElementById('saveMinutesBtn');
+    const saveMinutesPdfBtn = document.getElementById('saveMinutesPdfBtn');
     const saveMinutesToMeetingBtn = document.getElementById('saveMinutesToMeetingBtn');
+    const generateMinutesBtn = document.getElementById('generateMinutesBtn');
     
     const transcriptionModal = document.getElementById('transcriptionModal');
     const transcriptionCloseBtn = document.getElementById('transcriptionCloseBtn');
@@ -4623,6 +4674,12 @@
     }
     
     function clearLiveTranscription() {
+      // Hide save button when clearing
+      if (saveTranscriptionBtn) {
+        saveTranscriptionBtn.classList.add('hidden');
+      }
+      // Clear generated minutes
+      currentMinutesText = '';
       if (liveTranscriptionContent) {
         liveTranscriptionContent.textContent = '';
       }
@@ -10012,9 +10069,16 @@
               return;
             }
             
-            // Show save button instead of auto-downloading
+            // Show save buttons instead of auto-downloading
             if (saveAudioBtn) {
               saveAudioBtn.classList.remove('hidden');
+            }
+            // Show Save button after recording
+            if (saveTranscriptionBtn && liveTranscriptionContent && liveTranscriptionContent.textContent.trim()) {
+              const transcriptText = liveTranscriptionContent.textContent.trim().replace(/\[Recording completed:.*?\]/g, '').trim();
+              if (transcriptText && transcriptText !== 'Recording started...\n\n') {
+                saveTranscriptionBtn.classList.remove('hidden');
+              }
             }
             
             const fileSizeMB = (presenterRecordedBlob.size / (1024 * 1024)).toFixed(2);
@@ -10068,7 +10132,7 @@
         
         // Clear previous transcription and show recording started message
         if (liveTranscriptionContent) {
-          liveTranscriptionContent.textContent = 'Recording started... / بدء التسجيل...\n\n';
+          liveTranscriptionContent.textContent = 'Recording started...\n\n';
         }
         
         // Hide save button initially
@@ -10220,25 +10284,145 @@
       });
     }
     
+    // Save transcription button - opens Minutes to Meeting modal
+    if (saveTranscriptionBtn) {
+      saveTranscriptionBtn.addEventListener('click', () => {
+        openMinutesModal();
+      });
+    }
+    
+    // Store current minutes text for format switching
+    let currentMinutesText = '';
+    
+    // Function to format minutes based on selected format
+    function formatMinutesText(text, format) {
+      if (format === 'bullets') {
+        // Convert to bullet points format
+        const lines = text.split('\n');
+        let formatted = '';
+        
+        for (let i = 0; i < lines.length; i++) {
+          let line = lines[i].trim();
+          
+          if (!line) {
+            formatted += '\n';
+            continue;
+          }
+          
+          // Section headers (lines ending with colon, usually uppercase)
+          if (line.match(/^[A-Z][^:]*:$/) || line.match(/^[A-Z][^:]*\s*:$/)) {
+            formatted += '\n' + line + '\n';
+          }
+          // Already bulleted items
+          else if (/^[-•*]\s/.test(line) || /^\d+[.)]\s/.test(line)) {
+            formatted += line + '\n';
+          }
+          // Regular text lines - convert to bullets
+          else if (line.length > 0) {
+            // Split long sentences into multiple bullets if they contain periods
+            if (line.includes('. ') && line.length > 80) {
+              const sentences = line.split(/\.\s+/).filter(s => s.trim());
+              sentences.forEach((sentence, idx) => {
+                if (sentence.trim()) {
+                  formatted += '• ' + sentence.trim() + (idx < sentences.length - 1 ? '.' : '') + '\n';
+                }
+              });
+            } else {
+              formatted += '• ' + line + '\n';
+            }
+          }
+        }
+        return formatted.trim();
+      } else {
+        // Full text format - return as is
+        return text;
+      }
+    }
+    
+    // Open Minutes to Meeting modal
+    function openMinutesModal() {
+      if (!minutesToMeetingModal) return;
+      
+      // Get transcript text
+      let transcriptText = '';
+      if (liveTranscriptionContent && liveTranscriptionContent.textContent.trim()) {
+        transcriptText = liveTranscriptionContent.textContent.trim();
+        transcriptText = transcriptText.replace(/\[Recording completed:.*?\]/g, '').trim();
+        transcriptText = transcriptText.replace(/\[Meeting minutes generated successfully.*?\]/g, '').trim();
+      }
+      
+      if (!transcriptText || transcriptText === 'Recording started...\n\n') {
+        alert('No transcript available. Please record first.');
+        return;
+      }
+      
+      // If minutes already generated, show them; otherwise show transcript
+      const selectedFormat = document.querySelector('input[name="minutesFormat"]:checked')?.value || 'fulltext';
+      if (currentMinutesText) {
+        minutesContent.textContent = formatMinutesText(currentMinutesText, selectedFormat);
+      } else {
+        minutesContent.textContent = formatMinutesText(transcriptText, selectedFormat);
+      }
+      
+      minutesToMeetingModal.classList.remove('hidden');
+    }
+    
+    // Close Minutes to Meeting modal
+    function closeMinutesModal() {
+      if (!minutesToMeetingModal) return;
+      minutesToMeetingModal.classList.add('hidden');
+    }
+    
+    // Close modal button
+    if (minutesModalCloseBtn) {
+      minutesModalCloseBtn.addEventListener('click', closeMinutesModal);
+    }
+    
+    // Close modal on backdrop click
+    if (minutesToMeetingModal) {
+      minutesToMeetingModal.addEventListener('click', (event) => {
+        if (event.target === minutesToMeetingModal) {
+          closeMinutesModal();
+        }
+      });
+    }
+    
+    // Format toggle functionality
+    if (minutesFormatRadios) {
+      minutesFormatRadios.forEach(radio => {
+        radio.addEventListener('change', () => {
+          if (currentMinutesText) {
+            const selectedFormat = radio.value;
+            minutesContent.textContent = formatMinutesText(currentMinutesText, selectedFormat);
+          } else {
+            // If no generated minutes, format the transcript
+            let transcriptText = '';
+            if (liveTranscriptionContent && liveTranscriptionContent.textContent.trim()) {
+              transcriptText = liveTranscriptionContent.textContent.trim();
+              transcriptText = transcriptText.replace(/\[Recording completed:.*?\]/g, '').trim();
+            }
+            const selectedFormat = radio.value;
+            minutesContent.textContent = formatMinutesText(transcriptText, selectedFormat);
+          }
+        });
+      });
+    }
+    
     // Save minutes to Meeting to Presentation feature
     if (saveMinutesToMeetingBtn) {
       saveMinutesToMeetingBtn.addEventListener('click', () => {
-        // Get transcription text or minutes input
         let minutesText = '';
         
-        // First try to get from minutes input
-        if (presenterMinutesInput && presenterMinutesInput.value.trim()) {
-          minutesText = presenterMinutesInput.value.trim();
-        } 
-        // Otherwise get from live transcription
-        else if (liveTranscriptionContent && liveTranscriptionContent.textContent.trim()) {
+        // Get from modal content
+        if (minutesContent && minutesContent.textContent.trim()) {
+          minutesText = minutesContent.textContent.trim();
+        } else if (liveTranscriptionContent && liveTranscriptionContent.textContent.trim()) {
           minutesText = liveTranscriptionContent.textContent.trim();
-          // Remove the recording info line if present
           minutesText = minutesText.replace(/\[Recording completed:.*?\]/g, '').trim();
         }
         
         if (!minutesText) {
-          alert('No minutes or transcription available. Please record or enter minutes first.');
+          alert('No minutes available. Please generate or enter minutes first.');
           return;
         }
         
@@ -10249,7 +10433,7 @@
         // Show confirmation and option to navigate
         const shouldNavigate = confirm(`Minutes saved! Would you like to go to "Meeting to Presentation" page to use them?`);
         if (shouldNavigate) {
-          // Navigate to meeting-to-presentation page
+          closeMinutesModal();
           if (window.fadeNavigate) {
             window.fadeNavigate('meeting-to-presentation.html');
           } else {
@@ -10261,30 +10445,193 @@
       });
     }
     
-    // Save minutes button (download)
+    // Generate professional meeting minutes from transcript
+    if (generateMinutesBtn) {
+      generateMinutesBtn.addEventListener('click', async () => {
+        // Get transcription text
+        let transcriptText = '';
+        
+        // Get from live transcription
+        if (liveTranscriptionContent && liveTranscriptionContent.textContent.trim()) {
+          transcriptText = liveTranscriptionContent.textContent.trim();
+          transcriptText = transcriptText.replace(/\[Recording completed:.*?\]/g, '').trim();
+          transcriptText = transcriptText.replace(/\[Meeting minutes generated successfully.*?\]/g, '').trim();
+        }
+        
+        if (!transcriptText || transcriptText === 'Recording started...\n\n') {
+          alert('No transcript available. Please record or enter a meeting transcript first.');
+          return;
+        }
+        
+        // Check for API key
+        const API_KEY = window.OPENAI_API_KEY;
+        if (!API_KEY || API_KEY === 'YOUR_OPENAI_API_KEY_HERE' || API_KEY === 'YOUR_API_KEY_HERE') {
+          alert('OpenAI API key not configured. Please set your API key in config.js');
+          return;
+        }
+        
+        // Disable button and show loading state
+        generateMinutesBtn.disabled = true;
+        const originalText = generateMinutesBtn.innerHTML;
+        generateMinutesBtn.innerHTML = '<svg class="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 11-6.219-8.56"></path></svg> Generating...';
+        
+        try {
+          // Call OpenAI API to generate meeting minutes
+          const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${API_KEY}`
+            },
+            body: JSON.stringify({
+              model: 'gpt-4o-mini',
+              messages: [
+                {
+                  role: 'system',
+                  content: `You are a professional meeting minutes generator. Extract information from meeting transcripts and create well-structured, professional meeting minutes. Be concise, accurate, and organized.`
+                },
+                {
+                  role: 'user',
+                  content: `Generate professional meeting minutes from the following transcript. Extract and organize the information into the following structure:
+
+MEETING MINUTES
+
+Date & Time: [Extract the date and time when the meeting happened. If not mentioned, use "Not specified"]
+
+Attendees:
+[List all participants mentioned in the transcript. If names are not clear, use "Participant 1", "Participant 2", etc.]
+
+Agenda Summary:
+[Provide a brief overview of the main discussion topics (2-3 sentences)]
+
+Key Discussion Points:
+[Bullet points of the main points discussed. Be specific and clear.]
+
+Decisions Made:
+[Bullet points of any decisions, agreements, or conclusions reached during the meeting. If none, state "No formal decisions were made."]
+
+Action Items:
+[For each action item, include:
+- Task description
+- Assigned person (if mentioned, otherwise "TBD")
+- Deadline (if mentioned, otherwise "TBD")
+If no action items, state "No action items identified."]
+
+Next Meeting:
+[Date and time of the next meeting if mentioned. Otherwise, state "Not scheduled."]
+
+---
+
+Transcript:
+${transcriptText}
+
+Generate the meeting minutes now, following the exact structure above. Be concise and professional.`
+                }
+              ],
+              temperature: 0.3,
+              max_tokens: 2000
+            })
+          });
+          
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error?.message || `API error: ${response.status}`);
+          }
+          
+          const data = await response.json();
+          const generatedMinutes = data.choices[0].message.content.trim();
+          
+          // Store the generated minutes
+          currentMinutesText = generatedMinutes;
+          
+          // Display generated minutes in modal with current format
+          const selectedFormat = document.querySelector('input[name="minutesFormat"]:checked')?.value || 'fulltext';
+          if (minutesContent) {
+            minutesContent.textContent = formatMinutesText(generatedMinutes, selectedFormat);
+          }
+          
+          alert('Meeting minutes generated successfully! Review and edit if needed, then save or print.');
+          
+        } catch (error) {
+          console.error('Error generating meeting minutes:', error);
+          alert(`Failed to generate meeting minutes: ${error.message}. Please try again or check your API key configuration.`);
+        } finally {
+          // Re-enable button
+          generateMinutesBtn.disabled = false;
+          generateMinutesBtn.innerHTML = originalText;
+        }
+      });
+    }
+    
+    // Copy minutes button
+    if (minutesCopyBtn) {
+      minutesCopyBtn.addEventListener('click', () => {
+        if (minutesContent && minutesContent.textContent.trim()) {
+          navigator.clipboard.writeText(minutesContent.textContent.trim()).then(() => {
+            alert('Minutes copied to clipboard!');
+          }).catch(() => {
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = minutesContent.textContent.trim();
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            alert('Minutes copied to clipboard!');
+          });
+        } else {
+          alert('No minutes to copy.');
+        }
+      });
+    }
+    
+    // Print minutes button
+    if (minutesPrintBtn) {
+      minutesPrintBtn.addEventListener('click', () => {
+        if (minutesContent && minutesContent.textContent.trim()) {
+          const printWindow = window.open('', '_blank');
+          printWindow.document.write(`
+            <html>
+              <head>
+                <title>Meeting Minutes</title>
+                <style>
+                  body { font-family: Arial, sans-serif; padding: 40px; line-height: 1.6; }
+                  h1 { color: #333; border-bottom: 2px solid #333; padding-bottom: 10px; }
+                  pre { white-space: pre-wrap; font-family: Arial, sans-serif; }
+                </style>
+              </head>
+              <body>
+                <h1>Meeting Minutes</h1>
+                <pre>${minutesContent.textContent.trim()}</pre>
+              </body>
+            </html>
+          `);
+          printWindow.document.close();
+          printWindow.focus();
+          setTimeout(() => {
+            printWindow.print();
+            printWindow.close();
+          }, 250);
+        } else {
+          alert('No minutes to print.');
+        }
+      });
+    }
+    
+    // Download minutes button
     if (saveMinutesBtn) {
       saveMinutesBtn.addEventListener('click', () => {
-        const minutesText = presenterMinutesInput ? presenterMinutesInput.value.trim() : '';
+        let minutesText = '';
+        
+        if (minutesContent && minutesContent.textContent.trim()) {
+          minutesText = minutesContent.textContent.trim();
+        } else if (liveTranscriptionContent && liveTranscriptionContent.textContent.trim()) {
+          minutesText = liveTranscriptionContent.textContent.trim();
+          minutesText = minutesText.replace(/\[Recording completed:.*?\]/g, '').trim();
+        }
+        
         if (!minutesText) {
-          // Try to get from transcription if minutes input is empty
-          if (liveTranscriptionContent && liveTranscriptionContent.textContent.trim()) {
-            const transcriptionText = liveTranscriptionContent.textContent.trim().replace(/\[Recording completed:.*?\]/g, '').trim();
-            if (transcriptionText) {
-              // Create a text file and download it
-              const blob = new Blob([transcriptionText], { type: 'text/plain' });
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement('a');
-              a.href = url;
-              a.download = `meeting-minutes-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.txt`;
-              document.body.appendChild(a);
-              a.click();
-              document.body.removeChild(a);
-              URL.revokeObjectURL(url);
-              alert('Meeting minutes downloaded!');
-              return;
-            }
-          }
-          alert('Please enter meeting minutes first.');
+          alert('No minutes available to download.');
           return;
         }
         
@@ -10302,6 +10649,118 @@
         alert('Meeting minutes downloaded!');
       });
     }
+    
+    // Save as PDF button
+    if (saveMinutesPdfBtn) {
+      saveMinutesPdfBtn.addEventListener('click', () => {
+        let minutesText = '';
+        
+        if (minutesContent && minutesContent.textContent.trim()) {
+          minutesText = minutesContent.textContent.trim();
+        } else if (liveTranscriptionContent && liveTranscriptionContent.textContent.trim()) {
+          minutesText = liveTranscriptionContent.textContent.trim();
+          minutesText = minutesText.replace(/\[Recording completed:.*?\]/g, '').trim();
+        }
+        
+        if (!minutesText) {
+          alert('No minutes available to save as PDF.');
+          return;
+        }
+        
+        // Check if jsPDF is available
+        let jsPDF = null;
+        if (window.jspdf && window.jspdf.jsPDF) {
+          jsPDF = window.jspdf.jsPDF;
+        } else if (window.jsPDF) {
+          jsPDF = window.jsPDF;
+        }
+        
+        if (!jsPDF) {
+          alert('PDF export requires jsPDF library. Please refresh the page and try again.');
+          return;
+        }
+        
+        try {
+          // Create PDF
+          const pdf = new jsPDF({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: 'a4'
+          });
+          
+          // Set font
+          pdf.setFontSize(16);
+          pdf.setFont(undefined, 'bold');
+          pdf.text('Meeting Minutes', 105, 20, { align: 'center' });
+          
+          // Add date
+          pdf.setFontSize(10);
+          pdf.setFont(undefined, 'normal');
+          const dateStr = new Date().toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+          });
+          pdf.text(`Generated: ${dateStr}`, 105, 28, { align: 'center' });
+          
+          // Split text into lines that fit the page width
+          pdf.setFontSize(11);
+          const pageWidth = 190; // A4 width minus margins (210 - 20)
+          const pageHeight = 270; // A4 height minus margins (297 - 27)
+          const lineHeight = 7;
+          let yPosition = 40;
+          
+          // Split text by lines and process each line
+          const lines = minutesText.split('\n');
+          
+          lines.forEach((line) => {
+            if (!line.trim()) {
+              yPosition += lineHeight * 0.5; // Small gap for empty lines
+              return;
+            }
+            
+            // Check if we need a new page
+            if (yPosition > pageHeight) {
+              pdf.addPage();
+              yPosition = 20;
+            }
+            
+            // Handle long lines by splitting them
+            const splitLines = pdf.splitTextToSize(line, pageWidth);
+            
+            splitLines.forEach((splitLine) => {
+              if (yPosition > pageHeight) {
+                pdf.addPage();
+                yPosition = 20;
+              }
+              
+              // Check if line is a header (starts with uppercase and ends with colon)
+              if (splitLine.match(/^[A-Z][^:]*:$/)) {
+                pdf.setFont(undefined, 'bold');
+                pdf.setFontSize(12);
+                pdf.text(splitLine, 10, yPosition);
+                pdf.setFont(undefined, 'normal');
+                pdf.setFontSize(11);
+              } else {
+                pdf.text(splitLine, 10, yPosition);
+              }
+              
+              yPosition += lineHeight;
+            });
+          });
+          
+          // Save PDF
+          const fileName = `meeting-minutes-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.pdf`;
+          pdf.save(fileName);
+          
+          alert('Meeting minutes saved as PDF!');
+        } catch (error) {
+          console.error('Error generating PDF:', error);
+          alert('Failed to generate PDF. Please try again.');
+        }
+      });
+    }
+    
     
     // Initialize speech recognition on page load
     initSpeechRecognition();

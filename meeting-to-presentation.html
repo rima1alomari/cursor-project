@@ -618,43 +618,19 @@
           
           <!-- Tab Buttons for Input Methods -->
           <div style="display: flex; gap: 8px; margin-bottom: 24px; border-bottom: 2px solid var(--border);">
-            <button class="input-method-btn active" data-method="minutes" id="minutesTabBtn" style="flex: 1; padding: 12px 16px; background: var(--blue); color: white; border: none; border-radius: 8px 8px 0 0; font-weight: 600; cursor: pointer; transition: all 0.2s;">
-              📝 Minutes to Meeting
-            </button>
-            <button class="input-method-btn" data-method="upload" id="uploadTabBtn" style="flex: 1; padding: 12px 16px; background: transparent; color: var(--muted); border: none; border-radius: 8px 8px 0 0; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+            <button class="input-method-btn active" data-method="upload" id="uploadTabBtn" style="flex: 1; padding: 12px 16px; background: var(--blue); color: white; border: none; border-radius: 8px 8px 0 0; font-weight: 600; cursor: pointer; transition: all 0.2s;">
               📁 Upload Audio
             </button>
             <button class="input-method-btn" data-method="record" id="recordTabBtn" style="flex: 1; padding: 12px 16px; background: transparent; color: var(--muted); border: none; border-radius: 8px 8px 0 0; font-weight: 600; cursor: pointer; transition: all 0.2s;">
               🎤 Record
             </button>
+            <button class="input-method-btn" data-method="minutes" id="minutesTabBtn" style="flex: 1; padding: 12px 16px; background: transparent; color: var(--muted); border: none; border-radius: 8px 8px 0 0; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+              📝 Minutes to Meeting
+            </button>
           </div>
           
-          <!-- Meeting Minutes Input Panel -->
-          <div class="input-method-panel active" id="minutesPanel" style="display: block;">
-            <div style="padding: 20px; background: #f8fafc; border: 2px solid var(--blue); border-radius: 12px;">
-              <h3 style="margin: 0 0 12px 0; color: var(--blue); font-size: 1.2rem;">
-                📝 Paste Meeting Minutes / الصق محضر الاجتماع
-              </h3>
-              <p style="margin: 0 0 12px 0; font-size: 0.9rem; color: var(--muted); padding: 12px; background: #f0f9ff; border-left: 4px solid var(--blue); border-radius: 4px;">
-                ✓ <strong>No word limits:</strong> Paste your complete meeting minutes - all content will be processed without truncation. Every word is preserved.
-              </p>
-              <p style="margin: 0 0 12px 0; font-size: 0.9rem; color: var(--muted);">
-                Paste or type your meeting minutes, notes, or transcript here
-              </p>
-              <div class="file-input-wrapper" style="margin-bottom: 0;">
-                <textarea
-                  id="minutesInput"
-                  class="file-input"
-                  rows="8"
-                  placeholder="Paste your meeting minutes, notes, or transcript here... / الصق محضر الاجتماع أو الملاحظات هنا..."
-                  style="resize: vertical; min-height: 150px; font-family: inherit; width: 100%; padding: 12px;"
-                ></textarea>
-              </div>
-            </div>
-          </div>
-
           <!-- Upload Audio Panel -->
-          <div class="input-method-panel" id="uploadPanel" style="display: none;">
+          <div class="input-method-panel active" id="uploadPanel" style="display: block;">
             <div class="file-input-wrapper">
               <label class="file-input-label" for="audioFile">Select audio file</label>
               <input
@@ -699,6 +675,30 @@
                   <button class="use-recording-btn" id="useRecordingBtn">Use This Recording</button>
                   <button class="discard-recording-btn" id="discardRecordingBtn">Discard</button>
                 </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Meeting Minutes Input Panel -->
+          <div class="input-method-panel" id="minutesPanel" style="display: none;">
+            <div style="padding: 20px; background: #f8fafc; border: 2px solid var(--blue); border-radius: 12px;">
+              <h3 style="margin: 0 0 12px 0; color: var(--blue); font-size: 1.2rem;">
+                📝 Paste Meeting Minutes / الصق محضر الاجتماع
+              </h3>
+              <p style="margin: 0 0 12px 0; font-size: 0.9rem; color: var(--muted); padding: 12px; background: #f0f9ff; border-left: 4px solid var(--blue); border-radius: 4px;">
+                ✓ <strong>No word limits:</strong> Paste your complete meeting minutes - all content will be processed without truncation. Every word is preserved.
+              </p>
+              <p style="margin: 0 0 12px 0; font-size: 0.9rem; color: var(--muted);">
+                Paste or type your meeting minutes, notes, or transcript here
+              </p>
+              <div class="file-input-wrapper" style="margin-bottom: 0;">
+                <textarea
+                  id="minutesInput"
+                  class="file-input"
+                  rows="8"
+                  placeholder="Paste your meeting minutes, notes, or transcript here... / الصق محضر الاجتماع أو الملاحظات هنا..."
+                  style="resize: vertical; min-height: 150px; font-family: inherit; width: 100%; padding: 12px;"
+                ></textarea>
               </div>
             </div>
           </div>
