@@ -2170,11 +2170,108 @@
       return [introSlide, outlineSlide, keyPointsSlide, timelineSlide, thankYouSlide];
     }
 
+    // Cache for Template 1 JSON data
+    let template1DataCache = null;
+
+    // Load Template 1 JSON data at page initialization
+    (async function loadTemplate1Data() {
+      try {
+        const response = await fetch('Template 1 Presentation.json');
+        if (response.ok) {
+          template1DataCache = await response.json();
+        }
+      } catch (error) {
+        console.warn('Failed to load Template 1 JSON, using fallback:', error);
+      }
+    })();
+
+    // Cache for Template 2 JSON data
+    let template2DataCache = null;
+
+    // Load Template 2 JSON data at page initialization
+    (async function loadTemplate2Data() {
+      try {
+        const response = await fetch('Template 2 Presentation.json');
+        if (response.ok) {
+          template2DataCache = await response.json();
+        }
+      } catch (error) {
+        console.warn('Failed to load Template 2 JSON, using fallback:', error);
+      }
+    })();
+
+    // Cache for Template 3 JSON data
+    let template3DataCache = null;
+
+    // Load Template 3 JSON data at page initialization
+    (async function loadTemplate3Data() {
+      try {
+        const response = await fetch('Template 3 Presentation.json');
+        if (response.ok) {
+          template3DataCache = await response.json();
+        }
+      } catch (error) {
+        console.warn('Failed to load Template 3 JSON, using fallback:', error);
+      }
+    })();
+
+    function createTemplate1Slides() {
+      const baseAnimation = { type: 'none', duration: 600, delay: 0 };
+      
+      // If JSON data is loaded, use it directly
+      if (template1DataCache && template1DataCache.slides) {
+        // Deep clone the slides and regenerate IDs to avoid conflicts
+        return template1DataCache.slides.map(slide => ({
+          ...slide,
+          id: crypto.randomUUID(),
+          elements: slide.elements ? slide.elements.map(element => ({
+            ...element,
+            id: crypto.randomUUID()
+          })) : []
+        }));
+      }
+      
+      // Fallback: use hardcoded structure if JSON not loaded yet
+      const slides = [];
+      const backgroundImages = [
+        'templates/template1/SA-slide-1-bg.jpeg',
+        'templates/template1/SA-slide-2-bg.jpeg'
+      ];
+      
+      for (let i = 0; i < backgroundImages.length; i++) {
+        const slide = {
+          id: crypto.randomUUID(),
+          title: `Slide ${i + 1}`,
+          backgroundColor: '#ffffff',
+          backgroundImage: backgroundImages[i],
+          animation: { ...baseAnimation },
+          elements: []
+        };
+        
+        slides.push(slide);
+      }
+      
+      return slides;
+    }
+
     function createTemplate2Slides() {
       const baseAnimation = { type: 'none', duration: 600, delay: 0 };
-      const slides = [];
       
-      // Background images for Template 2 (17 slides)
+      // If JSON data is loaded, use it directly
+      if (template2DataCache && template2DataCache.slides) {
+        // Deep clone the slides and regenerate IDs to avoid conflicts
+        return template2DataCache.slides.map(slide => ({
+          ...slide,
+          id: crypto.randomUUID(),
+          elements: slide.elements ? slide.elements.map(element => ({
+            ...element,
+            id: crypto.randomUUID()
+          })) : []
+        }));
+      }
+      
+      // Fallback: use hardcoded structure if JSON not loaded yet
+      const slides = [];
       const backgroundImages = [
         'templates/template2/SA-slide-1-bg.png',
         'templates/template2/SA-slide-2-bg.png',
@@ -2195,7 +2292,6 @@
         'templates/template2/SA-slide-17-bg.png'
       ];
       
-      // Helper function to create text element from JSON structure
       const createTextElement = (elementData) => {
         return {
           id: crypto.randomUUID(),
@@ -2221,20 +2317,16 @@
         };
       };
       
-      // Define elements for each slide based on JSON
       const slideElements = [
-        // Slide 1
         [
           { left: 54, top: 253, width: 360, fontSize: 48, color: '#ffffff', text: 'Add text' },
           { left: 56, top: 373, width: 360, fontSize: 28, color: '#ffffff', text: 'Add text' },
           { left: 54, top: 492, width: 360, fontSize: 24, color: '#ffffff', text: 'Add text' }
         ],
-        // Slide 2
         [
           { left: 23, top: 262, width: 360, fontSize: 24, color: '#ffffff', text: 'Add text' },
           { left: 451, top: 184, width: 360, fontSize: 24, color: '#000000', text: 'Add text\nAdd text\nAdd text\nAdd text', listType: 'decimal' }
         ],
-        // Slide 3
         [
           { left: 118, top: 123, width: 187, fontSize: 18, color: '#ffffff', align: 'center', text: 'Add text' },
           { left: 403, top: 123, width: 223, fontSize: 18, color: '#ffffff', align: 'center', text: 'Add text' },
@@ -2256,11 +2348,9 @@
           { left: 442, top: 286, width: 120, fontSize: 16, color: '#ffffff', text: 'Add text' },
           { left: 715, top: 475, width: 120, fontSize: 16, color: '#ffffff', text: 'Add text' }
         ],
-        // Slides 4-17: empty elements arrays
         [], [], [], [], [], [], [], [], [], [], [], [], [], []
       ];
       
-      // Create 17 slides with background images and elements
       for (let i = 0; i < backgroundImages.length; i++) {
         const slide = {
           id: crypto.randomUUID(),
@@ -2271,12 +2361,55 @@
           elements: []
         };
         
-        // Add elements for this slide if defined
         if (slideElements[i] && slideElements[i].length > 0) {
           slideElements[i].forEach(elementData => {
             slide.elements.push(createTextElement(elementData));
           });
         }
+        
+        slides.push(slide);
+      }
+      
+      return slides;
+    }
+
+    function createTemplate3Slides() {
+      const baseAnimation = { type: 'none', duration: 600, delay: 0 };
+      
+      // If JSON data is loaded, use it directly
+      if (template3DataCache && template3DataCache.slides) {
+        // Deep clone the slides and regenerate IDs to avoid conflicts
+        return template3DataCache.slides.map(slide => ({
+          ...slide,
+          id: crypto.randomUUID(),
+          elements: slide.elements ? slide.elements.map(element => ({
+            ...element,
+            id: crypto.randomUUID()
+          })) : []
+        }));
+      }
+      
+      // Fallback: use hardcoded structure if JSON not loaded yet
+      const slides = [];
+      const backgroundImages = [
+        'templates/template3/SAO-slide-1-bg.png',
+        'templates/template3/SAO-slide-2-bg.png',
+        'templates/template3/SAO-slide-3-bg.png',
+        'templates/template3/SAO-slide-4-bg.png',
+        'templates/template3/SAO-slide-5-bg.png',
+        'templates/template3/SAO-slide-6-bg.png',
+        'templates/template3/SAO-slide-7-bg.png'
+      ];
+      
+      for (let i = 0; i < backgroundImages.length; i++) {
+        const slide = {
+          id: crypto.randomUUID(),
+          title: `Slide ${i + 1}`,
+          backgroundColor: '#ffffff',
+          backgroundImage: backgroundImages[i],
+          animation: { ...baseAnimation },
+          elements: []
+        };
         
         slides.push(slide);
       }
@@ -2458,11 +2591,23 @@
             presentationName: DEFAULT_PRESENTATION_NAME,
             slides: [createEmptySlide()],
           };
+        case 'template1':
+        case 'template 1':
+          return {
+            presentationName: 'Template 1 Presentation',
+            slides: createTemplate1Slides(),
+          };
         case 'template2':
         case 'template 2':
           return {
             presentationName: 'Template 2 Presentation',
             slides: createTemplate2Slides(),
+          };
+        case 'template3':
+        case 'template 3':
+          return {
+            presentationName: 'Template 3 Presentation',
+            slides: createTemplate3Slides(),
           };
         default:
           return {

@@ -1,0 +1,93 @@
+{
+  "id": "template3-pres-001",
+  "name": "Template 3 Presentation",
+  "createdAt": 1764153204855,
+  "updatedAt": 1764153204855,
+  "slides": [
+    {
+      "id": "template3-slide-1",
+      "title": "Slide 1",
+      "backgroundColor": "#ffffff",
+      "backgroundImage": "templates/template3/SAO-slide-1-bg.png",
+      "elements": [],
+      "animation": {
+        "type": "none",
+        "duration": 600,
+        "delay": 0
+      }
+    },
+    {
+      "id": "template3-slide-2",
+      "title": "Slide 2",
+      "backgroundColor": "#ffffff",
+      "backgroundImage": "templates/template3/SAO-slide-2-bg.png",
+      "elements": [],
+      "animation": {
+        "type": "none",
+        "duration": 600,
+        "delay": 0
+      }
+    },
+    {
+      "id": "template3-slide-3",
+      "title": "Slide 3",
+      "backgroundColor": "#ffffff",
+      "backgroundImage": "templates/template3/SAO-slide-3-bg.png",
+      "elements": [],
+      "animation": {
+        "type": "none",
+        "duration": 600,
+        "delay": 0
+      }
+    },
+    {
+      "id": "template3-slide-4",
+      "title": "Slide 4",
+      "backgroundColor": "#ffffff",
+      "backgroundImage": "templates/template3/SAO-slide-4-bg.png",
+      "elements": [],
+      "animation": {
+        "type": "none",
+        "duration": 600,
+        "delay": 0
+      }
+    },
+    {
+      "id": "template3-slide-5",
+      "title": "Slide 5",
+      "backgroundColor": "#ffffff",
+      "backgroundImage": "templates/template3/SAO-slide-5-bg.png",
+      "elements": [],
+      "animation": {
+        "type": "none",
+        "duration": 600,
+        "delay": 0
+      }
+    },
+    {
+      "id": "template3-slide-6",
+      "title": "Slide 6",
+      "backgroundColor": "#ffffff",
+      "backgroundImage": "templates/template3/SAO-slide-6-bg.png",
+      "elements": [],
+      "animation": {
+        "type": "none",
+        "duration": 600,
+        "delay": 0
+      }
+    },
+    {
+      "id": "template3-slide-7",
+      "title": "Slide 7",
+      "backgroundColor": "#ffffff",
+      "backgroundImage": "templates/template3/SAO-slide-7-bg.png",
+      "elements": [],
+      "animation": {
+        "type": "none",
+        "duration": 600,
+        "delay": 0
+      }
+    }
+  ]
+}
+

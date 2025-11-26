@@ -1,0 +1,33 @@
+{
+  "id": "template1-pres-001",
+  "name": "Template 1 Presentation",
+  "createdAt": 1764153204854,
+  "updatedAt": 1764153204854,
+  "slides": [
+    {
+      "id": "template1-slide-1",
+      "title": "Slide 1",
+      "backgroundColor": "#ffffff",
+      "backgroundImage": "templates/template1/SA-slide-1-bg.jpeg",
+      "elements": [],
+      "animation": {
+        "type": "none",
+        "duration": 600,
+        "delay": 0
+      }
+    },
+    {
+      "id": "template1-slide-2",
+      "title": "Slide 2",
+      "backgroundColor": "#ffffff",
+      "backgroundImage": "templates/template1/SA-slide-2-bg.jpeg",
+      "elements": [],
+      "animation": {
+        "type": "none",
+        "duration": 600,
+        "delay": 0
+      }
+    }
+  ]
+}
+
