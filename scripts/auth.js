@@ -101,6 +101,13 @@ function setGuestMode(enabled) {
  * Logout user
  */
 function logout() {
+  // Sign out from Firebase Auth if available
+  if (typeof signOutFirebaseAuth === 'function') {
+    signOutFirebaseAuth().catch(error => {
+      console.warn('Firebase Auth sign out error:', error);
+    });
+  }
+  
   setCurrentUser(null);
   setGuestMode(false);
 }

@@ -15,6 +15,7 @@ const firebaseConfig = window.firebaseConfig || {
 
 // Initialize Firebase (using compat API)
 let db = null;
+let auth = null;
 let firebaseInitialized = false;
 
 // Check if Firebase SDK is available
@@ -29,6 +30,9 @@ if (typeof firebase !== 'undefined') {
     // 1. Create it in Firebase Console, OR
     // 2. Use the default database (which can be renamed to "lumen" in console)
     db = firebase.firestore(app);
+    
+    // Initialize Firebase Authentication
+    auth = firebase.auth(app);
     
     // Try to set database name if supported (for newer Firebase versions)
     // This is a workaround - the database name should be set in Firebase Console
@@ -53,6 +57,192 @@ if (typeof firebase !== 'undefined') {
   }
 } else {
   console.warn('Firebase SDK not loaded');
+}
+
+/**
+ * Get Firebase Auth UID for current user
+ * Returns the Firebase Auth UID if authenticated, otherwise null
+ */
+function getFirebaseAuthUID() {
+  if (!auth) return null;
+  const user = auth.currentUser;
+  return user ? user.uid : null;
+}
+
+/**
+ * Authenticate user with Firebase Auth using email and password
+ * This creates or signs in a Firebase Auth user
+ */
+async function authenticateWithFirebase(email, password) {
+  if (!auth) {
+    console.warn('Firebase Auth not initialized');
+    return { success: false, error: 'Firebase Auth not available' };
+  }
+
+  try {
+    // Try to sign in first
+    try {
+      const userCredential = await auth.signInWithEmailAndPassword(email, password);
+      console.log('Firebase Auth: Signed in successfully');
+      return { success: true, user: userCredential.user };
+    } catch (signInError) {
+      // If user doesn't exist, try to create account
+      if (signInError.code === 'auth/user-not-found' || signInError.code === 'auth/invalid-credential') {
+        try {
+          const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+          console.log('Firebase Auth: Created new user');
+          return { success: true, user: userCredential.user };
+        } catch (createError) {
+          console.error('Firebase Auth: Failed to create user:', createError);
+          return { success: false, error: createError.message };
+        }
+      } else {
+        console.error('Firebase Auth: Sign in error:', signInError);
+        return { success: false, error: signInError.message };
+      }
+    }
+  } catch (error) {
+    console.error('Firebase Auth: Authentication error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Create Firebase Auth user (for new registrations)
+ */
+async function createFirebaseAuthUser(email, password) {
+  if (!auth) {
+    console.warn('Firebase Auth not initialized');
+    return { success: false, error: 'Firebase Auth not available' };
+  }
+
+  try {
+    const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+    console.log('Firebase Auth: Created new user');
+    return { success: true, user: userCredential.user };
+  } catch (error) {
+    console.error('Firebase Auth: Failed to create user:', error);
+    // If user already exists, try to sign in instead
+    if (error.code === 'auth/email-already-in-use') {
+      try {
+        const userCredential = await auth.signInWithEmailAndPassword(email, password);
+        console.log('Firebase Auth: User already exists, signed in');
+        return { success: true, user: userCredential.user };
+      } catch (signInError) {
+        return { success: false, error: signInError.message };
+      }
+    }
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Sign out from Firebase Auth
+ */
+async function signOutFirebaseAuth() {
+  if (!auth) return;
+  try {
+    await auth.signOut();
+    console.log('Firebase Auth: Signed out');
+  } catch (error) {
+    console.error('Firebase Auth: Sign out error:', error);
+  }
+}
+
+/**
+ * Check if user is authenticated with Firebase Auth
+ * Returns true if authenticated, false otherwise
+ */
+function isFirebaseAuthAuthenticated() {
+  if (!auth) return false;
+  return auth.currentUser !== null;
+}
+
+/**
+ * Wait for Firebase Auth to initialize and check authentication state
+ * This is useful when the page loads to ensure auth state is restored
+ */
+function waitForFirebaseAuth() {
+  return new Promise((resolve) => {
+    if (!auth) {
+      console.warn('Firebase Auth not initialized');
+      resolve(false);
+      return;
+    }
+    
+    // Check if already authenticated
+    if (auth.currentUser) {
+      console.log('Firebase Auth already authenticated:', auth.currentUser.uid);
+      resolve(true);
+      return;
+    }
+    
+    // Firebase Auth automatically restores auth state, but it might take a moment
+    // Use onAuthStateChanged to wait for the initial state
+    console.log('Waiting for Firebase Auth state to restore...');
+    let resolved = false;
+    
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (resolved) return; // Prevent multiple resolutions
+      resolved = true;
+      unsubscribe();
+      
+      if (user) {
+        console.log('✅ Firebase Auth state restored - authenticated:', user.uid);
+        resolve(true);
+      } else {
+        console.warn('⚠️ Firebase Auth state restored - not authenticated');
+        resolve(false);
+      }
+    });
+    
+    // Timeout after 5 seconds (increased from 3)
+    setTimeout(() => {
+      if (!resolved) {
+        resolved = true;
+        unsubscribe();
+        const isAuthenticated = auth.currentUser !== null;
+        if (isAuthenticated) {
+          console.log('✅ Firebase Auth authenticated (timeout check):', auth.currentUser.uid);
+        } else {
+          console.warn('⚠️ Firebase Auth not authenticated after timeout');
+        }
+        resolve(isAuthenticated);
+      }
+    }, 5000);
+  });
+}
+
+/**
+ * Check if user needs to re-authenticate with Firebase Auth
+ * Returns true if user is logged in with custom auth but not Firebase Auth
+ */
+function needsFirebaseAuthReauthentication() {
+  const currentUser = getCurrentUser();
+  if (!currentUser) return false;
+  
+  const firebaseUID = getFirebaseAuthUID();
+  return !firebaseUID;
+}
+
+/**
+ * Show a user-friendly message if Firebase Auth re-authentication is needed
+ */
+function checkAndNotifyFirebaseAuthStatus() {
+  if (needsFirebaseAuthReauthentication()) {
+    console.warn('⚠️ IMPORTANT: You are logged in but not authenticated with Firebase Auth.');
+    console.warn('⚠️ Firestore operations will fail. Please log out and log back in.');
+    console.warn('⚠️ This is a one-time requirement after the Firebase Auth integration.');
+    
+    // Optionally show a user-visible notification
+    if (typeof window !== 'undefined' && window.alert) {
+      // Don't show alert automatically, but log it for debugging
+      console.info('To fix: Log out and log back in to authenticate with Firebase Auth.');
+    }
+    
+    return false;
+  }
+  return true;
 }
 
 /**
@@ -81,14 +271,24 @@ function getUserProjectsIndexKey() {
  * Get Firestore reference for user's projects collection
  * Path: users/{uid}/projects/{projectId}
  * Database: lumen (configured in Firebase Console)
+ * Uses Firebase Auth UID if available, otherwise falls back to custom user ID
  */
-function getUserProjectsRef(uid, projectId = null) {
-  if (!db || !uid) return null;
+function getUserProjectsRef(uid = null, projectId = null) {
+  if (!db) return null;
+  
+  // Prefer Firebase Auth UID for Firestore queries (required for security rules)
+  const firebaseUID = getFirebaseAuthUID();
+  const effectiveUID = firebaseUID || uid;
+  
+  if (!effectiveUID) {
+    console.warn('No user ID available for Firestore reference');
+    return null;
+  }
   
   if (projectId) {
-    return db.collection('users').doc(uid).collection('projects').doc(projectId);
+    return db.collection('users').doc(effectiveUID).collection('projects').doc(projectId);
   } else {
-    return db.collection('users').doc(uid).collection('projects');
+    return db.collection('users').doc(effectiveUID).collection('projects');
   }
 }
 
@@ -102,6 +302,30 @@ async function saveProjectToFirestore(projectId, projectData) {
   if (!currentUser || !currentUser.id) {
     console.warn('Cannot save project: No user logged in');
     return { success: false, error: 'User not logged in' };
+  }
+
+  // Wait for Firebase Auth to be ready (if available)
+  // This is critical - Firebase Auth state restoration is asynchronous
+  if (typeof waitForFirebaseAuth === 'function') {
+    const isAuthReady = await waitForFirebaseAuth();
+    if (!isAuthReady) {
+      const firebaseUID = getFirebaseAuthUID();
+      if (!firebaseUID) {
+        console.error('❌ Firebase Auth not authenticated after waiting. Cannot save to Firestore.');
+        throw new Error('Firebase Auth not authenticated. Please log in again.');
+      }
+    }
+  } else {
+    // If waitForFirebaseAuth is not available, check current state
+    const firebaseUID = getFirebaseAuthUID();
+    if (!firebaseUID) {
+      // Give it a moment - auth state might still be restoring
+      await new Promise(resolve => setTimeout(resolve, 500));
+      const firebaseUIDAfterWait = getFirebaseAuthUID();
+      if (!firebaseUIDAfterWait) {
+        throw new Error('Firebase Auth not authenticated. Please log in again.');
+      }
+    }
   }
 
   if (!firebaseInitialized || !db) {
@@ -144,21 +368,84 @@ async function saveProjectToFirestore(projectId, projectData) {
           console.log('Firestore save: First element text length:', firstSlide.elements[0]?.text?.length || 0);
         }
       }
+      
+      // Calculate approximate data size
+      try {
+        const jsonString = JSON.stringify(dataToSave);
+        const sizeInBytes = new Blob([jsonString]).size;
+        const sizeInMB = sizeInBytes / (1024 * 1024);
+        console.log(`Firestore save: Data size: ${sizeInBytes} bytes (${sizeInMB.toFixed(2)} MB)`);
+        
+        // Firestore document limit is 1MB
+        if (sizeInMB > 1) {
+          console.warn('⚠️ WARNING: Project data exceeds 1MB limit. Firestore may reject this save.');
+        }
+      } catch (sizeError) {
+        console.warn('Could not calculate data size:', sizeError);
+      }
     } else {
       console.warn('Firestore save: projectData.slides is not a valid array:', dataToSave.slides);
     }
 
-    const projectRef = getUserProjectsRef(currentUser.id, projectId);
+    // Clean data: Remove any undefined values, functions, or circular references
+    // Firestore doesn't support undefined values
+    const cleanData = (obj) => {
+      if (obj === null || obj === undefined) return null;
+      if (typeof obj === 'function') return null; // Remove functions
+      if (obj instanceof Date) return obj.getTime(); // Convert dates to timestamps
+      if (Array.isArray(obj)) {
+        return obj.map(item => cleanData(item)).filter(item => item !== undefined);
+      }
+      if (typeof obj === 'object') {
+        const cleaned = {};
+        for (const key in obj) {
+          if (obj.hasOwnProperty(key)) {
+            const value = cleanData(obj[key]);
+            if (value !== undefined) {
+              cleaned[key] = value;
+            }
+          }
+        }
+        return cleaned;
+      }
+      return obj;
+    };
+
+    const cleanedData = cleanData(dataToSave);
+
+    // Use Firebase Auth UID for Firestore queries (required for security rules)
+    const firebaseUID = getFirebaseAuthUID();
+    if (!firebaseUID) {
+      throw new Error('Firebase Auth not authenticated. Please log in again.');
+    }
+    
+    const projectRef = getUserProjectsRef(firebaseUID, projectId);
     if (!projectRef) {
       throw new Error('Failed to get project reference');
     }
 
-    await projectRef.set(dataToSave, { merge: true });
-    console.log('Project saved to Firestore (lumen database):', `users/${currentUser.id}/projects/${projectId}`);
+    console.log('Firestore save: Attempting to save to', `users/${firebaseUID}/projects/${projectId}`);
+    await projectRef.set(cleanedData, { merge: true });
+    console.log('✅ Project saved to Firestore (lumen database):', `users/${firebaseUID}/projects/${projectId}`);
     return { success: true };
   } catch (error) {
-    console.error('Failed to save project to Firestore:', error);
-    return { success: false, error: error.message };
+    console.error('❌ Failed to save project to Firestore:', error);
+    console.error('Error details:', {
+      code: error.code,
+      message: error.message,
+      stack: error.stack
+    });
+    
+    // Provide more specific error messages
+    if (error.code === 'permission-denied') {
+      return { success: false, error: 'Permission denied. Please check Firestore security rules.' };
+    } else if (error.message && error.message.includes('size')) {
+      return { success: false, error: 'Project data is too large for Firestore (max 1MB).' };
+    } else if (error.message && error.message.includes('serialize')) {
+      return { success: false, error: 'Project data contains invalid values that cannot be saved.' };
+    }
+    
+    return { success: false, error: error.message || 'Unknown error occurred' };
   }
 }
 
@@ -216,7 +503,13 @@ async function loadProjectFromFirestore(projectId) {
   }
 
   try {
-    const projectRef = getUserProjectsRef(currentUser.id, projectId);
+    // Use Firebase Auth UID for Firestore queries (required for security rules)
+    const firebaseUID = getFirebaseAuthUID();
+    if (!firebaseUID) {
+      throw new Error('Firebase Auth not authenticated. Please log in again.');
+    }
+    
+    const projectRef = getUserProjectsRef(firebaseUID, projectId);
     if (!projectRef) {
       throw new Error('Failed to get project reference');
     }
@@ -224,7 +517,7 @@ async function loadProjectFromFirestore(projectId) {
     const doc = await projectRef.get();
     if (doc.exists) {
       const data = doc.data();
-      console.log('Project loaded from Firestore (lumen database):', `users/${currentUser.id}/projects/${projectId}`);
+      console.log('Project loaded from Firestore (lumen database):', `users/${firebaseUID}/projects/${projectId}`);
       
       // Debug: Log what we loaded
       console.log('Firestore load: Full data keys:', Object.keys(data));
@@ -274,9 +567,9 @@ async function loadAllUserProjectsFromFirestore() {
     return [];
   }
 
-  if (!firebaseInitialized || !db) {
-    console.warn('Firebase not initialized, falling back to localStorage');
-    // Fallback to localStorage - filter by userId
+  // Helper function for localStorage fallback
+  const loadFromLocalStorage = () => {
+    console.warn('Using localStorage fallback for projects');
     const PRESENTATIONS_INDEX_KEY = 'lumen-presentations-index';
     const PRESENTATION_STORAGE_PREFIX = 'lumen-presentation-';
     try {
@@ -338,14 +631,41 @@ async function loadAllUserProjectsFromFirestore() {
       console.error('Failed to load projects from localStorage:', error);
       return [];
     }
+  };
+
+  // Check if we should use localStorage fallback
+  if (!firebaseInitialized || !db) {
+    console.warn('Firebase not initialized, falling back to localStorage');
+    return loadFromLocalStorage();
+  }
+
+  // Check if Firebase Auth is authenticated - if not, use localStorage
+  const firebaseUID = getFirebaseAuthUID();
+  if (!firebaseUID) {
+    console.warn('Firebase Auth not authenticated. Using localStorage fallback.');
+    console.warn('To use Firestore, please log out and log back in.');
+    return loadFromLocalStorage();
   }
 
   try {
-    const projectsRef = getUserProjectsRef(currentUser.id);
+    // Use Firebase Auth UID for Firestore queries (required for security rules)
+    const firebaseUID = getFirebaseAuthUID();
+    if (!firebaseUID) {
+      const currentUser = getCurrentUser();
+      console.error('❌ Firebase Auth not authenticated!');
+      console.error('   Custom auth user:', currentUser?.email || currentUser?.username || 'Unknown');
+      console.error('   Firebase Auth UID: null');
+      console.error('   Solution: Log out and log back in to authenticate with Firebase Auth.');
+      throw new Error('Firebase Auth not authenticated. Please log out and log back in.');
+    }
+    
+    console.log('✅ Firebase Auth authenticated with UID:', firebaseUID);
+    const projectsRef = getUserProjectsRef(firebaseUID);
     if (!projectsRef) {
       throw new Error('Failed to get projects collection reference');
     }
 
+    console.log('Attempting to load projects from Firestore with UID:', firebaseUID);
     const snapshot = await projectsRef.get();
     const projects = [];
     
@@ -364,6 +684,20 @@ async function loadAllUserProjectsFromFirestore() {
     return projects;
   } catch (error) {
     console.error('Failed to load projects from Firestore:', error);
+    
+    // If it's a permission error and user is not authenticated with Firebase Auth
+    if (error.code === 'permission-denied' || error.message?.includes('permission')) {
+      const firebaseUID = getFirebaseAuthUID();
+      if (!firebaseUID) {
+        console.error('PERMISSION DENIED: User is logged in with custom auth but not authenticated with Firebase Auth.');
+        console.error('SOLUTION: Please log out and log back in to authenticate with Firebase Auth.');
+        console.error('This is required for Firestore access. Falling back to localStorage.');
+      } else {
+        console.error('PERMISSION DENIED: User is authenticated but Firestore security rules are blocking access.');
+        console.error('Please check Firestore security rules in Firebase Console.');
+      }
+    }
+    
     return [];
   }
 }
@@ -396,13 +730,19 @@ async function deleteProjectFromFirestore(projectId) {
   }
 
   try {
-    const projectRef = getUserProjectsRef(currentUser.id, projectId);
+    // Use Firebase Auth UID for Firestore queries (required for security rules)
+    const firebaseUID = getFirebaseAuthUID();
+    if (!firebaseUID) {
+      throw new Error('Firebase Auth not authenticated. Please log in again.');
+    }
+    
+    const projectRef = getUserProjectsRef(firebaseUID, projectId);
     if (!projectRef) {
       throw new Error('Failed to get project reference');
     }
 
     await projectRef.delete();
-    console.log('Project deleted from Firestore (lumen database):', `users/${currentUser.id}/projects/${projectId}`);
+    console.log('Project deleted from Firestore (lumen database):', `users/${firebaseUID}/projects/${projectId}`);
     return { success: true };
   } catch (error) {
     console.error('Failed to delete project from Firestore:', error);
@@ -452,7 +792,13 @@ async function updateProjectMetadataInFirestore(projectId, metadata) {
   }
 
   try {
-    const projectRef = getUserProjectsRef(currentUser.id, projectId);
+    // Use Firebase Auth UID for Firestore queries (required for security rules)
+    const firebaseUID = getFirebaseAuthUID();
+    if (!firebaseUID) {
+      throw new Error('Firebase Auth not authenticated. Please log in again.');
+    }
+    
+    const projectRef = getUserProjectsRef(firebaseUID, projectId);
     if (!projectRef) {
       throw new Error('Failed to get project reference');
     }

@@ -639,6 +639,20 @@
             <p class="template-option-description">A structured layout for professional slides.</p>
           </div>
         </div>
+        <div class="template-option" data-template="template2">
+          <div class="template-option-preview">
+            <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+              <rect x="8" y="8" width="24" height="16" rx="2" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="1.5"/>
+              <rect x="10" y="10" width="20" height="12" rx="1" fill="#cbd5e1" opacity="0.3"/>
+              <rect x="12" y="12" width="16" height="2" rx="1" fill="#94a3b8"/>
+              <rect x="12" y="16" width="12" height="2" rx="1" fill="#cbd5e1"/>
+            </svg>
+          </div>
+          <div class="template-option-info">
+            <h3 class="template-option-title">Template 2</h3>
+            <p class="template-option-description">Professional slides with custom background images.</p>
+          </div>
+        </div>
       </div>
       <div class="modal-actions">
         <button type="button" class="btn btn-outline" id="cancelTemplate">Cancel</button>
@@ -672,6 +686,7 @@
 
   <!-- Firebase SDK - Using compat version for file:// protocol compatibility -->
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics-compat.js"></script>
   <script src="./scripts/auth.js"></script>
@@ -691,6 +706,19 @@
     if (!currentUser) {
       window.location.href = './login.html';
     }
+
+    // Check Firebase Auth state and wait for it to initialize
+    (async () => {
+      if (typeof waitForFirebaseAuth === 'function') {
+        const isAuthenticated = await waitForFirebaseAuth();
+        if (!isAuthenticated && typeof isFirebaseAuthAuthenticated === 'function' && !isFirebaseAuthAuthenticated()) {
+          console.warn('User is logged in with custom auth but not Firebase Auth.');
+          console.warn('Firestore operations will fail. User should log out and log back in.');
+        } else if (isAuthenticated) {
+          console.log('Firebase Auth authenticated successfully');
+        }
+      }
+    })();
 
     // Generate thumbnail from first slide
     async function generateThumbnailFromSlide(projectId) {

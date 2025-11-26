@@ -2170,6 +2170,120 @@
       return [introSlide, outlineSlide, keyPointsSlide, timelineSlide, thankYouSlide];
     }
 
+    function createTemplate2Slides() {
+      const baseAnimation = { type: 'none', duration: 600, delay: 0 };
+      const slides = [];
+      
+      // Background images for Template 2 (17 slides)
+      const backgroundImages = [
+        'templates/template2/SA-slide-1-bg.png',
+        'templates/template2/SA-slide-2-bg.png',
+        'templates/template2/SA-slide-3-bg.png',
+        'templates/template2/SA-slide-4-bg.png',
+        'templates/template2/SA-slide-5-bg.png',
+        'templates/template2/SA-slide-6-bg.png',
+        'templates/template2/SA-slide-7-bg.png',
+        'templates/template2/SA-slide-8-bg.png',
+        'templates/template2/SA-slide-9-bg-new.png',
+        'templates/template2/SA-slide-10-bg.png',
+        'templates/template2/SA-slide-11-bg.png',
+        'templates/template2/SA-slide-12-bg.png',
+        'templates/template2/SA-slide-13-bg.png',
+        'templates/template2/SA-slide-14-bg.png',
+        'templates/template2/SA-slide-15-bg.png',
+        'templates/template2/SA-slide-16-bg.png',
+        'templates/template2/SA-slide-17-bg.png'
+      ];
+      
+      // Helper function to create text element from JSON structure
+      const createTextElement = (elementData) => {
+        return {
+          id: crypto.randomUUID(),
+          type: 'text',
+          text: elementData.text || 'Add text',
+          left: elementData.left,
+          top: elementData.top,
+          width: elementData.width,
+          fontSize: elementData.fontSize,
+          fontFamily: elementData.fontFamily || 'Inter, sans-serif',
+          color: elementData.color || '#ffffff',
+          bold: elementData.bold || false,
+          italic: elementData.italic || false,
+          underline: elementData.underline || false,
+          align: elementData.align || 'left',
+          listType: elementData.listType || 'none',
+          lineHeight: elementData.lineHeight || 1.4,
+          letterSpacing: elementData.letterSpacing || 0,
+          textTransform: elementData.textTransform || 'none',
+          backgroundColor: elementData.backgroundColor || null,
+          height: elementData.height || undefined,
+          animation: { ...baseAnimation },
+        };
+      };
+      
+      // Define elements for each slide based on JSON
+      const slideElements = [
+        // Slide 1
+        [
+          { left: 54, top: 253, width: 360, fontSize: 48, color: '#ffffff', text: 'Add text' },
+          { left: 56, top: 373, width: 360, fontSize: 28, color: '#ffffff', text: 'Add text' },
+          { left: 54, top: 492, width: 360, fontSize: 24, color: '#ffffff', text: 'Add text' }
+        ],
+        // Slide 2
+        [
+          { left: 23, top: 262, width: 360, fontSize: 24, color: '#ffffff', text: 'Add text' },
+          { left: 451, top: 184, width: 360, fontSize: 24, color: '#000000', text: 'Add text\nAdd text\nAdd text\nAdd text', listType: 'decimal' }
+        ],
+        // Slide 3
+        [
+          { left: 118, top: 123, width: 187, fontSize: 18, color: '#ffffff', align: 'center', text: 'Add text' },
+          { left: 403, top: 123, width: 223, fontSize: 18, color: '#ffffff', align: 'center', text: 'Add text' },
+          { left: 699, top: 128, width: 241, fontSize: 18, color: '#ffffff', align: 'center', text: 'Add text' },
+          { left: 69, top: 176, width: 147, fontSize: 16, color: '#ffffff', height: 62, text: 'Add text' },
+          { left: 58, top: 270, width: 153, fontSize: 16, color: '#ffffff', height: 62, text: 'Add text' },
+          { left: 58, top: 367, width: 156, fontSize: 16, color: '#ffffff', height: 63, text: 'Add text' },
+          { left: 58, top: 463, width: 152, fontSize: 16, color: '#ffffff', height: 63, text: 'Add text' },
+          { left: 250, top: 478, width: 120, fontSize: 16, color: '#ffffff', text: 'Add text' },
+          { left: 252, top: 384, width: 120, fontSize: 16, color: '#ffffff', text: 'Add text' },
+          { left: 254, top: 289, width: 120, fontSize: 16, color: '#ffffff', text: 'Add text' },
+          { left: 257, top: 189, width: 120, fontSize: 16, color: '#ffffff', text: 'Add text' },
+          { left: 709, top: 391, width: 120, fontSize: 16, color: '#ffffff', text: 'Add text' },
+          { left: 713, top: 288, width: 120, fontSize: 16, color: '#ffffff', text: 'Add text' },
+          { left: 715, top: 194, width: 120, fontSize: 16, color: '#ffffff', text: 'Add text' },
+          { left: 446, top: 192, width: 164, fontSize: 16, color: '#ffffff', text: 'Add text' },
+          { left: 448, top: 478, width: 120, fontSize: 16, color: '#ffffff', text: 'Add text' },
+          { left: 446, top: 385, width: 120, fontSize: 16, color: '#ffffff', text: 'Add text' },
+          { left: 442, top: 286, width: 120, fontSize: 16, color: '#ffffff', text: 'Add text' },
+          { left: 715, top: 475, width: 120, fontSize: 16, color: '#ffffff', text: 'Add text' }
+        ],
+        // Slides 4-17: empty elements arrays
+        [], [], [], [], [], [], [], [], [], [], [], [], [], []
+      ];
+      
+      // Create 17 slides with background images and elements
+      for (let i = 0; i < backgroundImages.length; i++) {
+        const slide = {
+          id: crypto.randomUUID(),
+          title: `Slide ${i + 1}`,
+          backgroundColor: '#ffffff',
+          backgroundImage: backgroundImages[i],
+          animation: { ...baseAnimation },
+          elements: []
+        };
+        
+        // Add elements for this slide if defined
+        if (slideElements[i] && slideElements[i].length > 0) {
+          slideElements[i].forEach(elementData => {
+            slide.elements.push(createTextElement(elementData));
+          });
+        }
+        
+        slides.push(slide);
+      }
+      
+      return slides;
+    }
+
     function buildPresentationPreview(slide) {
       const fallback = {
         backgroundColor: '#ffffff',
@@ -2343,6 +2457,12 @@
           return {
             presentationName: DEFAULT_PRESENTATION_NAME,
             slides: [createEmptySlide()],
+          };
+        case 'template2':
+        case 'template 2':
+          return {
+            presentationName: 'Template 2 Presentation',
+            slides: createTemplate2Slides(),
           };
         default:
           return {
@@ -3959,10 +4079,33 @@
         
         // CRITICAL: Save to Firestore using user-specific path: users/{uid}/projects/{projectId}
         if (presentationId && typeof saveProjectToFirestore === 'function') {
+          // Ensure Firebase Auth is ready before attempting save
+          if (typeof waitForFirebaseAuth === 'function') {
+            const isAuthReady = await waitForFirebaseAuth();
+            if (!isAuthReady) {
+              console.warn('⚠️ Autosave: Firebase Auth not ready, skipping Firestore save');
+              // Fallback to localStorage
+              const projectStorageKey = `${PRESENTATION_STORAGE_PREFIX}${presentationId}`;
+              try {
+                localStorage.setItem(projectStorageKey, JSON.stringify(presentationState));
+                console.log('Autosave: Saved to localStorage (Firebase Auth not ready):', projectStorageKey);
+              } catch (localStorageError) {
+                console.error('❌ Autosave: Failed to save to localStorage:', localStorageError);
+              }
+              return; // Exit early, don't attempt Firestore save
+            }
+          }
+          
           // Save to Firestore
+          console.log('Autosave: Attempting to save to Firestore...', {
+            presentationId,
+            slidesCount: slides.length,
+            presentationName
+          });
+          
           const saveResult = await saveProjectToFirestore(presentationId, presentationState);
           if (saveResult.success) {
-            console.log('Autosave: Saved to Firestore users/{uid}/projects/', presentationId, 'with', slides.length, 'slides');
+            console.log('✅ Autosave: Saved to Firestore users/{uid}/projects/', presentationId, 'with', slides.length, 'slides');
             // Verify what was saved
             console.log('Autosave: Saved slides structure:', {
               totalSlides: slides.length,
@@ -3970,14 +4113,30 @@
               firstSlideTitle: slides[0]?.title || 'No title'
             });
           } else {
-            console.warn('Autosave: Failed to save to Firestore:', saveResult.error);
+            console.error('❌ Autosave: Failed to save to Firestore:', saveResult.error);
+            console.error('Error details:', {
+              error: saveResult.error,
+              presentationId,
+              slidesCount: slides.length,
+              presentationName
+            });
+            
             // Fallback to localStorage
-          const projectStorageKey = `${PRESENTATION_STORAGE_PREFIX}${presentationId}`;
-          localStorage.setItem(projectStorageKey, JSON.stringify(presentationState));
-            console.log('Autosave: Fallback saved to localStorage:', projectStorageKey);
+            const projectStorageKey = `${PRESENTATION_STORAGE_PREFIX}${presentationId}`;
+            try {
+              localStorage.setItem(projectStorageKey, JSON.stringify(presentationState));
+              console.log('Autosave: Fallback saved to localStorage:', projectStorageKey);
+            } catch (localStorageError) {
+              console.error('❌ Autosave: Failed to save to localStorage as well:', localStorageError);
+            }
           }
         } else {
-          console.warn('Autosave: No presentationId available, cannot save to project storage');
+          if (!presentationId) {
+            console.warn('Autosave: No presentationId available, cannot save to project storage');
+          }
+          if (typeof saveProjectToFirestore !== 'function') {
+            console.warn('Autosave: saveProjectToFirestore function not available. Make sure firebase.js is loaded.');
+          }
         }
         
         const syncPayload = JSON.stringify({
@@ -12189,12 +12348,36 @@ Generate the meeting minutes now, following the exact structure above. Be concis
   </style>
   <!-- Firebase SDK - Using compat version for file:// protocol compatibility -->
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics-compat.js"></script>
   <script src="./scripts/auth.js"></script>
   <script src="./scripts/profile.js"></script>
   <script src="./scripts/teams.js"></script>
   <script src="./scripts/firebase.js"></script>
+  <script>
+    // Wait for Firebase Auth to initialize and restore state
+    // This ensures authentication is ready before any Firestore operations
+    (async function() {
+      if (typeof waitForFirebaseAuth === 'function') {
+        console.log('Waiting for Firebase Auth to initialize...');
+        const isAuthenticated = await waitForFirebaseAuth();
+        if (isAuthenticated) {
+          console.log('✅ Firebase Auth authenticated and ready');
+        } else {
+          const currentUser = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+          if (currentUser) {
+            console.warn('⚠️ User is logged in but Firebase Auth is not authenticated.');
+            console.warn('⚠️ Firestore operations will fail. Please log out and log back in.');
+          } else {
+            console.log('ℹ️ No user logged in');
+          }
+        }
+      } else {
+        console.warn('waitForFirebaseAuth function not available');
+      }
+    })();
+  </script>
   
   <!-- Chatbot Component -->
   <div id="chatbot">
